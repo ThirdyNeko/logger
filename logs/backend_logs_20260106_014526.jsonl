@@ -1,0 +1,11 @@
+{"type":"backend-output","output":"{\"item\":\"Burger\",\"subtotal\":\"300.00\",\"tax\":\"36.00\",\"total\":\"336.00\"}","timestamp":"2026-01-06T01:50:16+01:00","iteration_id":1,"session_id":"20260106_014526"}
+{"type":"backend-output","output":"{\"item\":\"Burger\",\"subtotal\":\"300.00\",\"tax\":\"36.00\",\"total\":\"336.00\"}","timestamp":"2026-01-06T01:54:54+01:00","iteration_id":2,"session_id":"20260106_014526"}
+{"type":"backend-output","output":"{\"item\":\"Burger\",\"subtotal\":\"300.00\",\"tax\":\"36.00\",\"total\":\"336.00\"}","timestamp":"2026-01-06T01:55:30+01:00","iteration_id":3,"session_id":"20260106_014526"}
+{"type":"backend-output","output":"{\"item\":\"Burger\",\"subtotal\":\"300.00\",\"tax\":\"36.00\",\"total\":\"336.00\"}","timestamp":"2026-01-06T01:57:59+01:00","iteration_id":4,"session_id":"20260106_014526"}
+{"type":"backend-output","output":"{\"item\":\"Burger\",\"subtotal\":\"300.00\",\"tax\":\"36.00\",\"total\":\"336.00\"}","timestamp":"2026-01-06T02:17:25+01:00","iteration_id":5,"session_id":"20260106_014526"}
+{"type":"backend-output","output":"{\"item\":\"Burger\",\"subtotal\":\"300.00\",\"tax\":\"36.00\",\"total\":\"336.00\"}","timestamp":"2026-01-06T02:18:09+01:00","iteration_id":6,"session_id":"20260106_014526"}
+{"type":"backend-output","output":"{\"item\":\"Burger\",\"subtotal\":\"300.00\",\"tax\":\"36.00\",\"total\":\"336.00\"}","timestamp":"2026-01-06T02:19:56+01:00","iteration_id":7,"session_id":"20260106_014526"}
+{"type":"backend-output","output":"{\"item\":\"Burger\",\"subtotal\":\"300.00\",\"tax\":\"36.00\",\"total\":\"336.00\"}","timestamp":"2026-01-06T02:27:28+01:00","iteration_id":8,"session_id":"20260106_014526"}
+{"type":"backend-output","output":{"item":"Burger","subtotal":"300.00","tax":"36.00","total":"336.00"},"timestamp":"2026-01-06T02:34:32+01:00","iteration_id":9,"session_id":"20260106_014526"}
+{"type":"backend-output","output":"{\"item\":\"Burger\",\"subtotal\":\"300.00\",\"tax\":\"36.00\",\"total\":\"336.00\"}","timestamp":"2026-01-06T02:36:10+01:00","iteration_id":11,"session_id":"20260106_014526"}
+{"type":"backend-output","response":{"item":"Burger","subtotal":"300.00","tax":"36.00","total":"336.00"},"timestamp":"2026-01-06T03:39:23+01:00","iteration_id":12,"session_id":"20260106_014526"}

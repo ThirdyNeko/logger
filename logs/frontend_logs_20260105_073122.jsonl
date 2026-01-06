@@ -1,0 +1,1 @@
+{"type":"frontend-io","url":"test_ok.php","method":"GET","request":null,"status":200,"response":"Hello from backend OK\nCurrent time: 07:31:24","timestamp":"2026-01-05T06:31:25.012Z","iteration_id":2,"session_id":"20260105_073122"}

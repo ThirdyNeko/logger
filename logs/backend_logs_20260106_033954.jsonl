@@ -1,0 +1,6 @@
+{"type":"backend-output","response":{"item":"Burger","subtotal":"300.00","tax":"36.00","total":"336.00"},"timestamp":"2026-01-06T03:43:35+01:00","iteration_id":1,"session_id":"20260106_033954"}
+{"type":"backend-output","response":{"item":"Burger","subtotal":"300.00","tax":"36.00","total":"336.00"},"timestamp":"2026-01-06T03:50:16+01:00","iteration_id":6,"session_id":"20260106_033954"}
+{"type":"backend-error","severity":2,"message":"Undefined variable $total","file":"C:\\xampp\\htdocs\\Test\\test_website\\process.php","line":25,"timestamp":"2026-01-06T03:51:10+01:00","iteration_id":7,"session_id":"20260106_033954"}
+{"type":"backend-error","severity":2,"message":"Undefined variable $total","file":"C:\\xampp\\htdocs\\Test\\test_website\\process.php","line":46,"timestamp":"2026-01-06T03:51:10+01:00","iteration_id":7,"session_id":"20260106_033954"}
+{"type":"backend-error","severity":8192,"message":"number_format(): Passing null to parameter #1 ($num) of type float is deprecated","file":"C:\\xampp\\htdocs\\Test\\test_website\\process.php","line":46,"timestamp":"2026-01-06T03:51:10+01:00","iteration_id":7,"session_id":"20260106_033954"}
+{"type":"backend-output","response":{"item":"Burger","subtotal":"300.00","tax":"36.00","total":"0.00"},"timestamp":"2026-01-06T03:51:10+01:00","iteration_id":7,"session_id":"20260106_033954"}

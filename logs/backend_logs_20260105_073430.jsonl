@@ -1,0 +1,6 @@
+{"type":"backend-output","output":"Hello from backend OK\nCurrent time: 07:34:33","timestamp":"2026-01-05T07:34:33+01:00","iteration_id":1,"session_id":"20260105_073430"}
+{"type":"backend-error","severity":2,"message":"Undefined variable $undefined_variable","file":"C:\\xampp\\htdocs\\Test\\QA_Frontend_Backend_test\\test_error.php","line":4,"timestamp":"2026-01-05T07:37:28+01:00","iteration_id":2,"session_id":"20260105_073430"}
+{"type":"backend-output","output":"About to trigger warning...\nThis still runs\n","timestamp":"2026-01-05T07:37:28+01:00","iteration_id":2,"session_id":"20260105_073430"}
+{"type":"backend-error","severity":2,"message":"Undefined variable $undefined_variable","file":"C:\\xampp\\htdocs\\Test\\QA_Frontend_Backend_test\\test_error.php","line":4,"timestamp":"2026-01-05T07:37:39+01:00","iteration_id":3,"session_id":"20260105_073430"}
+{"type":"backend-output","output":"About to trigger warning...\nThis still runs\n","timestamp":"2026-01-05T07:37:40+01:00","iteration_id":4,"session_id":"20260105_073430"}
+{"type":"backend-output","output":"Hello from backend OK\nCurrent time: 07:37:41","timestamp":"2026-01-05T07:37:41+01:00","iteration_id":5,"session_id":"20260105_073430"}

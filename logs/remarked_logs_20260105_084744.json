@@ -1,0 +1,26 @@
+{
+    "1": {
+        "remark": "Good",
+        "logs": [
+            {
+                "type": "frontend-io",
+                "url": "..\/QA_Frontend_Backend_test\/backend\/test_ok.php",
+                "method": "GET",
+                "request": null,
+                "status": 200,
+                "response": "Hello from backend OK\nCurrent time: 09:22:38",
+                "timestamp": "2026-01-05T08:22:38.130Z",
+                "iteration_id": 1,
+                "session_id": "20260105_084744"
+            },
+            {
+                "type": "backend-output",
+                "output": "Hello from backend OK\nCurrent time: 09:22:38",
+                "timestamp": "2026-01-05T09:22:38+01:00",
+                "iteration_id": 1,
+                "session_id": "20260105_084744"
+            }
+        ],
+        "saved_at": "2026-01-05T09:22:51+01:00"
+    }
+}

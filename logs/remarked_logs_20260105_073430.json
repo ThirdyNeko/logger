@@ -1,0 +1,42 @@
+{
+    "1": {
+        "remark": "Good",
+        "logs": [
+            {
+                "type": "frontend-io",
+                "url": "test_ok.php",
+                "method": "GET",
+                "request": null,
+                "status": 200,
+                "response": "Hello from backend OK\nCurrent time: 07:34:33",
+                "timestamp": "2026-01-05T06:34:33.676Z",
+                "iteration_id": 1,
+                "session_id": "20260105_073430"
+            },
+            {
+                "type": "backend-output",
+                "output": "Hello from backend OK\nCurrent time: 07:34:33",
+                "timestamp": "2026-01-05T07:34:33+01:00",
+                "iteration_id": 1,
+                "session_id": "20260105_073430"
+            }
+        ],
+        "saved_at": "2026-01-05T07:34:49+01:00"
+    },
+    "3": {
+        "remark": "error please check",
+        "logs": [
+            {
+                "type": "backend-error",
+                "severity": 2,
+                "message": "Undefined variable $undefined_variable",
+                "file": "C:\\xampp\\htdocs\\Test\\QA_Frontend_Backend_test\\test_error.php",
+                "line": 4,
+                "timestamp": "2026-01-05T07:37:39+01:00",
+                "iteration_id": 3,
+                "session_id": "20260105_073430"
+            }
+        ],
+        "saved_at": "2026-01-05T08:07:14+01:00"
+    }
+}

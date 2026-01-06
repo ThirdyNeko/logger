@@ -1,0 +1,27 @@
+{"type":"backend-output","output":"Hello from backend OK\nCurrent time: 07:00:26","timestamp":"2026-01-05T07:00:26+01:00","iteration_id":1,"session_id":"20260105_070001"}
+{"type":"backend-error","severity":2,"message":"Undefined variable $undefined_variable","file":"C:\\xampp\\htdocs\\Test\\QA_Frontend_Backend_test\\test_error.php","line":4,"timestamp":"2026-01-05T07:00:27+01:00","iteration_id":2,"session_id":"20260105_070001"}
+{"type":"backend-output","output":"About to trigger warning...\nThis still runs\n","timestamp":"2026-01-05T07:00:27+01:00","iteration_id":2,"session_id":"20260105_070001"}
+{"type":"backend-output","output":"Hello from backend OK\nCurrent time: 07:05:17","timestamp":"2026-01-05T07:05:17+01:00","iteration_id":3,"session_id":"20260105_070001"}
+{"type":"backend-output","output":"Hello from backend OK\nCurrent time: 07:05:19","timestamp":"2026-01-05T07:05:19+01:00","iteration_id":4,"session_id":"20260105_070001"}
+{"type":"backend-output","output":"Hello from backend OK\nCurrent time: 07:05:21","timestamp":"2026-01-05T07:05:21+01:00","iteration_id":5,"session_id":"20260105_070001"}
+{"type":"backend-output","output":"Hello from backend OK\nCurrent time: 07:05:23","timestamp":"2026-01-05T07:05:23+01:00","iteration_id":6,"session_id":"20260105_070001"}
+{"type":"backend-output","output":"Hello from backend OK\nCurrent time: 07:07:34","timestamp":"2026-01-05T07:07:34+01:00","iteration_id":7,"session_id":"20260105_070001"}
+{"type":"backend-error","severity":2,"message":"Undefined variable $undefined_variable","file":"C:\\xampp\\htdocs\\Test\\QA_Frontend_Backend_test\\test_error.php","line":4,"timestamp":"2026-01-05T07:07:35+01:00","iteration_id":8,"session_id":"20260105_070001"}
+{"type":"backend-output","output":"About to trigger warning...\nThis still runs\n","timestamp":"2026-01-05T07:07:35+01:00","iteration_id":8,"session_id":"20260105_070001"}
+{"type":"backend-output","output":"Hello from backend OK\nCurrent time: 07:08:43","timestamp":"2026-01-05T07:08:43+01:00","iteration_id":9,"session_id":"20260105_070001"}
+{"type":"backend-output","output":"Hello from backend OK\nCurrent time: 07:08:43","timestamp":"2026-01-05T07:08:43+01:00","iteration_id":9,"session_id":"20260105_070001"}
+{"type":"backend-output","output":"Hello from backend OK\nCurrent time: 07:08:44","timestamp":"2026-01-05T07:08:44+01:00","iteration_id":10,"session_id":"20260105_070001"}
+{"type":"backend-error","severity":2,"message":"Undefined variable $undefined_variable","file":"C:\\xampp\\htdocs\\Test\\QA_Frontend_Backend_test\\test_error.php","line":4,"timestamp":"2026-01-05T07:08:45+01:00","iteration_id":11,"session_id":"20260105_070001"}
+{"type":"backend-output","output":"About to trigger warning...\nThis still runs\n","timestamp":"2026-01-05T07:08:45+01:00","iteration_id":11,"session_id":"20260105_070001"}
+{"type":"backend-output","output":"Hello from backend OK\nCurrent time: 07:08:58","timestamp":"2026-01-05T07:08:58+01:00","iteration_id":12,"session_id":"20260105_070001"}
+{"type":"backend-output","output":"Hello from backend OK\nCurrent time: 07:08:59","timestamp":"2026-01-05T07:08:59+01:00","iteration_id":13,"session_id":"20260105_070001"}
+{"type":"backend-output","output":"Hello from backend OK\nCurrent time: 07:08:59","timestamp":"2026-01-05T07:08:59+01:00","iteration_id":13,"session_id":"20260105_070001"}
+{"type":"backend-output","output":"Hello from backend OK\nCurrent time: 07:08:59","timestamp":"2026-01-05T07:08:59+01:00","iteration_id":13,"session_id":"20260105_070001"}
+{"type":"backend-output","output":"Hello from backend OK\nCurrent time: 07:08:59","timestamp":"2026-01-05T07:08:59+01:00","iteration_id":13,"session_id":"20260105_070001"}
+{"type":"backend-error","severity":2,"message":"Undefined variable $undefined_variable","file":"C:\\xampp\\htdocs\\Test\\QA_Frontend_Backend_test\\test_error.php","line":4,"timestamp":"2026-01-05T07:08:59+01:00","iteration_id":13,"session_id":"20260105_070001"}
+{"type":"backend-output","output":"About to trigger warning...\nThis still runs\n","timestamp":"2026-01-05T07:08:59+01:00","iteration_id":13,"session_id":"20260105_070001"}
+{"type":"backend-error","severity":2,"message":"Undefined variable $undefined_variable","file":"C:\\xampp\\htdocs\\Test\\QA_Frontend_Backend_test\\test_error.php","line":4,"timestamp":"2026-01-05T07:08:59+01:00","iteration_id":13,"session_id":"20260105_070001"}
+{"type":"backend-output","output":"About to trigger warning...\nThis still runs\n","timestamp":"2026-01-05T07:08:59+01:00","iteration_id":13,"session_id":"20260105_070001"}
+{"type":"backend-error","severity":2,"message":"Undefined variable $undefined_variable","file":"C:\\xampp\\htdocs\\Test\\QA_Frontend_Backend_test\\test_error.php","line":4,"timestamp":"2026-01-05T07:09:00+01:00","iteration_id":14,"session_id":"20260105_070001"}
+{"type":"backend-output","output":"About to trigger warning...\nThis still runs\n","timestamp":"2026-01-05T07:09:00+01:00","iteration_id":14,"session_id":"20260105_070001"}
+{"type":"backend-output","output":"Hello from backend OK\nCurrent time: 07:09:04","timestamp":"2026-01-05T07:09:04+01:00","iteration_id":15,"session_id":"20260105_070001"}

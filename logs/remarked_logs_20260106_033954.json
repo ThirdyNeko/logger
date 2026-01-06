@@ -1,0 +1,91 @@
+{
+    "2": {
+        "remark": "fsgsg",
+        "logs": [
+            {
+                "type": "frontend-io",
+                "url": "ErrorTest.php",
+                "method": "POST",
+                "request": {
+                    "item": "Burger",
+                    "quantity": "2",
+                    "price": "150"
+                },
+                "status": 200,
+                "response": "[empty response]",
+                "timestamp": "2026-01-06T02:49:04.888Z",
+                "iteration_id": 2,
+                "session_id": "20260106_033954"
+            }
+        ],
+        "saved_at": "2026-01-06T03:49:30+01:00"
+    },
+    "7": {
+        "remark": "Afasfaf",
+        "logs": [
+            {
+                "type": "frontend-io",
+                "url": "process.php",
+                "method": "POST",
+                "request": {
+                    "item": "Burger",
+                    "quantity": "2",
+                    "price": "150"
+                },
+                "status": 200,
+                "response": {
+                    "item": "Burger",
+                    "subtotal": "300.00",
+                    "tax": "36.00",
+                    "total": "0.00"
+                },
+                "timestamp": "2026-01-06T02:51:10.297Z",
+                "iteration_id": 7,
+                "session_id": "20260106_033954"
+            },
+            {
+                "type": "backend-error",
+                "severity": 2,
+                "message": "Undefined variable $total",
+                "file": "C:\\xampp\\htdocs\\Test\\test_website\\process.php",
+                "line": 25,
+                "timestamp": "2026-01-06T03:51:10+01:00",
+                "iteration_id": 7,
+                "session_id": "20260106_033954"
+            },
+            {
+                "type": "backend-error",
+                "severity": 2,
+                "message": "Undefined variable $total",
+                "file": "C:\\xampp\\htdocs\\Test\\test_website\\process.php",
+                "line": 46,
+                "timestamp": "2026-01-06T03:51:10+01:00",
+                "iteration_id": 7,
+                "session_id": "20260106_033954"
+            },
+            {
+                "type": "backend-error",
+                "severity": 8192,
+                "message": "number_format(): Passing null to parameter #1 ($num) of type float is deprecated",
+                "file": "C:\\xampp\\htdocs\\Test\\test_website\\process.php",
+                "line": 46,
+                "timestamp": "2026-01-06T03:51:10+01:00",
+                "iteration_id": 7,
+                "session_id": "20260106_033954"
+            },
+            {
+                "type": "backend-output",
+                "response": {
+                    "item": "Burger",
+                    "subtotal": "300.00",
+                    "tax": "36.00",
+                    "total": "0.00"
+                },
+                "timestamp": "2026-01-06T03:51:10+01:00",
+                "iteration_id": 7,
+                "session_id": "20260106_033954"
+            }
+        ],
+        "saved_at": "2026-01-06T03:51:25+01:00"
+    }
+}

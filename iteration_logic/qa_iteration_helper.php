@@ -9,7 +9,7 @@ function qa_get_session_state(): array
 
     if (!file_exists($file)) {
         $state = [
-            'session_id'        => date('Ymd_His'), // Manila time
+            'session_id'        => date('Y_m_d_H_i_s'), // Manila time
             'iteration'         => 0,
             'remarks_iteration' => '',
             'last_second'       => null,

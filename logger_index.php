@@ -383,13 +383,13 @@ Iteration count is high (<?= $status['iteration'] ?>/50).
     border-radius:4px;
 ">
 🚨 <strong>Logging stopped.</strong><br>
-Maximum iteration limit (50) reached.<br>
+Maximum logs limit (50) reached.<br>
 Start a new session to resume logging.
 </div>
 <?php endif; ?>
 
 <div style="margin-bottom:15px;color:#555;">
-Current iteration count:
+Current Log count:
 <strong><?= (int)$status['iteration'] ?></strong>
 |
 Logging status:
@@ -398,7 +398,7 @@ Logging status:
 
 
 <form method="GET">
-    <label for="iteration">Select Iteration:</label>
+    <label for="iteration">Select Activity Log:</label>
     <select name="iteration" id="iteration" onchange="this.form.submit()">
         <?php foreach ($grouped as $id => $_): ?>
         <option value="<?= htmlspecialchars($id) ?>" <?= $id == $currentIteration ? 'selected' : '' ?>>
@@ -411,7 +411,7 @@ Logging status:
 
 
 <div class="log-box">
-    <h3>Iteration ID: <?= htmlspecialchars($currentIteration) ?></h3>
+    <h3>Activity Log ID: <?= htmlspecialchars($currentIteration) ?></h3>
 
     <?php
     // -------------------------------
@@ -460,12 +460,12 @@ Logging status:
 <?php $remarkIds = array_keys($remarked); ?>
 
 <form method="GET">
-    <label for="remarkSelect"><strong>Select Iteration:</strong></label>
+    <label for="remarkSelect"><strong>Select Activity Log:</strong></label>
     <select
         id="remarkSelect"
         onchange="filterRemarks(this.value)"
     >
-        <option value="">-- Select Iteration --</option>
+        <option value="">-- Select Activity Log --</option>
 
         <?php foreach ($remarkIds as $rid): ?>
             <option
@@ -482,7 +482,7 @@ Logging status:
 
 <?php foreach ($remarked as $id => $entry): ?>
 <div class="log-box remark-item" data-iteration="<?= htmlspecialchars($id) ?>" style="display:none;">
-    <h3>Iteration ID: <?= htmlspecialchars($id) ?></h3>
+    <h3>Activity Log ID: <?= htmlspecialchars($id) ?></h3>
 
     <strong>Remark:</strong>
     <p><?= nl2br(htmlspecialchars($entry['remark'])) ?></p>

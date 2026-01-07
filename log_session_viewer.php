@@ -213,9 +213,9 @@ if ($selectedSession && isset($previousSessions[$selectedSession])) {
         <form method="GET" style="margin-top:10px;">
             <input type="hidden" name="session" value="<?= htmlspecialchars($selectedSession) ?>">
 
-            <label><strong>Select Iteration:</strong></label><br>
+            <label><strong>Select Activity Log:</strong></label><br>
             <select name="iteration" onchange="this.form.submit()">
-                <option value="">-- Select Iteration --</option>
+                <option value="">-- Select Activity Log --</option>
 
                 <?php foreach ($iterations as $iter): ?>
                     <option value="<?= htmlspecialchars($iter) ?>"
@@ -246,7 +246,7 @@ if ($selectedSession && isset($previousSessions[$selectedSession])) {
 ?>
 
 <div class="log-box">
-    <h3>Iteration ID: <?= htmlspecialchars($selectedIteration) ?></h3>
+    <h3>Activity Log ID: <?= htmlspecialchars($selectedIteration) ?></h3>
     <strong>Remark:</strong>
     <p><?= nl2br(htmlspecialchars($entry['remark'])) ?></p>
     <small>Saved at: <?= htmlspecialchars($entry['saved_at']) ?></small>

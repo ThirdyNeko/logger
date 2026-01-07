@@ -20,6 +20,7 @@ if (isset($_GET['remark_iteration'])) {
     );
 }
 
+
 // Restore selection
 $selectedRemarksIteration = $qaState['remarks_iteration'] ?? '';
 
@@ -273,7 +274,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         file_put_contents($REMARK_FILE, json_encode($existing, JSON_PRETTY_PRINT));
     }
 
-    header('Location: ' . $_SERVER['PHP_SELF'] . '?iteration=' . urlencode($id));
+    header(
+        'Location: ' . $_SERVER['PHP_SELF']
+        . '?iteration=' . urlencode($id)
+        . '&remark_iteration=' . urlencode($id)
+    );
     exit;
 }
 

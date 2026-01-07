@@ -2,7 +2,7 @@
     if (window.__QA_HOOK_INSTALLED__) return;
     window.__QA_HOOK_INSTALLED__ = true;
 
-    const FRONTEND_RECEIVER = 'http://localhost/logger/receiver_frontend.php';
+    const FRONTEND_RECEIVER = 'http://localhost/logger/hooks/receiver_frontend.php';
     const originalFetch = window.fetch.bind(window);
 
     /* ------------------------------

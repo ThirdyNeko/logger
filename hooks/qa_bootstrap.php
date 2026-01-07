@@ -7,7 +7,7 @@ if (!isset($_SERVER['HTTP_X_QA_ENABLE'])) {
     return;
 }
 
-$BACKEND_RECEIVER = 'http://localhost/logger/receiver_backend.php';
+$BACKEND_RECEIVER = 'http://localhost/logger/hooks/receiver_backend.php';
 
 /**
  * Send log to backend receiver

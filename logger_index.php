@@ -1,7 +1,7 @@
 <?php
 date_default_timezone_set('Asia/Manila');
 
-require_once __DIR__ . '/qa_iteration_helper.php';
+require_once __DIR__ . '/iteration_logic/qa_iteration_helper.php';
 
 /* ============================
    REMARKS ITERATION STATE
@@ -15,7 +15,7 @@ if (isset($_GET['remark_iteration'])) {
     $qaState['remarks_iteration'] = $_GET['remark_iteration'];
 
     file_put_contents(
-        __DIR__ . '/qa_session_state.json',
+        __DIR__ . '/iteration_logic/qa_session_state.json',
         json_encode($qaState, JSON_PRETTY_PRINT)
     );
 }
@@ -28,7 +28,7 @@ $selectedRemarksIteration = $qaState['remarks_iteration'] ?? '';
  * Handle new session request
  */
 if (isset($_POST['new_session'])) {
-    $stateFile = __DIR__ . '/qa_session_state.json';
+    $stateFile = __DIR__ . '/iteration_logic/qa_session_state.json';
     if (file_exists($stateFile)) {
         unlink($stateFile);
     }
@@ -578,7 +578,7 @@ let lastIteration = CURRENT_ITERATION;
 if (LOGGING_ACTIVE) {
     setInterval(async () => {
         try {
-            const res = await fetch('logger_iteration_status.php', {
+            const res = await fetch('iteration_logic/logger_iteration_status.php', {
                 cache: 'no-store'
             });
             const data = await res.json();

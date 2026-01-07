@@ -268,7 +268,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $existing[$id] = [
             'remark'   => $remark,
             'logs'     => $merged,
-            'saved_at' => date('c')
+            'saved_at' => date('F j, Y, g:i A')
         ];
 
         file_put_contents($REMARK_FILE, json_encode($existing, JSON_PRETTY_PRINT));

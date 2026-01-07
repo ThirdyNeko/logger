@@ -1,17 +1,21 @@
 <?php
 
+// ✅ Force Manila timezone globally
+date_default_timezone_set('Asia/Manila');
+
 function qa_get_session_state(): array
 {
     $file = __DIR__ . '/qa_session_state.json';
 
     if (!file_exists($file)) {
         $state = [
-        'session_id'        => date('Ymd_His'),
-        'iteration'         => 0,
-        'remarks_iteration' => '',
-        'last_second'       => null,
-        'logging_active'    => true
-    ];
+            'session_id'        => date('Ymd_His'), // Manila time
+            'iteration'         => 0,
+            'remarks_iteration' => '',
+            'last_second'       => null,
+            'logging_active'    => true
+        ];
+
         file_put_contents($file, json_encode($state));
         return $state;
     }
@@ -33,8 +37,8 @@ function qa_assign_iteration_id(string $timestamp): ?int
         return null;
     }
 
-    $dt = new DateTime($timestamp);
-    $dt->setTimezone(new DateTimeZone('UTC'));
+    // ✅ Interpret timestamp in Manila timezone
+    $dt = new DateTime($timestamp, new DateTimeZone('Asia/Manila'));
     $secondKey = $dt->format('Y-m-d H:i:s');
 
     if ($state['last_second'] !== $secondKey) {

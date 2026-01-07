@@ -1,0 +1,1 @@
+{"type":"frontend-io","url":"ErrorTest.php","method":"POST","request":{"item":"Burger","quantity":"2","price":"150"},"status":200,"timestamp":"2026-01-07T02:47:12.496Z","iteration_id":1,"session_id":"20260107_102859"}

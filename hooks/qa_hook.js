@@ -67,9 +67,6 @@
 
         const response = await originalFetch(...args);
 
-        /* ------------------------------
-           SEND LOG (NO RESPONSE BODY)
-        ------------------------------ */
         try {
             await originalFetch(FRONTEND_RECEIVER, {
                 method: 'POST',
@@ -87,9 +84,84 @@
             console.warn('[QA] Frontend log failed', e);
         }
 
-        // IMPORTANT: return backend response untouched
         return response;
     };
 
-    console.log('[QA] Frontend QA hook active');
+    /* ------------------------------
+       JQUERY AJAX OVERRIDE
+    ------------------------------ */
+    if (window.jQuery) {
+        const originalAjax = $.ajax;
+        $.ajax = function(options) {
+            const origSuccess = options.success;
+            const origError = options.error;
+
+            options.success = function(data, textStatus, jqXHR) {
+                try {
+                    $.post(FRONTEND_RECEIVER, JSON.stringify({
+                        type: 'frontend-io-jquery',
+                        url: options.url,
+                        method: options.type || 'GET',
+                        request: options.data || null,
+                        status: jqXHR.status,
+                        timestamp: new Date().toISOString()
+                    }));
+                } catch (e) { console.warn('[QA] jQuery AJAX log failed', e); }
+
+                if (origSuccess) origSuccess.apply(this, arguments);
+            };
+
+            options.error = function(jqXHR, textStatus, errorThrown) {
+                try {
+                    $.post(FRONTEND_RECEIVER, JSON.stringify({
+                        type: 'frontend-io-jquery',
+                        url: options.url,
+                        method: options.type || 'GET',
+                        request: options.data || null,
+                        status: jqXHR.status,
+                        timestamp: new Date().toISOString()
+                    }));
+                } catch (e) { console.warn('[QA] jQuery AJAX error log failed', e); }
+
+                if (origError) origError.apply(this, arguments);
+            };
+
+            return originalAjax.call(this, options);
+        };
+        console.log('[QA] jQuery AJAX hook active');
+    }
+
+    /* ------------------------------
+       XHR OVERRIDE
+    ------------------------------ */
+    const origXHRopen = XMLHttpRequest.prototype.open;
+    const origXHRsend = XMLHttpRequest.prototype.send;
+
+    XMLHttpRequest.prototype.open = function(method, url, ...rest) {
+        this._qa_method = method;
+        this._qa_url = url;
+        return origXHRopen.call(this, method, url, ...rest);
+    };
+
+    XMLHttpRequest.prototype.send = function(body) {
+        this.addEventListener('load', () => {
+            try {
+                fetch(FRONTEND_RECEIVER, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: 'frontend-io-xhr',
+                        url: this._qa_url,
+                        method: this._qa_method,
+                        request: body || null,
+                        status: this.status,
+                        timestamp: new Date().toISOString()
+                    })
+                });
+            } catch (e) { console.warn('[QA] XHR log failed', e); }
+        });
+        return origXHRsend.call(this, body);
+    };
+
+    console.log('[QA] Frontend QA hook fully active (fetch + jQuery + XHR)');
 })();

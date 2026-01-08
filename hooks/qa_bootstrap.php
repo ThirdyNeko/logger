@@ -57,9 +57,25 @@ $isFrontendRequest =
     !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
     strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
 
-if (!$isFrontendRequest) {
-    return; // skip non-frontend requests
+$isApiLikeResponse =
+    (
+        !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+        strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest'
+    )
+    ||
+    (
+        isset($_SERVER['CONTENT_TYPE']) &&
+        stripos($_SERVER['CONTENT_TYPE'], 'application/json') !== false
+    )
+    ||
+    (
+        $_SERVER['REQUEST_METHOD'] === 'POST'
+    );
+
+if (!$isApiLikeResponse) {
+    return;
 }
+
 
 /* -------------------
    Capture normal output

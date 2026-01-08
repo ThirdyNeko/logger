@@ -1,0 +1,36 @@
+{
+    "2": {
+        "name": "Login Details",
+        "remark": "Good",
+        "logs": [
+            {
+                "type": "frontend-io-xhr",
+                "url": "functions\/login.php",
+                "method": "POST",
+                "request": "username=NekuNeko&password=Bimbim",
+                "status": 200,
+                "timestamp": "2026-01-08T02:52:21.526Z",
+                "iteration_id": 2,
+                "session_id": "Test5_2026_01_08"
+            },
+            {
+                "type": "frontend-io",
+                "url": "http:\/\/localhost\/logger\/hooks\/receiver_frontend.php",
+                "method": "POST",
+                "request": {
+                    "type": "frontend-io-xhr",
+                    "url": "functions\/login.php",
+                    "method": "POST",
+                    "request": "username=NekuNeko&password=Bimbim",
+                    "status": 200,
+                    "timestamp": "2026-01-08T02:52:21.526Z"
+                },
+                "status": 204,
+                "timestamp": "2026-01-08T02:52:21.551Z",
+                "iteration_id": 2,
+                "session_id": "Test5_2026_01_08"
+            }
+        ],
+        "saved_at": "January 8, 2026, 10:52 AM"
+    }
+}

@@ -382,10 +382,14 @@ function promptSessionName() {
         return false; // user cancelled
     }
 
-    document.getElementById('session_name_input').value = name.trim();
+    document.getElementById('session_name_input').value =
+        name.trim().toUpperCase();
+
     return true;
 }
 </script>
+
+
 
 
 <div style="

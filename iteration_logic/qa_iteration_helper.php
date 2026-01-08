@@ -77,7 +77,7 @@ function qa_create_new_session(string $sessionName): void
     $cleanName = trim($cleanName, '_');
 
     $state = [
-        'session_id'        => $cleanName . '_' . date('Y_m_d'),
+        'session_id'        => $cleanName,
         'session_name'      => $cleanName,
         'iteration'         => 0,
         'remarks_iteration' => '',

@@ -193,7 +193,29 @@ if ($selectedSession && isset($previousSessions[$selectedSession])) {
 </head>
 <body>
 
-<h2>Previous Sessions – Remarks (Read-Only)</h2>
+
+
+<h1>Previous Sessions – Remarks (Read-Only)</h1>
+
+<form method="POST" style="margin-bottom:15px; display:flex; gap:10px; align-items:center;"
+      onsubmit="return promptSessionName();">
+
+    <!-- Go to Logger -->
+    <button
+    type="button"
+    onclick="window.location.href='logger_index.php'"
+    style="
+        background:#FFFFFF;
+        border:1px solid #000000;
+        color:#000000;
+        padding:8px 14px;
+        border-radius:4px;
+        cursor:pointer;
+    ">
+    Return to Logger
+</button>
+
+    </form>
 
 <div class="session-info">
     <form method="GET">

@@ -35,14 +35,10 @@ foreach (['request', 'response', 'inputs', 'result', 'body'] as $key) {
     }
 }
 
-
 if (!$data || empty($data['timestamp'])) {
     http_response_code(400);
     exit;
 }
-
-
-
 
 $iteration = qa_assign_iteration_id($data['timestamp']);
 if ($iteration === null) {

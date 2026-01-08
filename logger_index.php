@@ -1,6 +1,7 @@
 <?php
-date_default_timezone_set('Asia/Manila');
+define('QA_SKIP_LOGGING', true);
 
+date_default_timezone_set('Asia/Manila');
 require_once __DIR__ . '/iteration_logic/qa_iteration_helper.php';
 
 /* ============================
@@ -20,6 +21,33 @@ if (isset($_GET['remark_iteration'])) {
     );
 }
 
+define('QA_SESSION_NAMES_FILE', __DIR__ . '/iteration_logic/session_names.json');
+
+function qa_normalize_session_name(string $name): string
+{
+    return strtoupper(trim(preg_replace('/\s+/', ' ', $name)));
+}
+
+function qa_load_session_names(): array
+{
+    if (!file_exists(QA_SESSION_NAMES_FILE)) {
+        return [];
+    }
+
+    $data = json_decode(file_get_contents(QA_SESSION_NAMES_FILE), true);
+    return is_array($data) ? $data : [];
+}
+
+function qa_save_session_name(string $name): void
+{
+    $names = qa_load_session_names();
+    $names[] = $name;
+
+    file_put_contents(
+        QA_SESSION_NAMES_FILE,
+        json_encode(array_values(array_unique($names)), JSON_PRETTY_PRINT)
+    );
+}
 
 // Restore selection
 $selectedRemarksIteration = $qaState['remarks_iteration'] ?? '';
@@ -29,18 +57,33 @@ $selectedRemarksIteration = $qaState['remarks_iteration'] ?? '';
  * Handle new session request
  */
 if (isset($_POST['new_session'])) {
-    $sessionName = trim($_POST['session_name'] ?? '');
 
-    if ($sessionName === '') {
-        $sessionName = 'Unnamed_Session';
+    $_SERVER['QA_SKIP_LOGGING'] = true; // 👈 THIS LINE (must be first)
+
+    $rawName = trim($_POST['session_name'] ?? '');
+
+    if ($rawName === '') {
+        $rawName = 'Unnamed_Session';
+    }
+
+    $sessionName = qa_normalize_session_name($rawName);
+
+    $existingNames = qa_load_session_names();
+
+    if (in_array($sessionName, $existingNames, true)) {
+        echo "<script>
+            alert('⚠️ Session name already exists. Please choose a different name.');
+            window.history.back();
+        </script>";
+        exit;
     }
 
     qa_create_new_session($sessionName);
+    qa_save_session_name($sessionName);
 
     header('Location: ' . $_SERVER['PHP_SELF']);
     exit;
 }
-
 
 
 $status = qa_get_logging_status();

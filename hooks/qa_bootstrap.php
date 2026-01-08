@@ -1,8 +1,20 @@
 <?php
+// --------------------------------------------------
+// HARD STOP: do not log session-control requests
+// --------------------------------------------------
+if (
+    $_SERVER['REQUEST_METHOD'] === 'POST'
+    && isset($_POST['new_session'])
+) {
+    return;
+}
 
 error_log('QA BOOTSTRAP LOADED');
 
+
 $BACKEND_RECEIVER = 'http://localhost/logger/hooks/receiver_backend.php';
+
+
 
 /**
  * Send log to backend receiver

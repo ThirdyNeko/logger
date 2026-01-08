@@ -1,0 +1,9 @@
+{"type":"frontend-io","url":"ErrorTest.php","method":"POST","request":{"item":"Burger","quantity":"2","price":"150"},"status":200,"timestamp":"2026-01-08T06:26:06.883Z","iteration_id":10,"session_id":"TEST_15"}
+{"type":"frontend-io","url":"ErrorTest.php","method":"POST","request":{"item":"Burger","quantity":"2","price":"150"},"status":200,"timestamp":"2026-01-08T06:28:55.085Z","iteration_id":10,"session_id":"TEST_15"}
+{"type":"frontend-io","url":"ErrorTest.php","method":"POST","request":{"item":"Burger","quantity":"2","price":"150"},"status":200,"timestamp":"2026-01-08T06:29:15.729Z","iteration_id":10,"session_id":"TEST_15"}
+{"type":"frontend-io","url":"ErrorTest.php","method":"POST","request":{"item":"Burger","quantity":"2","price":"150"},"status":200,"timestamp":"2026-01-08T06:30:57.694Z","iteration_id":12,"session_id":"TEST_15"}
+{"type":"frontend-io","url":"ErrorTest.php","method":"POST","request":{"item":"Burger","quantity":"2","price":"150"},"status":200,"timestamp":"2026-01-08T06:32:00.289Z","iteration_id":12,"session_id":"TEST_15"}
+{"type":"frontend-io","url":"ErrorTest.php","method":"POST","request":{"item":"Burger","quantity":"2","price":"150"},"status":200,"timestamp":"2026-01-08T06:33:04.639Z","iteration_id":12,"session_id":"TEST_15"}
+{"type":"frontend-io","url":"ErrorTest.php","method":"POST","request":{"item":"Burger","quantity":"2","price":"150"},"status":200,"timestamp":"2026-01-08T06:33:31.565Z","iteration_id":12,"session_id":"TEST_15"}
+{"type":"frontend-io","url":"ErrorTest.php","method":"POST","request":{"item":"Burger","quantity":"2","price":"150"},"status":200,"timestamp":"2026-01-08T06:34:02.206Z","iteration_id":14,"session_id":"TEST_15"}
+{"type":"frontend-io","url":"ErrorTest.php","method":"POST","request":{"item":"Burger","quantity":"2","price":"150"},"status":200,"timestamp":"2026-01-08T06:38:25.616Z","iteration_id":24,"session_id":"TEST_15"}

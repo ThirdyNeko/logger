@@ -397,9 +397,12 @@ $currentRemark    = $remarked[$currentIteration]['remark'] ?? '';
 
 <h1>QA Logger/Viewer</h1>
 
-<form method="POST" style="margin-bottom:15px;" onsubmit="return promptSessionName();">
+<form method="POST" style="margin-bottom:15px; display:flex; gap:10px; align-items:center;"
+      onsubmit="return promptSessionName();">
+
     <input type="hidden" name="session_name" id="session_name_input">
 
+    <!-- Start New Session -->
     <button
         type="submit"
         name="new_session"
@@ -413,7 +416,25 @@ $currentRemark    = $remarked[$currentIteration]['remark'] ?? '';
         ">
         Start New Session
     </button>
+
+    <!-- Go to Session Viewer -->
+    <button
+    type="button"
+    onclick="window.location.href='log_session_viewer.php'"
+    style="
+        background:#FFFFFF;
+        border:1px solid #000000;
+        color:#000000;
+        padding:8px 14px;
+        border-radius:4px;
+        cursor:pointer;
+    ">
+    View Sessions
+</button>
+
+
 </form>
+
 
 <script>
 function promptSessionName() {

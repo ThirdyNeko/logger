@@ -29,17 +29,27 @@ $selectedRemarksIteration = $qaState['remarks_iteration'] ?? '';
  * Handle new session request
  */
 if (isset($_POST['new_session'])) {
-    $stateFile = __DIR__ . '/iteration_logic/qa_session_state.json';
-    if (file_exists($stateFile)) {
-        unlink($stateFile);
+    $sessionName = trim($_POST['session_name'] ?? '');
+
+    if ($sessionName === '') {
+        $sessionName = 'Unnamed_Session';
     }
+
+    qa_create_new_session($sessionName);
 
     header('Location: ' . $_SERVER['PHP_SELF']);
     exit;
 }
 
+
+
 $status = qa_get_logging_status();
 $sessionId = qa_get_session_id();
+$sessionState = qa_get_session_state();
+$currentSessionName = isset($sessionState['session_name'])
+    ? str_replace('_', ' ', $sessionState['session_name'])
+    : 'Unknown';
+
 
 $FRONTEND_LOG = __DIR__ . "/logs/frontend_logs_{$sessionId}.jsonl";
 $BACKEND_LOG  = __DIR__ . "/logs/backend_logs_{$sessionId}.jsonl";
@@ -249,10 +259,11 @@ function render_log_entry(array $log): string
  * Handle save request
  */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $id = $_POST['iteration_id'] ?? null;
-    $remark = trim($_POST['remark'] ?? '');
+    $id         = $_POST['iteration_id'] ?? null;
+    $remark     = trim($_POST['remark'] ?? '');
+    $remarkName = trim($_POST['remark_name'] ?? '');
 
-    if ($id !== null && $remark !== '') {
+    if ($id !== null && $remark !== '' && $remarkName !== '') {
         $frontend = load_jsonl($FRONTEND_LOG);
         $backend  = load_jsonl($BACKEND_LOG);
 
@@ -266,10 +277,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             : [];
 
         $existing[$id] = [
+            'name'     => $remarkName,
             'remark'   => $remark,
             'logs'     => $merged,
             'saved_at' => date('F j, Y, g:i A')
         ];
+
 
         file_put_contents($REMARK_FILE, json_encode($existing, JSON_PRETTY_PRINT));
     }
@@ -341,11 +354,12 @@ $currentRemark    = $remarked[$currentIteration]['remark'] ?? '';
 
 <h1>QA Logger/Viewer</h1>
 
-<form method="POST" style="margin-bottom:15px;">
+<form method="POST" style="margin-bottom:15px;" onsubmit="return promptSessionName();">
+    <input type="hidden" name="session_name" id="session_name_input">
+
     <button
         type="submit"
         name="new_session"
-        onclick="return confirm('Start a new logging session? This will reset iteration count.');"
         style="
             background:#000000;
             color:white;
@@ -357,6 +371,32 @@ $currentRemark    = $remarked[$currentIteration]['remark'] ?? '';
         Start New Session
     </button>
 </form>
+
+<script>
+function promptSessionName() {
+    const name = prompt(
+        "Enter Session Name:\n\nExample:\n• Login QA\n• Checkout Bug\n• Regression Round 2"
+    );
+
+    if (name === null) {
+        return false; // user cancelled
+    }
+
+    document.getElementById('session_name_input').value = name.trim();
+    return true;
+}
+</script>
+
+
+<div style="
+    margin-bottom:20px;
+    border-radius:4px;
+    font-size: 25px;
+">
+    <strong>Current Session:</strong><br>
+    <?= htmlspecialchars($currentSessionName) ?>
+</div>
+
 
 
 <?php if ($status['warn40'] && !$status['warn50']): ?>
@@ -411,7 +451,53 @@ Logging status:
 
 
 <div class="log-box">
-    <h3>Activity Log ID: <?= htmlspecialchars($currentIteration) ?></h3>
+
+    <form method="POST">
+
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+            <h3 style="margin:0;">
+                Activity Log ID: <?= htmlspecialchars($currentIteration) ?>
+            </h3>
+
+            <input
+                type="text"
+                name="remark_name"
+                placeholder="Remark name (e.g. Login)"
+                required
+                style="
+                    padding:6px 8px;
+                    border:1px solid #ccc;
+                    border-radius:4px;
+                    min-width:220px;
+                "
+                value="<?= htmlspecialchars($remarked[$currentIteration]['name'] ?? '') ?>"
+            >
+        </div>
+
+        <?php
+        // logs rendering stays EXACTLY the same
+        ?>
+
+        <input
+            type="hidden"
+            name="iteration_id"
+            value="<?= htmlspecialchars($currentIteration) ?>"
+        >
+
+        <label>Remarks:</label>
+        <textarea
+            name="remark"
+            placeholder="Enter QA remarks here..."
+            required
+        ><?= htmlspecialchars($currentRemark) ?></textarea>
+
+        <br>
+        <button type="submit">Save Remark</button>
+
+    </form>
+</div>
+
+
 
     <?php
     // -------------------------------
@@ -439,13 +525,6 @@ Logging status:
         <?= render_log_entry($log) ?>
     <?php endforeach; ?>
 
-    <form method="POST">
-        <input type="hidden" name="iteration_id" value="<?= htmlspecialchars($currentIteration) ?>">
-        <label>Remarks:</label>
-        <textarea name="remark" placeholder="Enter QA remarks here..."><?= htmlspecialchars($currentRemark) ?></textarea>
-        <br>
-        <button type="submit">Save Remark</button>
-    </form>
 </div>
 
 
@@ -467,12 +546,15 @@ Logging status:
     >
         <option value="">-- Select Activity Log --</option>
 
-        <?php foreach ($remarkIds as $rid): ?>
+        <?php foreach ($remarked as $rid => $entry): ?>
             <option
                 value="<?= htmlspecialchars($rid) ?>"
                 <?= ((string)$rid === (string)$currentIteration) ? 'selected' : '' ?>
             >
                 <?= htmlspecialchars($rid) ?>
+                <?php if (!empty($entry['name'])): ?>
+                    - <?= htmlspecialchars($entry['name']) ?>
+                <?php endif; ?>
             </option>
         <?php endforeach; ?>
     </select>
@@ -484,7 +566,13 @@ Logging status:
 <div class="log-box remark-item" data-iteration="<?= htmlspecialchars($id) ?>" style="display:none;">
     <h3>Activity Log ID: <?= htmlspecialchars($id) ?></h3>
 
+    <?php if (!empty($entry['name'])): ?>
+        <strong>Remark Name:</strong>
+        <p><?= htmlspecialchars($entry['name']) ?></p>
+    <?php endif; ?>
+
     <strong>Remark:</strong>
+
     <p><?= nl2br(htmlspecialchars($entry['remark'])) ?></p>
 
     <?php

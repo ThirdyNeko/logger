@@ -127,19 +127,55 @@ function render_log_entry(array $log): string
 }
 
 /* ============================
-   FIND PREVIOUS SESSIONS
+   FIND PREVIOUS SESSIONS (BY DATE)
 ============================ */
 
 $remarkFiles = glob(__DIR__ . '/logs/remarked_logs_*.json');
 
-$previousSessions = [];
+$sessionsByDate = [];
+
 foreach ($remarkFiles as $file) {
     $sid = str_replace(['remarked_logs_', '.json'], '', basename($file));
-    if ($sid !== $sessionId) {
-        $previousSessions[$sid] = $file;
+
+    if ($sid === $sessionId) {
+        continue;
+    }
+
+    $createdAt = filectime($file);
+    $dateKey   = date('Y-m-d', $createdAt);
+
+    $sessionsByDate[$dateKey][$sid] = [
+        'file' => $file,
+        'ctime' => $createdAt,
+    ];
+}
+
+/* Sort dates DESC, sessions DESC */
+krsort($sessionsByDate);
+foreach ($sessionsByDate as &$sessions) {
+    uksort($sessions, fn($a, $b) => strcmp($b, $a));
+}
+
+$selectedDate      = $_GET['date'] ?? '';
+$selectedSession   = $_GET['session'] ?? '';
+$selectedIteration = $_GET['iteration'] ?? '';
+
+$remarks    = [];
+$iterations = [];
+
+if (!empty($selectedDate) && !empty($selectedSession)) {
+    $sessionMeta = $sessionsByDate[$selectedDate][$selectedSession] ?? null;
+
+    if ($sessionMeta && file_exists($sessionMeta['file'])) {
+        $remarks = json_decode(file_get_contents($sessionMeta['file']), true);
+
+        if (is_array($remarks) && !empty($remarks)) {
+            // Use numeric or string keys as iteration IDs
+            $iterations = array_keys($remarks);
+        }
     }
 }
-krsort($previousSessions);
+
 
 /* ============================
    LOAD SELECTED SESSION
@@ -147,18 +183,27 @@ krsort($previousSessions);
 
 $selectedSession   = $_GET['session'] ?? '';
 $selectedIteration = $_GET['iteration'] ?? '';
+$selectedDate      = $_GET['date'] ?? '';
 $remarks           = [];
 $iterations        = [];
 
-if ($selectedSession && isset($previousSessions[$selectedSession])) {
-    $remarks = json_decode(
-        file_get_contents($previousSessions[$selectedSession]),
-        true
-    ) ?? [];
-
-    $iterations = array_map('strval', array_keys($remarks));
-    $selectedIteration = $selectedIteration !== '' ? (string)$selectedIteration : '';
+if ($selectedDate && $selectedSession) {
+    // Load via date-filtered array
+    $sessionMeta = $sessionsByDate[$selectedDate][$selectedSession] ?? null;
+    if ($sessionMeta && file_exists($sessionMeta['file'])) {
+        $remarks = json_decode(file_get_contents($sessionMeta['file']), true);
+        if (is_array($remarks)) {
+            $iterations = array_map('strval', array_keys($remarks));
+        }
+    }
+} elseif ($selectedSession && isset($previousSessions[$selectedSession])) {
+    // Fallback to old flat session lookup
+    $remarks = json_decode(file_get_contents($previousSessions[$selectedSession]), true);
+    if (is_array($remarks)) {
+        $iterations = array_map('strval', array_keys($remarks));
+    }
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -218,30 +263,51 @@ if ($selectedSession && isset($previousSessions[$selectedSession])) {
     </form>
 
 <div class="session-info">
+
+    <!-- DATE SELECT -->
     <form method="GET">
-        <label><strong>Select Session:</strong></label><br>
-        <select name="session" onchange="this.form.submit()">
-            <option value="">-- Select Session --</option>
-            <?php foreach ($previousSessions as $sid => $_): ?>
-                <option value="<?= htmlspecialchars($sid) ?>"
-                    <?= $sid === $selectedSession ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($sid) ?>
+        <label><strong>Select Date:</strong></label><br>
+        <select name="date" onchange="this.form.submit()">
+            <option value="">-- Select Date --</option>
+            <?php foreach ($sessionsByDate as $date => $_): ?>
+                <option value="<?= htmlspecialchars($date) ?>"
+                    <?= $date === $selectedDate ? 'selected' : '' ?>>
+                    <?= htmlspecialchars($date) ?>
                 </option>
             <?php endforeach; ?>
         </select>
     </form>
 
+    <!-- SESSION SELECT -->
+    <?php if ($selectedDate && !empty($sessionsByDate[$selectedDate])): ?>
+        <form method="GET" style="margin-top:10px;">
+            <input type="hidden" name="date" value="<?= htmlspecialchars($selectedDate) ?>">
+
+            <label><strong>Select Session:</strong></label><br>
+            <select name="session" onchange="this.form.submit()">
+                <option value="">-- Select Session --</option>
+                <?php foreach ($sessionsByDate[$selectedDate] as $sid => $meta): ?>
+                    <option value="<?= htmlspecialchars($sid) ?>"
+                        <?= $sid === $selectedSession ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($sid) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </form>
+    <?php endif; ?>
+
+    <!-- ITERATION SELECT -->
     <?php if ($selectedSession && !empty($iterations)): ?>
         <form method="GET" style="margin-top:10px;">
+            <input type="hidden" name="date" value="<?= htmlspecialchars($selectedDate) ?>">
             <input type="hidden" name="session" value="<?= htmlspecialchars($selectedSession) ?>">
 
             <label><strong>Select Activity Log:</strong></label><br>
             <select name="iteration" onchange="this.form.submit()">
                 <option value="">-- Select Activity Log --</option>
-
                 <?php foreach ($iterations as $iter): ?>
                     <option value="<?= htmlspecialchars($iter) ?>"
-                        <?= ($iter === $selectedIteration) ? 'selected="selected"' : '' ?>>
+                        <?= ($iter === $selectedIteration) ? 'selected' : '' ?>>
                         <?= htmlspecialchars($iter) ?>
                         <?php if (!empty($remarks[$iter]['name'])): ?>
                             - <?= htmlspecialchars($remarks[$iter]['name']) ?>

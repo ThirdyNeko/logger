@@ -1,0 +1,55 @@
+{
+    "2": {
+        "name": "Login Info",
+        "remark": "Good",
+        "logs": [
+            {
+                "type": "frontend-io-xhr",
+                "url": "functions\/login.php",
+                "method": "POST",
+                "request": "username=NekuNeko&password=Bimbim",
+                "status": 200,
+                "timestamp": "2026-01-08T02:28:49.277Z",
+                "iteration_id": 2,
+                "session_id": "Check_5_2026_01_08"
+            },
+            {
+                "type": "frontend-io",
+                "url": "http:\/\/localhost\/logger\/hooks\/receiver_frontend.php",
+                "method": "POST",
+                "request": {
+                    "type": "frontend-io-xhr",
+                    "url": "functions\/login.php",
+                    "method": "POST",
+                    "request": "username=NekuNeko&password=Bimbim",
+                    "status": 200,
+                    "timestamp": "2026-01-08T02:28:49.277Z"
+                },
+                "status": 204,
+                "timestamp": "2026-01-08T02:28:49.299Z",
+                "iteration_id": 2,
+                "session_id": "Check_5_2026_01_08"
+            }
+        ],
+        "saved_at": "January 8, 2026, 10:29 AM"
+    },
+    "1": {
+        "name": "Login Backend",
+        "remark": "Driver Error",
+        "logs": [
+            {
+                "type": "backend-response",
+                "status": 200,
+                "response": "Connection failed: could not find driver",
+                "request": {
+                    "username": "NekuNeko",
+                    "password": "Bimbim"
+                },
+                "timestamp": "2026-01-08T10:28:49+08:00",
+                "iteration_id": 1,
+                "session_id": "Check_5_2026_01_08"
+            }
+        ],
+        "saved_at": "January 8, 2026, 10:29 AM"
+    }
+}

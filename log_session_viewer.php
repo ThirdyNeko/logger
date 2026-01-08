@@ -221,6 +221,9 @@ if ($selectedSession && isset($previousSessions[$selectedSession])) {
                     <option value="<?= htmlspecialchars($iter) ?>"
                         <?= ($iter === $selectedIteration) ? 'selected="selected"' : '' ?>>
                         <?= htmlspecialchars($iter) ?>
+                        <?php if (!empty($remarks[$iter]['name'])): ?>
+                            - <?= htmlspecialchars($remarks[$iter]['name']) ?>
+                        <?php endif; ?>
                     </option>
                 <?php endforeach; ?>
             </select>
@@ -247,10 +250,18 @@ if ($selectedSession && isset($previousSessions[$selectedSession])) {
 
 <div class="log-box">
     <h3>Activity Log ID: <?= htmlspecialchars($selectedIteration) ?></h3>
+
+    <?php if (!empty($entry['name'])): ?>
+        <strong>Remark Name:</strong>
+        <p><?= htmlspecialchars($entry['name']) ?></p>
+    <?php endif; ?>
+
     <strong>Remark:</strong>
     <p><?= nl2br(htmlspecialchars($entry['remark'])) ?></p>
+
     <small>Saved at: <?= htmlspecialchars($entry['saved_at']) ?></small>
 </div>
+
 
 <?php if (!empty($errorLogs)): ?>
 <div class="error-box">

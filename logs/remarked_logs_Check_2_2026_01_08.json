@@ -1,0 +1,21 @@
+{
+    "1": {
+        "name": "Connection",
+        "remark": "Driver Can't be found error",
+        "logs": [
+            {
+                "type": "backend-response",
+                "status": 200,
+                "response": "Connection failed: could not find driver",
+                "request": {
+                    "username": "NekuNeko",
+                    "password": "Bimbim"
+                },
+                "timestamp": "2026-01-08T09:42:47+08:00",
+                "iteration_id": 1,
+                "session_id": "Check_2_2026_01_08"
+            }
+        ],
+        "saved_at": "January 8, 2026, 9:43 AM"
+    }
+}

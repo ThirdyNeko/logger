@@ -462,8 +462,9 @@ Logging status:
             <input
                 type="text"
                 name="remark_name"
-                placeholder="Remark name (e.g. Login)"
+                placeholder="Remark name: max 20 characters"
                 required
+                maxlength="20"
                 style="
                     padding:6px 8px;
                     border:1px solid #ccc;

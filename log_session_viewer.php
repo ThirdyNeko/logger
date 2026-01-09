@@ -177,8 +177,16 @@ $selectedIteration = $_GET['iteration'] ?? '';
 $remarks    = [];
 $iterations = [];
 
-if ($fromDate && $toDate && $selectedDate && $selectedSession) {
-    $sessionMeta = $filteredSessionsByDate[$selectedDate][$selectedSession] ?? null;
+if ($fromDate && $toDate && $selectedSession) {
+
+    $sessionMeta = null;
+
+    foreach ($filteredSessionsByDate as $date => $sessions) {
+        if (isset($sessions[$selectedSession])) {
+            $sessionMeta = $sessions[$selectedSession];
+            break;
+        }
+    }
 
     if ($sessionMeta && file_exists($sessionMeta['file'])) {
         $remarks = json_decode(file_get_contents($sessionMeta['file']), true);

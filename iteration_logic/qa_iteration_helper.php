@@ -30,7 +30,8 @@ function qa_assign_iteration_id(string $timestamp): ?int
     }
 
     // ✅ Interpret timestamp in Manila timezone
-    $dt = new DateTime($timestamp, new DateTimeZone('Asia/Manila'));
+    $dt = new DateTime($timestamp);
+    $dt->setTimezone(new DateTimeZone('Asia/Manila'));
     $secondKey = $dt->format('Y-m-d H:i:s');
 
     if ($state['last_second'] !== $secondKey) {

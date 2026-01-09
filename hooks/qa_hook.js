@@ -5,163 +5,109 @@
     const FRONTEND_RECEIVER = 'http://localhost/logger/hooks/receiver_frontend.php';
     const originalFetch = window.fetch.bind(window);
 
-    /* ------------------------------
-       NORMALIZE REQUEST BODY
-    ------------------------------ */
-    async function extractRequestBody(options, request) {
-        try {
-            if (request) {
-                const clone = request.clone();
-                const contentType = clone.headers.get('content-type') || '';
-
-                if (contentType.includes('application/json')) {
-                    return await clone.json();
-                }
-                if (contentType.includes('application/x-www-form-urlencoded')) {
-                    return Object.fromEntries(new URLSearchParams(await clone.text()));
-                }
-                return await clone.text();
-            }
-
-            if (!options || !options.body) return null;
-
-            if (options.body instanceof FormData) {
-                return Object.fromEntries(options.body.entries());
-            }
-            if (options.body instanceof URLSearchParams) {
-                return Object.fromEntries(options.body.entries());
-            }
-            if (typeof options.body === 'string') {
-                try {
-                    return JSON.parse(options.body);
-                } catch {
-                    return options.body;
-                }
-            }
-        } catch {
-            return '[unreadable request body]';
-        }
+    function isQaInternalRequest(url, options) {
+        if (typeof url === 'string' && url.includes('receiver_frontend.php')) return true;
+        if (options?.headers?.['X-QA-INTERNAL'] === '1') return true;
+        return false;
     }
 
-    /* ------------------------------
-       FETCH OVERRIDE
-    ------------------------------ */
+    function qaSendFrontendLog(payload) {
+        return originalFetch(FRONTEND_RECEIVER, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-QA-INTERNAL': '1'
+            },
+            body: JSON.stringify(payload)
+        }).catch(() => {});
+    }
+
+    /* ---------------- FETCH ---------------- */
     window.fetch = async (...args) => {
-        let url, method = 'GET', requestBody = null;
+        const url = args[0] instanceof Request ? args[0].url : args[0];
+        const options = args[1];
 
-        if (args[0] instanceof Request) {
-            const req = args[0];
-            url = req.url;
-            method = req.method;
-            requestBody = await extractRequestBody(null, req);
-        } else {
-            url = args[0];
-            const options = args[1] || {};
-            method = options.method || 'GET';
-            requestBody = await extractRequestBody(options, null);
-
-            options.headers = options.headers || {};
-            options.headers['X-QA-ENABLE'] = '1';
-            args[1] = options;
+        if (isQaInternalRequest(url, options)) {
+            return originalFetch(...args);
         }
 
         const response = await originalFetch(...args);
 
-        try {
-            await originalFetch(FRONTEND_RECEIVER, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    type: 'frontend-io',
-                    url,
-                    method,
-                    request: requestBody,
-                    status: response.status,
-                    timestamp: new Date().toISOString()
-                })
-            });
-        } catch (e) {
-            console.warn('[QA] Frontend log failed', e);
-        }
+        qaSendFrontendLog({
+            type: 'frontend-io',
+            url,
+            method: options?.method || 'GET',
+            request: options?.body || null,
+            status: response.status,
+            timestamp: new Date().toISOString()
+        });
 
         return response;
     };
 
-    /* ------------------------------
-       JQUERY AJAX OVERRIDE
-    ------------------------------ */
+    /* ---------------- JQUERY ---------------- */
     if (window.jQuery) {
         const originalAjax = $.ajax;
+
         $.ajax = function(options) {
-            const origSuccess = options.success;
-            const origError = options.error;
+            const method = options.type || 'GET';
+            const url = options.url;
+            const request = options.data || null;
 
-            options.success = function(data, textStatus, jqXHR) {
-                try {
-                    $.post(FRONTEND_RECEIVER, JSON.stringify({
-                        type: 'frontend-io-jquery',
-                        url: options.url,
-                        method: options.type || 'GET',
-                        request: options.data || null,
+            return originalAjax.call(this, {
+                ...options,
+                success: function(data, textStatus, jqXHR) {
+                    qaSendFrontendLog({
+                        type: 'frontend-io',
+                        url,
+                        method,
+                        request,
                         status: jqXHR.status,
                         timestamp: new Date().toISOString()
-                    }));
-                } catch (e) { console.warn('[QA] jQuery AJAX log failed', e); }
-
-                if (origSuccess) origSuccess.apply(this, arguments);
-            };
-
-            options.error = function(jqXHR, textStatus, errorThrown) {
-                try {
-                    $.post(FRONTEND_RECEIVER, JSON.stringify({
-                        type: 'frontend-io-jquery',
-                        url: options.url,
-                        method: options.type || 'GET',
-                        request: options.data || null,
+                    });
+                    options.success?.apply(this, arguments);
+                },
+                error: function(jqXHR) {
+                    qaSendFrontendLog({
+                        type: 'frontend-io',
+                        url,
+                        method,
+                        request,
                         status: jqXHR.status,
                         timestamp: new Date().toISOString()
-                    }));
-                } catch (e) { console.warn('[QA] jQuery AJAX error log failed', e); }
-
-                if (origError) origError.apply(this, arguments);
-            };
-
-            return originalAjax.call(this, options);
+                    });
+                    options.error?.apply(this, arguments);
+                }
+            });
         };
-        console.log('[QA] jQuery AJAX hook active');
     }
 
-    /* ------------------------------
-       XHR OVERRIDE
-    ------------------------------ */
-    const origXHRopen = XMLHttpRequest.prototype.open;
-    const origXHRsend = XMLHttpRequest.prototype.send;
+    /* ---------------- XHR ---------------- */
+    const origOpen = XMLHttpRequest.prototype.open;
+    const origSend = XMLHttpRequest.prototype.send;
 
     XMLHttpRequest.prototype.open = function(method, url, ...rest) {
+        this._qa_skip = isQaInternalRequest(url);
         this._qa_method = method;
         this._qa_url = url;
-        return origXHRopen.call(this, method, url, ...rest);
+        return origOpen.call(this, method, url, ...rest);
     };
 
     XMLHttpRequest.prototype.send = function(body) {
-        this.addEventListener('load', () => {
-            try {
-                fetch(FRONTEND_RECEIVER, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        type: 'frontend-io-xhr',
-                        url: this._qa_url,
-                        method: this._qa_method,
-                        request: body || null,
-                        status: this.status,
-                        timestamp: new Date().toISOString()
-                    })
+        if (!this._qa_skip) {
+            this.addEventListener('load', () => {
+                qaSendFrontendLog({
+                    type: 'frontend-io',
+                    url: this._qa_url,
+                    method: this._qa_method,
+                    request: body || null,
+                    status: this.status,
+                    timestamp: new Date().toISOString()
                 });
-            } catch (e) { console.warn('[QA] XHR log failed', e); }
-        });
-        return origXHRsend.call(this, body);
+            });
+        }
+        return origSend.call(this, body);
     };
 
-    console.log('[QA] Frontend QA hook fully active (fetch + jQuery + XHR)');
+    console.log('[QA] Frontend QA hook active');
 })();

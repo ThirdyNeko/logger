@@ -447,7 +447,7 @@ function promptSessionName() {
     }
 
     document.getElementById('session_name_input').value =
-        name.trim().toUpperCase();
+        name.trim().toUpperCase().replace(/_/g, ' ');
 
     return true;
 }

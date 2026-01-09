@@ -298,7 +298,7 @@ if ($fromDate && $toDate && $selectedSession) {
                     <?php foreach ($sessions as $sid => $meta): ?>
                         <option value="<?= htmlspecialchars($sid) ?>"
                             <?= $sid === $selectedSession ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($sid) ?>
+                            <?= htmlspecialchars(str_replace('_', ' ', $sid)) ?>
                         </option>
                     <?php endforeach; ?>
                 <?php endforeach; ?>

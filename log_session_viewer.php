@@ -150,11 +150,25 @@ foreach ($remarkFiles as $file) {
     ];
 }
 
+$fromDate = $_GET['from_date'] ?? null;
+$toDate   = $_GET['to_date'] ?? null;
+
+$filteredSessionsByDate = [];
+
+if ($fromDate && $toDate) {
+    foreach ($sessionsByDate as $date => $sessions) {
+        if ($date >= $fromDate && $date <= $toDate) {
+            $filteredSessionsByDate[$date] = $sessions;
+        }
+    }
+}
+
 /* Sort dates DESC, sessions DESC */
-krsort($sessionsByDate);
-foreach ($sessionsByDate as &$sessions) {
+krsort($filteredSessionsByDate);
+foreach ($filteredSessionsByDate as &$sessions) {
     uksort($sessions, fn($a, $b) => strcmp($b, $a));
 }
+unset($sessions);
 
 $selectedDate      = $_GET['date'] ?? '';
 $selectedSession   = $_GET['session'] ?? '';
@@ -163,44 +177,14 @@ $selectedIteration = $_GET['iteration'] ?? '';
 $remarks    = [];
 $iterations = [];
 
-if (!empty($selectedDate) && !empty($selectedSession)) {
-    $sessionMeta = $sessionsByDate[$selectedDate][$selectedSession] ?? null;
+if ($fromDate && $toDate && $selectedDate && $selectedSession) {
+    $sessionMeta = $filteredSessionsByDate[$selectedDate][$selectedSession] ?? null;
 
-    if ($sessionMeta && file_exists($sessionMeta['file'])) {
-        $remarks = json_decode(file_get_contents($sessionMeta['file']), true);
-
-        if (is_array($remarks) && !empty($remarks)) {
-            // Use numeric or string keys as iteration IDs
-            $iterations = array_keys($remarks);
-        }
-    }
-}
-
-
-/* ============================
-   LOAD SELECTED SESSION
-============================ */
-
-$selectedSession   = $_GET['session'] ?? '';
-$selectedIteration = $_GET['iteration'] ?? '';
-$selectedDate      = $_GET['date'] ?? '';
-$remarks           = [];
-$iterations        = [];
-
-if ($selectedDate && $selectedSession) {
-    // Load via date-filtered array
-    $sessionMeta = $sessionsByDate[$selectedDate][$selectedSession] ?? null;
     if ($sessionMeta && file_exists($sessionMeta['file'])) {
         $remarks = json_decode(file_get_contents($sessionMeta['file']), true);
         if (is_array($remarks)) {
             $iterations = array_map('strval', array_keys($remarks));
         }
-    }
-} elseif ($selectedSession && isset($previousSessions[$selectedSession])) {
-    // Fallback to old flat session lookup
-    $remarks = json_decode(file_get_contents($previousSessions[$selectedSession]), true);
-    if (is_array($remarks)) {
-        $iterations = array_map('strval', array_keys($remarks));
     }
 }
 
@@ -264,34 +248,53 @@ if ($selectedDate && $selectedSession) {
 
 <div class="session-info">
 
-    <!-- DATE SELECT -->
+    <!-- DATE RANGE SELECT -->
     <form method="GET">
-        <label><strong>Select Date:</strong></label><br>
-        <select name="date" onchange="this.form.submit()">
-            <option value="">-- Select Date --</option>
-            <?php foreach ($sessionsByDate as $date => $_): ?>
-                <option value="<?= htmlspecialchars($date) ?>"
-                    <?= $date === $selectedDate ? 'selected' : '' ?>>
-                    <?= htmlspecialchars($date) ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
+        <label><strong>Select Date Range:</strong></label><br><br>
+
+        <label>
+            From:
+            <input
+                type="date"
+                name="from_date"
+                value="<?= htmlspecialchars($_GET['from_date'] ?? '') ?>"
+                onchange="this.form.submit()"
+            >
+        </label>
+
+        &nbsp;&nbsp;
+
+        <label>
+            To:
+            <input
+                type="date"
+                name="to_date"
+                value="<?= htmlspecialchars($_GET['to_date'] ?? '') ?>"
+                onchange="this.form.submit()"
+            >
+        </label>
     </form>
 
     <!-- SESSION SELECT -->
-    <?php if ($selectedDate && !empty($sessionsByDate[$selectedDate])): ?>
+    <?php if ($fromDate && $toDate && !empty($filteredSessionsByDate)): ?>
         <form method="GET" style="margin-top:10px;">
-            <input type="hidden" name="date" value="<?= htmlspecialchars($selectedDate) ?>">
+            <!-- preserve date range -->
+            <input type="hidden" name="from_date" value="<?= htmlspecialchars($_GET['from_date'] ?? '') ?>">
+            <input type="hidden" name="to_date" value="<?= htmlspecialchars($_GET['to_date'] ?? '') ?>">
 
             <label><strong>Select Session:</strong></label><br>
             <select name="session" onchange="this.form.submit()">
                 <option value="">-- Select Session --</option>
-                <?php foreach ($sessionsByDate[$selectedDate] as $sid => $meta): ?>
-                    <option value="<?= htmlspecialchars($sid) ?>"
-                        <?= $sid === $selectedSession ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($sid) ?>
-                    </option>
+
+                <?php foreach ($filteredSessionsByDate as $date => $sessions): ?>
+                    <?php foreach ($sessions as $sid => $meta): ?>
+                        <option value="<?= htmlspecialchars($sid) ?>"
+                            <?= $sid === $selectedSession ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($sid) ?>
+                        </option>
+                    <?php endforeach; ?>
                 <?php endforeach; ?>
+
             </select>
         </form>
     <?php endif; ?>
@@ -299,12 +302,15 @@ if ($selectedDate && $selectedSession) {
     <!-- ITERATION SELECT -->
     <?php if ($selectedSession && !empty($iterations)): ?>
         <form method="GET" style="margin-top:10px;">
-            <input type="hidden" name="date" value="<?= htmlspecialchars($selectedDate) ?>">
+            <!-- preserve date range + session -->
+            <input type="hidden" name="from_date" value="<?= htmlspecialchars($_GET['from_date'] ?? '') ?>">
+            <input type="hidden" name="to_date" value="<?= htmlspecialchars($_GET['to_date'] ?? '') ?>">
             <input type="hidden" name="session" value="<?= htmlspecialchars($selectedSession) ?>">
 
             <label><strong>Select Activity Log:</strong></label><br>
             <select name="iteration" onchange="this.form.submit()">
                 <option value="">-- Select Activity Log --</option>
+
                 <?php foreach ($iterations as $iter): ?>
                     <option value="<?= htmlspecialchars($iter) ?>"
                         <?= ($iter === $selectedIteration) ? 'selected' : '' ?>>
@@ -314,10 +320,13 @@ if ($selectedDate && $selectedSession) {
                         <?php endif; ?>
                     </option>
                 <?php endforeach; ?>
+
             </select>
         </form>
     <?php endif; ?>
+
 </div>
+
 
 <?php if ($selectedIteration && isset($remarks[$selectedIteration])):
     $entry = $remarks[$selectedIteration];

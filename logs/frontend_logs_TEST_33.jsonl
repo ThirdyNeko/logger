@@ -1,0 +1,3 @@
+{"type":"frontend-io","url":"functions\/login.php","method":"POST","request":"username=NekuNeko&password=Bimbim33","status":200,"timestamp":"2026-01-10T00:47:31.111Z","iteration_id":2,"session_id":"TEST_33"}
+{"type":"frontend-io","url":"functions\/login.php","method":"POST","request":"username=NekuNeko&password=Bimbim33","status":200,"timestamp":"2026-01-10T00:47:41.171Z","iteration_id":3,"session_id":"TEST_33"}
+{"type":"frontend-io","url":"process.php","method":"POST","request":{"item":"Burger","quantity":"2","price":"150"},"status":200,"timestamp":"2026-01-10T00:48:11.584Z","iteration_id":4,"session_id":"TEST_33"}

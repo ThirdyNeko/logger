@@ -409,7 +409,7 @@ $currentRemark    = $remarked[$currentIteration]['remark'] ?? '';
         style="
             background:#000000;
             color:white;
-            border:none;
+            border:1px solid #000000;
             padding:8px 14px;
             border-radius:4px;
             cursor:pointer;

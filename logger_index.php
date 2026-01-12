@@ -1,10 +1,13 @@
 <?php
 require_once __DIR__ . '/auth/require_login.php';
-require_once __DIR__ . '/auth/require_login.php';
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 define('QA_SKIP_LOGGING', true);
-
 date_default_timezone_set('Asia/Manila');
+
 require_once __DIR__ . '/iteration_logic/qa_iteration_helper.php';
 
 /* ============================
@@ -13,15 +16,9 @@ require_once __DIR__ . '/iteration_logic/qa_iteration_helper.php';
 
 $qaState = qa_get_session_state();
 
-
-// Save selection
 if (isset($_GET['remark_iteration'])) {
     $qaState['remarks_iteration'] = $_GET['remark_iteration'];
-
-    file_put_contents(
-        __DIR__ . '/iteration_logic/qa_session_state.json',
-        json_encode($qaState, JSON_PRETTY_PRINT)
-    );
+    qa_save_session_state($qaState);
 }
 
 define('QA_SESSION_NAMES_FILE', __DIR__ . '/iteration_logic/session_names.json');
@@ -90,7 +87,7 @@ if (isset($_POST['new_session'])) {
 
 
 $status = qa_get_logging_status();
-$sessionId = qa_get_session_id();
+$sessionId = qa_get_session_id() ?? 'unknown_session';
 $sessionState = qa_get_session_state();
 $currentSessionName = isset($sessionState['session_name'])
     ? str_replace('_', ' ', $sessionState['session_name'])

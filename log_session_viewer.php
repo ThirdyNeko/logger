@@ -1,11 +1,15 @@
 <?php
-
 require_once __DIR__ . '/auth/require_login.php';
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 date_default_timezone_set('Asia/Manila');
 require_once __DIR__ . '/iteration_logic/qa_iteration_helper.php';
 
+
 $userId    = $_SESSION['user']['id'] ?? 'guest';
-$sessionId = qa_get_session_id();
 
 /* ==========================
    Helpers

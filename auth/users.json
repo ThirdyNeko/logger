@@ -1,0 +1,14 @@
+[
+    {
+        "id": 1,
+        "username": "tester",
+        "password_hash": "$2y$10$gNxF99gBjIZ4.i9h/T1jl.deXrxBJ2n8OEPagwDPkjscQpoRTZiRm",
+        "role": "admin"
+    },
+    {
+        "id": 2,
+        "username": "ThirdNeko",
+        "password_hash": "$2y$10$gNxF99gBjIZ4.i9h/T1jl.deXrxBJ2n8OEPagwDPkjscQpoRTZiRm",
+        "role": "admin"
+    }
+]

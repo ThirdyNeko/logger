@@ -1,4 +1,7 @@
 <?php
+require_once __DIR__ . '/auth/require_login.php';
+require_once __DIR__ . '/auth/require_login.php';
+
 define('QA_SKIP_LOGGING', true);
 
 date_default_timezone_set('Asia/Manila');
@@ -94,9 +97,18 @@ $currentSessionName = isset($sessionState['session_name'])
     : 'Unknown';
 
 
-$FRONTEND_LOG = __DIR__ . "/logs/frontend_logs_{$sessionId}.jsonl";
-$BACKEND_LOG  = __DIR__ . "/logs/backend_logs_{$sessionId}.jsonl";
-$REMARK_FILE  = __DIR__ . "/logs/remarked_logs_{$sessionId}.json";
+$userId = $_SESSION['user']['id'] ?? 'guest';
+/* ✅ User-specific log directory */
+$logBase = __DIR__ . "/logs/user_{$userId}";
+if (!is_dir($logBase)) {
+    mkdir($logBase, 0777, true);
+}
+
+/* Update log file paths to use per-user folder */
+$sessionId = qa_get_session_id(); // already exists
+$FRONTEND_LOG = "{$logBase}/frontend_logs_{$sessionId}.jsonl";
+$BACKEND_LOG  = "{$logBase}/backend_logs_{$sessionId}.jsonl";
+$REMARK_FILE  = "{$logBase}/remarked_logs_{$sessionId}.json";
 
 
 $status = qa_get_logging_status();
@@ -394,6 +406,20 @@ $currentRemark    = $remarked[$currentIteration]['remark'] ?? '';
     </style>
 </head>
 <body>
+
+<button
+    type="button"
+    onclick="window.location.href='auth/logout.php'"
+    style="
+        background:#FFFFFF;
+        border:1px solid #000000;
+        color:#000000;
+        padding:8px 14px;
+        border-radius:4px;
+        cursor:pointer;
+    ">
+    Logout
+</button>
 
 <h1>QA Logger/Viewer</h1>
 

@@ -1,4 +1,13 @@
 <?php
+// Prefer the session user ID
+$userId = $_SESSION['user']['id'] ?? 'guest';
+
+// Then write logs to user-specific folder
+$logBase = __DIR__ . "/../../logs/user_{$userId}";
+if (!is_dir($logBase)) mkdir($logBase, 0777, true);
+
+// Rest of logging logic...
+
 // 🚫 NEVER LOG PHP DEPRECATIONS (PHP 8.1+)
 error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
 
@@ -43,15 +52,17 @@ $GLOBALS['__QA_RESPONSE_HASH__'] = null;
  */
 function qa_backend_log(array $data)
 {
+    session_start();
+    $data['user_id'] = $_SESSION['user']['id'] ?? 'guest';
+
     global $BACKEND_RECEIVER;
 
-    // Mark this as an internal QA log request
     $opts = [
         'http' => [
             'method'  => 'POST',
             'header'  =>
                 "Content-Type: application/json\r\n" .
-                "X-QA-INTERNAL: 1\r\n", // 👈 prevents self-logging
+                "X-QA-INTERNAL: 1\r\n",
             'content' => json_encode($data),
             'timeout' => 1
         ]
@@ -59,6 +70,7 @@ function qa_backend_log(array $data)
 
     @file_get_contents($BACKEND_RECEIVER, false, stream_context_create($opts));
 }
+
 
 
 /**

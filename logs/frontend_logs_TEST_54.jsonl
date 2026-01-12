@@ -1,0 +1,2 @@
+{"type":"frontend-io","url":"process.php","method":"POST","request":{"item":"Burger","quantity":"2","price":"150"},"status":200,"timestamp":"2026-01-12T00:44:22.298Z","iteration_id":2,"session_id":"TEST_54"}
+{"type":"frontend-io","url":"functions\/login.php","method":"POST","request":"username=game&password=Password","status":200,"timestamp":"2026-01-12T00:44:45.290Z","iteration_id":3,"session_id":"TEST_54"}

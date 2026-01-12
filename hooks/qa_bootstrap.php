@@ -1,7 +1,21 @@
 <?php
+// 🚫 NEVER LOG PHP DEPRECATIONS (PHP 8.1+)
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
+
 // --------------------------------------------------
 // HARD STOPS (must be first)
 // --------------------------------------------------
+
+// Absolute path to logger directory
+$LOGGER_ROOT = realpath(__DIR__ . '/logger');
+
+// Current executing script
+$currentScript = realpath($_SERVER['SCRIPT_FILENAME'] ?? '');
+
+// 🚫 HARD STOP: Never log anything from logger itself
+if ($LOGGER_ROOT && $currentScript && str_starts_with($currentScript, $LOGGER_ROOT)) {
+    return;
+}
 
 // Prevent recursion
 if (!empty($_SERVER['HTTP_X_QA_INTERNAL'])) {
@@ -148,9 +162,22 @@ ob_start(function ($output) {
 -------------------------------------------------- */
 set_error_handler(function ($severity, $message, $file, $line) {
 
-    // Prevent recursion only
+    // 🚫 ABSOLUTE HARD STOP: ignore all deprecations
+    if ($severity === E_DEPRECATED || $severity === E_USER_DEPRECATED) {
+        return true; // fully handled, stop propagation
+    }
+
+    // Prevent recursion
     if (!empty($_SERVER['HTTP_X_QA_INTERNAL'])) {
-        return false;
+        return true;
+    }
+
+    // 🚫 HARD BLOCK logger files (string check, no realpath)
+    if (
+        strpos($file, DIRECTORY_SEPARATOR . 'logger' . DIRECTORY_SEPARATOR) !== false ||
+        basename($file) === 'logger_index.php'
+    ) {
+        return true;
     }
 
     qa_backend_log([
@@ -162,9 +189,9 @@ set_error_handler(function ($severity, $message, $file, $line) {
         'timestamp' => date('c')
     ]);
 
-    // Let PHP continue normal error handling
-    return false;
+    return true; // stop PHP from re-processing
 });
+
 
 
 /* --------------------------------------------------

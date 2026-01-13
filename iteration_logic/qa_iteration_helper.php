@@ -100,11 +100,23 @@ function qa_assign_iteration_id(string $timestamp): ?int
         return null;
     }
 
-    $secondKey = $dt->format('Y-m-d H:i:s');
+    // -----------------------------
+    // NORMALIZE TIMESTAMP
+    // -----------------------------
+    $epoch = $dt->getTimestamp();
 
-    if ($state['last_second'] !== $secondKey) {
+    // Group into 2-second buckets
+    $bucketSize = 2;
+    $normalizedEpoch = intdiv($epoch, $bucketSize) * $bucketSize;
+
+    $normalizedKey = date('Y-m-d H:i:s', $normalizedEpoch);
+
+    // -----------------------------
+    // ITERATION LOGIC
+    // -----------------------------
+    if (($state['last_second'] ?? null) !== $normalizedKey) {
         $state['iteration']++;
-        $state['last_second'] = $secondKey;
+        $state['last_second'] = $normalizedKey;
 
         if ($state['iteration'] >= 50) {
             $state['logging_active'] = false;
@@ -115,8 +127,6 @@ function qa_assign_iteration_id(string $timestamp): ?int
 
     return $state['iteration'];
 }
-
-
 
 /* ============================
    READ-ONLY HELPERS

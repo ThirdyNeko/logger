@@ -1,2 +1,0 @@
-{"type":"frontend-io","url":"process.php","method":"POST","request":{"item":"Burger","quantity":"2","price":"150"},"status":200,"timestamp":"2026-01-12T07:31:01.404Z","iteration_id":1,"session_id":"BACKEND_TEST_1","user_id":2,"php_session":"f9kav2h5bshgquj72b14q1lp2u"}
-{"type":"frontend-io","url":"process.php","method":"POST","request":{"item":"Burger","quantity":"2","price":"150"},"status":200,"timestamp":"2026-01-12T07:31:27.688Z","iteration_id":2,"session_id":"BACKEND_TEST_1","user_id":2,"php_session":"f9kav2h5bshgquj72b14q1lp2u"}

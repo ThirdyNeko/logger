@@ -2,37 +2,14 @@
 // 🚫 NEVER LOG PHP DEPRECATIONS
 error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
 
-// --------------------------------------------------
 // Load helpers
-// --------------------------------------------------
 require_once __DIR__ . '/../iteration_logic/qa_iteration_helper.php';
 
-// --------------------------------------------------
-// Read POSTed log data
-// --------------------------------------------------
+// Read the POSTed log data
 $data = json_decode(file_get_contents('php://input'), true);
 
-// Validate early
-if (!$data || empty($data['timestamp'])) {
-    http_response_code(400);
-    exit;
-}
-
-// --------------------------------------------------
-// Resolve user
-// --------------------------------------------------
+// Get the user ID safely from global
 $userId = $data['user_id'] ?? $GLOBALS['__QA_USER_ID__'] ?? 'guest';
-
-// --------------------------------------------------
-// ✅ THIS IS WHERE IT GOES
-// --------------------------------------------------
-qa_prepare_backend_session($userId);
-
-// Ensure session_id exists
-if (qa_get_session_id() === null) {
-    // Generate a new session name for this user
-    qa_create_new_session(uniqid("qa_{$userId}_", true));
-}
 
 /* ==========================
    User-specific log folder
@@ -42,27 +19,27 @@ if (!is_dir($logBase)) {
     mkdir($logBase, 0777, true);
 }
 
-// --------------------------------------------------
+// Validate input
+if (!$data || empty($data['timestamp'])) {
+    http_response_code(400);
+    exit;
+}
+
 // Assign iteration & session
-// --------------------------------------------------
 $iteration = qa_assign_iteration_id($data['timestamp']);
 if ($iteration === null) {
     http_response_code(204);
-    exit;
+    exit; // logging stopped
 }
 
 $session = qa_get_session_id();
 
-// --------------------------------------------------
 // Add meta
-// --------------------------------------------------
 $data['iteration_id'] = $iteration;
 $data['session_id']   = $session;
 $data['user_id']      = $userId;
 
-// --------------------------------------------------
 // Write log
-// --------------------------------------------------
 $file = "{$logBase}/backend_logs_{$session}.jsonl";
 file_put_contents($file, json_encode($data) . PHP_EOL, FILE_APPEND);
 

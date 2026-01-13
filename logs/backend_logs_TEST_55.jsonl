@@ -1,2 +1,0 @@
-{"type":"backend-error","severity":8192,"message":"htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated","file":"C:\\xampp\\htdocs\\logger\\logger_index.php","line":527,"timestamp":"2026-01-12T08:45:52+08:00","iteration_id":1,"session_id":"TEST_55"}
-{"type":"backend-error","severity":8192,"message":"htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated","file":"C:\\xampp\\htdocs\\logger\\logger_index.php","line":553,"timestamp":"2026-01-12T08:45:52+08:00","iteration_id":1,"session_id":"TEST_55"}

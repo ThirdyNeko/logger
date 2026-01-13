@@ -1,4 +1,0 @@
-{"type":"frontend-io","url":"test_ok.php","method":"GET","request":null,"status":200,"response":"Hello from backend OK\nCurrent time: 07:34:33","timestamp":"2026-01-05T06:34:33.676Z","iteration_id":1,"session_id":"20260105_073430"}
-{"type":"frontend-io","url":"test_error.php","method":"GET","request":null,"status":200,"response":"About to trigger warning...\nThis still runs\n","timestamp":"2026-01-05T06:37:28.710Z","iteration_id":2,"session_id":"20260105_073430"}
-{"type":"frontend-io","url":"test_error.php","method":"GET","request":null,"status":200,"response":"About to trigger warning...\nThis still runs\n","timestamp":"2026-01-05T06:37:40.012Z","iteration_id":4,"session_id":"20260105_073430"}
-{"type":"frontend-io","url":"test_ok.php","method":"GET","request":null,"status":200,"response":"Hello from backend OK\nCurrent time: 07:37:41","timestamp":"2026-01-05T06:37:41.287Z","iteration_id":5,"session_id":"20260105_073430"}

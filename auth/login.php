@@ -22,7 +22,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'role'     => $user['role']
             ];
 
-            header('Location: ../logger_index.php');
+            // 🔁 ROLE-BASED REDIRECT
+            switch ($user['role']) {
+                case 'developer':
+                    header('Location: ../developer_viewer.php');
+                    break;
+
+                case 'qa':
+                    header('Location: ../logger_index.php');
+                    break;
+
+                default:
+                    header('Location: ../login.php'); // fallback
+            }
+
             exit;
         }
     }

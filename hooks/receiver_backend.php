@@ -7,9 +7,11 @@ require_once __DIR__ . '/../iteration_logic/qa_iteration_helper.php';
 
 // Read the POSTed log data
 $data = json_decode(file_get_contents('php://input'), true);
+$GLOBALS['__QA_USER_ID__'] = $data['user_id'] ?? 'guest';
 
 // Get the user ID safely from global
 $userId = $data['user_id'] ?? $GLOBALS['__QA_USER_ID__'] ?? 'guest';
+
 
 /* ==========================
    User-specific log folder

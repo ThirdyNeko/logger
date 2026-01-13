@@ -73,6 +73,7 @@ function qa_backend_log(array $data)
 
 
 
+
 /**
  * Extract valid JSON from output
  * Returns decoded array or null

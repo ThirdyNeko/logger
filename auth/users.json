@@ -2,13 +2,19 @@
     {
         "id": 1,
         "username": "tester",
-        "password_hash": "$2y$10$gNxF99gBjIZ4.i9h/T1jl.deXrxBJ2n8OEPagwDPkjscQpoRTZiRm",
+        "password_hash": "$2y$10$gNxF99gBjIZ4.i9h\/T1jl.deXrxBJ2n8OEPagwDPkjscQpoRTZiRm",
         "role": "admin"
     },
     {
         "id": 2,
         "username": "ThirdNeko",
-        "password_hash": "$2y$10$gNxF99gBjIZ4.i9h/T1jl.deXrxBJ2n8OEPagwDPkjscQpoRTZiRm",
+        "password_hash": "$2y$10$gNxF99gBjIZ4.i9h\/T1jl.deXrxBJ2n8OEPagwDPkjscQpoRTZiRm",
         "role": "admin"
+    },
+    {
+        "id": "user_6965e43dec3f84.08255200",
+        "username": "NekuNeko",
+        "password_hash": "$2y$10$VlApF1SdFIoiV7LlZUdu5uW0OLq3cq\/iLIEwNRuQJQ0N9idemqXp6",
+        "role": "user"
     }
 ]

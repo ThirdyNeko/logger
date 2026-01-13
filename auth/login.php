@@ -41,7 +41,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <form method="post">
   <input name="username" placeholder="Username" required>
   <input name="password" type="password" placeholder="Password" required>
-  <button type="submit">Login</button>
+  <button type="submit" style="
+        background:#000000;
+        border:1px solid #000000;
+        color:#FFFFFF;
+        padding: 2px 10px;
+        border-radius:4px;
+        cursor:pointer;
+    ">Login</button>
 </form>
+
+<br>
+
+<button type="button" 
+        onclick="window.location.href='create_user.php'"
+        style="
+        background:#FFFFFF;
+        border:1px solid #000000;
+        color:#000000;
+        padding: 2px 10px;
+        border-radius:4px;
+        cursor:pointer;"
+        >Sign up</button>
+
 </body>
 </html>

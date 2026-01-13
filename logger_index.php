@@ -431,6 +431,20 @@ $currentRemark    = $remarked[$currentIteration]['remark'] ?? '';
     Logout
 </button>
 
+<button
+    type="button"
+    onclick="window.location.href='profile.php'"
+    style="
+        background:#000000;
+        border:1px solid #000000;
+        color:#FFFFFF;
+        padding:8px 14px;
+        border-radius:4px;
+        cursor:pointer;
+    ">
+    Profile
+</button>
+
 <h1>QA Logger/Viewer</h1>
 
 <form method="POST" style="margin-bottom:15px; display:flex; gap:10px; align-items:center;"

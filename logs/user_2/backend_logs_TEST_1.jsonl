@@ -1,0 +1,1 @@
+{"type":"backend-response","method":"POST","endpoint":"\/test\/test_website\/process.php","status":200,"request":{"item":"Burger","quantity":"2","price":"150"},"response":{"item":"Burger","subtotal":"300.00","tax":"24.00","total":"324.00"},"timestamp":"2026-01-13T06:22:47+01:00","user_id":2,"iteration_id":1,"session_id":"TEST_1"}

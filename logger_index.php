@@ -1,11 +1,20 @@
 <?php
 require_once __DIR__ . '/auth/require_login.php';
-require_once __DIR__ . '/auth/require_login.php';
-
 define('QA_SKIP_LOGGING', true);
 
 date_default_timezone_set('Asia/Manila');
 require_once __DIR__ . '/iteration_logic/qa_iteration_helper.php';
+
+/* ============================
+   USER-AWARE SESSION NAMES
+============================ */
+
+function qa_get_session_names_file(): string
+{
+    $userKey = qa_get_user_key();
+    return __DIR__ . "/iteration_logic/session_names_user_{$userKey}.json";
+}
+
 
 /* ============================
    REMARKS ITERATION STATE
@@ -18,13 +27,8 @@ $qaState = qa_get_session_state();
 if (isset($_GET['remark_iteration'])) {
     $qaState['remarks_iteration'] = $_GET['remark_iteration'];
 
-    file_put_contents(
-        __DIR__ . '/iteration_logic/qa_session_state.json',
-        json_encode($qaState, JSON_PRETTY_PRINT)
-    );
+    qa_save_session_state($qaState);
 }
-
-define('QA_SESSION_NAMES_FILE', __DIR__ . '/iteration_logic/session_names.json');
 
 function qa_normalize_session_name(string $name): string
 {
@@ -33,24 +37,30 @@ function qa_normalize_session_name(string $name): string
 
 function qa_load_session_names(): array
 {
-    if (!file_exists(QA_SESSION_NAMES_FILE)) {
+    $file = qa_get_session_names_file();
+
+    if (!file_exists($file)) {
         return [];
     }
 
-    $data = json_decode(file_get_contents(QA_SESSION_NAMES_FILE), true);
+    $data = json_decode(file_get_contents($file), true);
     return is_array($data) ? $data : [];
 }
 
+
 function qa_save_session_name(string $name): void
 {
+    $file  = qa_get_session_names_file();
     $names = qa_load_session_names();
+
     $names[] = $name;
 
     file_put_contents(
-        QA_SESSION_NAMES_FILE,
+        $file,
         json_encode(array_values(array_unique($names)), JSON_PRETTY_PRINT)
     );
 }
+
 
 // Restore selection
 $selectedRemarksIteration = $qaState['remarks_iteration'] ?? '';
@@ -75,7 +85,7 @@ if (isset($_POST['new_session'])) {
 
     if (in_array($sessionName, $existingNames, true)) {
         echo "<script>
-            alert('⚠️ Session name already exists. Please choose a different name.');
+            alert('⚠️ Session name already exists for your account. Please choose a different name.');
             window.history.back();
         </script>";
         exit;

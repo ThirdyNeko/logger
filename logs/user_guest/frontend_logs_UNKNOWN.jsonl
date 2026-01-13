@@ -1,0 +1,4 @@
+{"type":"frontend-io","url":"actions\/logininventory.php","method":"POST","request":"Username=reil&Password=reil123&Status=ONLINE","status":200,"timestamp":"2026-01-13T05:22:11.252Z","iteration_id":1,"session_id":"UNKNOWN","user_id":"guest"}
+{"type":"frontend-io","url":"actions\/logininventory.php","method":"POST","request":"Username=reil&Password=reil123&Status=ONLINE","status":200,"timestamp":"2026-01-13T05:22:16.246Z","iteration_id":2,"session_id":"UNKNOWN","user_id":"guest"}
+{"type":"frontend-io","url":"actions\/logininventory.php","method":"POST","request":"Username=reil&Password=reil123&Status=OFFLINE","status":200,"timestamp":"2026-01-13T05:22:25.290Z","iteration_id":3,"session_id":"UNKNOWN","user_id":"guest"}
+{"type":"frontend-io","url":"process.php","method":"POST","request":{"item":"Burger","quantity":"2","price":"150"},"status":200,"timestamp":"2026-01-13T05:22:38.792Z","iteration_id":4,"session_id":"UNKNOWN","user_id":"guest"}

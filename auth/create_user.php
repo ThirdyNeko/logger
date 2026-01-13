@@ -62,8 +62,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <input name="password" type="password" placeholder="Password" required>
     <br><br>
     <select name="role">
-        <option value="user">User</option>
-        <option value="admin">Admin</option>
+        <option value="qa">QA</option>
+        <option value="developer">Developer</option>
     </select>
     <br><br>
     <button type="submit">Create User</button>

@@ -77,7 +77,7 @@ style = "
         cursor:pointer;
     "
 >
-Return to Logger</button>
+Return to Dashboard</button>
 
 <h2>My Profile</h2>
 

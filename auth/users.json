@@ -2,7 +2,7 @@
     {
         "id": 1,
         "username": "tester",
-        "password_hash": "$2y$10$gNxF99gBjIZ4.i9h\/T1jl.deXrxBJ2n8OEPagwDPkjscQpoRTZiRm",
+        "password_hash": "$2y$10$w0O8qwquXvkjkiLel47X8.qtcEBhHC3AsJNvPA8YntZDNX.YnvyDC",
         "role": "qa"
     },
     {

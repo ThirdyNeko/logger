@@ -45,37 +45,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>
 <!doctype html>
 <html>
-<head><title>Logger Login</title></head>
-<body>
-<h2>Login</h2>
-<?php if ($error): ?>
-<p style="color:red"><?= htmlspecialchars($error) ?></p>
-<?php endif; ?>
-<form method="post">
-  <input name="username" placeholder="Username" required>
-  <input name="password" type="password" placeholder="Password" required>
-  <button type="submit" style="
-        background:#000000;
-        border:1px solid #000000;
-        color:#FFFFFF;
-        padding: 2px 10px;
-        border-radius:4px;
-        cursor:pointer;
-    ">Login</button>
-</form>
+<head>
+    <title>Logger Login
 
-<br>
+    </title>
+    <link rel="stylesheet" href="../css/design.css">
+</head>
+<body class = "login-body">
 
-<button type="button" 
-        onclick="window.location.href='create_user.php'"
-        style="
-        background:#FFFFFF;
-        border:1px solid #000000;
-        color:#000000;
-        padding: 2px 10px;
-        border-radius:4px;
-        cursor:pointer;"
-        >Sign up</button>
+    <div class = "page-container">
+        <h1 class="login-title">QA Logger</h1>  
+        <div class="login-card">
+            <h2>Login</h2>
 
+            <?php if ($error): ?>
+            <p style="color:red"><?= htmlspecialchars($error) ?></p>
+            <?php endif; ?>
+
+            <form class = "login-form"method="post">
+                <input class = "login-input" name="username" placeholder="Username" required>
+                <input class = "login-input" name="password" type="password" placeholder="Password" required>
+                <button class="btn-white" type="submit">Login</button>
+            </form>
+
+            <button class="login-singup-button"
+                    type="button" 
+                    onclick="window.location.href='create_user.php'">
+                    Sign up
+            </button>
+        </div>
+    </div>
 </body>
 </html>

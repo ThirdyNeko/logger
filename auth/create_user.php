@@ -52,35 +52,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html>
 <head>
     <title>Create User</title>
+    <link rel="stylesheet" href="../css/design.css">
 </head>
-<body>
+<body class = "signup-body">
+    <div class = "page-container">
+        <h2>Create User</h2>
+        <div class="signup-card">
+            <?php if ($error): ?>
+                <p style="color:red"><?= htmlspecialchars($error) ?></p>
+            <?php endif; ?>
 
-<h2>Create User</h2>
+            <?php if ($success): ?>
+                <p style="color:green"><?= htmlspecialchars($success) ?></p>
+            <?php endif; ?>
 
-<?php if ($error): ?>
-    <p style="color:red"><?= htmlspecialchars($error) ?></p>
-<?php endif; ?>
-
-<?php if ($success): ?>
-    <p style="color:green"><?= htmlspecialchars($success) ?></p>
-<?php endif; ?>
-
-<form method="post">
-    <input name="username" placeholder="Username" required>
-    <br><br>
-    <input name="password" type="password" placeholder="Password" required>
-    <br><br>
-    <select name="role">
-        <option value="qa">QA</option>
-        <option value="developer">Developer</option>
-    </select>
-    <br><br>
-    <button type="submit">Create User</button>
-</form>
-
-<p>
-    <a href="login.php">Back to login</a>
-</p>
+            <form class = "signup-form" method="post">
+                <input class = "signup-input" name="username" placeholder="Username" required>
+                <input class = "signup-input" name="password" type="password" placeholder="Password" required>
+                <select class = "signup-form"name="role">
+                    <option value="qa">QA</option>
+                    <option value="developer">Developer</option>
+                </select>
+                <button class = "btn-white" type="submit">Create User</button>
+            </form>
+        </div>
+        <button class="signup-return-button"
+                            type="button" 
+                            onclick="window.location.href='login.php'">
+                            Back to login
+        </button>
+    </div>
 
 </body>
 </html>

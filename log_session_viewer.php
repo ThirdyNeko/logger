@@ -120,12 +120,13 @@ if ($selectedSession && isset($filteredRemarked[$selectedSession])) {
         .log-box { background:#fff; border:1px solid #ccc; border-radius:6px; padding:15px; margin-bottom:20px; }
         select, input[type=date] { padding:5px; margin-top:5px; }
     </style>
+    <link rel="stylesheet" href="css/design.css">
 </head>
 <body>
 
 <h1>Previous Sessions – Remarks (Read-Only)</h1>
 
-<button onclick="window.location.href='logger_index.php'">Return to Logger</button>
+<button class="btn-white" onclick="window.location.href='logger_index.php'">Return to Logger</button>
 
 <hr>
 

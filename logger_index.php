@@ -414,38 +414,12 @@ $currentRemark    = $remarked[$currentIteration]['remark'] ?? '';
         button { padding:6px 12px; margin-top:5px; }
         select { padding:4px; margin-bottom:10px; }
     </style>
+    <link rel="stylesheet" href="css/design.css">
 </head>
 <body>
 
-<button
-    type="button"
-    onclick="window.location.href='auth/logout.php'"
-    style="
-        background:#FFFFFF;
-        border:1px solid #000000;
-        color:#000000;
-        padding:8px 14px;
-        border-radius:4px;
-        cursor:pointer;
-    ">
-    Logout
-</button>
-
-<button
-    type="button"
-    onclick="window.location.href='profile.php'"
-    style="
-        background:#000000;
-        border:1px solid #000000;
-        color:#FFFFFF;
-        padding:8px 14px;
-        border-radius:4px;
-        cursor:pointer;
-    ">
-    Profile
-</button>
-
 <h1>QA Logger/Viewer</h1>
+
 
 <form method="POST" style="margin-bottom:15px; display:flex; gap:10px; align-items:center;"
       onsubmit="return promptSessionName();">
@@ -453,34 +427,39 @@ $currentRemark    = $remarked[$currentIteration]['remark'] ?? '';
     <input type="hidden" name="session_name" id="session_name_input">
 
     <!-- Start New Session -->
+
+
     <button
+        class="btn-black"
         type="submit"
-        name="new_session"
-        style="
-            background:#000000;
-            color:white;
-            border:1px solid #000000;
-            padding:8px 14px;
-            border-radius:4px;
-            cursor:pointer;
-        ">
+        name="new_session">
         Start New Session
     </button>
 
     <!-- Go to Session Viewer -->
     <button
-    type="button"
-    onclick="window.location.href='log_session_viewer.php'"
-    style="
-        background:#FFFFFF;
-        border:1px solid #000000;
-        color:#000000;
-        padding:8px 14px;
-        border-radius:4px;
-        cursor:pointer;
-    ">
-    View Sessions
+        class="btn-white"
+        type="button"
+        onclick="window.location.href='log_session_viewer.php'">
+        View Sessions
     </button>
+
+
+    <div style = "align-self: right; margin-left: auto; display: flex; gap: 10px;">
+        <button
+            class="btn-white"
+            type="button"
+            onclick="window.location.href='auth/logout.php'">
+            Logout
+        </button>
+
+        <button
+            class="btn-black"
+            type="button"
+            onclick="window.location.href='profile.php'">
+            Profile
+        </button>
+    </div>
 
 
 </form>

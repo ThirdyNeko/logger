@@ -64,48 +64,42 @@ if (isset($_SESSION['user']['role'])) {
 <html>
 <head>
     <title>My Profile</title>
+    <link rel="stylesheet" href="css/design.css">
 </head>
-<body>
-<br>
-<button onclick="window.location.href='<?= htmlspecialchars($redirectUrl) ?>'"
-style = "
-        background:#FFFFFF;
-        border:1px solid #000000;
-        color:#000000;
-        padding: 8px 14px;
-        border-radius:4px;
-        cursor:pointer;
-    "
->
-Return to Dashboard</button>
+<body class="profile-body">
 
-<h2>My Profile</h2>
+    <div class="page-container">
+        <h2>My Profile</h2>
+        <h2>Hello <?= htmlspecialchars($_SESSION['user']['username']) ?><br></h2> 
 
-<p>
-    <strong>Username:</strong> <?= htmlspecialchars($_SESSION['user']['username']) ?><br>
-    <strong>Role:</strong> 
-    <span style="text-transform: uppercase;">
-        <?= htmlspecialchars($_SESSION['user']['role']) ?>
-    </span>
-</p>
+        <p>
+            <strong>Username:</strong> <?= htmlspecialchars($_SESSION['user']['username']) ?><br>
+            <strong>Role:</strong> 
+            <span style="text-transform: uppercase;">
+                <?= htmlspecialchars($_SESSION['user']['role']) ?>
+            </span>
+        </p>
+        <div class="profile-card">
+            <?php if ($error): ?>
+                <p style="color:red"><?= htmlspecialchars($error) ?></p>
+            <?php endif; ?>
 
-<?php if ($error): ?>
-    <p style="color:red"><?= htmlspecialchars($error) ?></p>
-<?php endif; ?>
+            <?php if ($success): ?>
+                <p style="color:green"><?= htmlspecialchars($success) ?></p>
+            <?php endif; ?>
 
-<?php if ($success): ?>
-    <p style="color:green"><?= htmlspecialchars($success) ?></p>
-<?php endif; ?>
-
-<form method="post">
-    <input type="password" name="current_password" placeholder="Current password" required>
-    <br><br>
-    <input type="password" name="new_password" placeholder="New password" required>
-    <br><br>
-    <input type="password" name="confirm_password" placeholder="Confirm new password" required>
-    <br><br>
-    <button type="submit">Change Password</button>
-</form>
-
+            <form class ="profile-form" method="post">
+                <input class = "profile-input" type="password" name="current_password" placeholder="Current password" required>
+    
+                <input class = "profile-input" type="password" name="new_password" placeholder="New password" required>
+             
+                <input class = "profile-input" type="password" name="confirm_password" placeholder="Confirm new password" required>
+          
+                <button class = "btn-black" type="submit">Change Password</button>
+            </form>
+        </div>
+        <button class="profile-return-button" onclick="window.location.href='<?= htmlspecialchars($redirectUrl) ?>'">
+        Return to Dashboard</button>
+    </div>
 </body>
 </html>

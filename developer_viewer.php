@@ -176,21 +176,18 @@ if ($selectedSession && isset($filteredRemarked[$selectedSession])) {
         .log-box { background:#fff; border:1px solid #ccc; border-radius:6px; padding:15px; margin-bottom:20px; }
         select, input[type=date] { padding:5px; margin-top:5px; }
     </style>
+    <link rel="stylesheet" href="css/design.css">
 </head>
 <body>
 
 <h1>Previous Sessions – Remarks (Read-Only)</h1>
 
-<button type="button" onclick="window.location.href='auth/logout.php'"
-        style="background:#FFFFFF;border:1px solid #000000;color:#000000;padding:8px 14px;border-radius:4px;cursor:pointer;">
+<button class = "btn-white"type="button" onclick="window.location.href='auth/logout.php'">
     Logout
 </button>
-
-<button type="button" onclick="window.location.href='profile.php'"
-        style="background:#000000;border:1px solid #000000;color:#FFFFFF;padding:8px 14px;border-radius:4px;cursor:pointer;">
+<button class = "btn-black"type="button" onclick="window.location.href='profile.php'" >
     Profile
 </button>
-
 <hr>
 
 <!-- USER FILTER -->

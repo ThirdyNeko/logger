@@ -12,15 +12,15 @@
         "role": "qa"
     },
     {
-        "id": "user_6965e43dec3f84.08255200",
+        "id": 3,
         "username": "NekuNeko",
-        "password_hash": "$2y$10$VlApF1SdFIoiV7LlZUdu5uW0OLq3cq\/iLIEwNRuQJQ0N9idemqXp6",
+        "password_hash": "$2y$10$5J.0tvdO80jY3QWi.KBs9ew9guwXzVboQlmhFM1G9eA6ZYgxECCpa",
         "role": "developer"
     },
     {
-        "id": "user_6966065ccfc9c7.25385778",
+        "id": 4,
         "username": "ThirdehCat",
-        "password_hash": "$2y$10$Ys0cKOzY4AKA3.sfumaXUu8KbWk7LUu4RoyBcOjR42rmcp6\/HqMxK",
-        "role": "developer"
+        "password_hash": "$2y$10$\/WcTjF0k3Ts\/qu9x6N8IUuOwlh9UVN1mri0BiHx82dkjZAxqtguUO",
+        "role": "qa"
     }
 ]

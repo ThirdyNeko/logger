@@ -1,1 +1,0 @@
-{"type":"backend-response","method":"POST","endpoint":"\/iserve2\/actions\/logininventory.php","status":200,"request":{"Username":"reil","Password":"reil123","Status":"ONLINE"},"response":{"response":"DENIED","message":"Inventory account access denied."},"timestamp":"2026-01-13T07:22:43+01:00","user_id":"user_6965e43dec3f84.08255200","iteration_id":1,"session_id":"TEST_1"}

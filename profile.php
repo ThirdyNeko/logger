@@ -42,6 +42,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         unset($u);
     }
 }
+
+$redirectUrl = '/auth/login.php'; // safe fallback
+
+if (isset($_SESSION['user']['role'])) {
+    switch ($_SESSION['user']['role']) {
+        case 'developer':
+            $redirectUrl = 'developer_viewer.php';
+            break;
+
+        case 'qa':
+            $redirectUrl = 'logger_index.php';
+            break;
+        
+        default:
+            $redirectUrl = '/auth/login.php';
+    }
+}
 ?>
 <!doctype html>
 <html>
@@ -50,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
 <br>
-<button onclick="window.location.href='logger_index.php'"
+<button onclick="window.location.href='<?= htmlspecialchars($redirectUrl) ?>'"
 style = "
         background:#FFFFFF;
         border:1px solid #000000;
@@ -59,13 +76,17 @@ style = "
         border-radius:4px;
         cursor:pointer;
     "
->Return to Logger</button>
+>
+Return to Logger</button>
 
 <h2>My Profile</h2>
 
 <p>
     <strong>Username:</strong> <?= htmlspecialchars($_SESSION['user']['username']) ?><br>
-    <strong>Role:</strong> <?= htmlspecialchars($_SESSION['user']['role']) ?>
+    <strong>Role:</strong> 
+    <span style="text-transform: uppercase;">
+        <?= htmlspecialchars($_SESSION['user']['role']) ?>
+    </span>
 </p>
 
 <?php if ($error): ?>

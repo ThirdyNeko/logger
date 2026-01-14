@@ -1,8 +1,8 @@
 {
     "session_id": "TEST_3",
     "session_name": "TEST_3",
-    "iteration": 0,
-    "remarks_iteration": "",
-    "last_second": null,
+    "iteration": 1,
+    "remarks_iteration": "1",
+    "last_second": "2026-01-14 09:10:28",
     "logging_active": true
 }

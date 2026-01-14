@@ -23,8 +23,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (!$error) {
+        // Determine next integer ID
+        $maxId = 0;
+        foreach ($users as $u) {
+            if (isset($u['id']) && is_numeric($u['id'])) {
+                $maxId = max($maxId, (int)$u['id']);
+            }
+        }
+        $newId = $maxId + 1;
+
         $users[] = [
-            'id'            => uniqid('user_', true),
+            'id'            => $newId,
             'username'      => $username,
             'password_hash' => password_hash($password, PASSWORD_DEFAULT),
             'role'          => $role

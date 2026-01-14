@@ -9,6 +9,19 @@ $users = file_exists($usersFile)
 $error = '';
 $success = '';
 
+$usernameValue = '';
+$roleValue     = 'user';
+$passwordValue        = '';
+$confirmPasswordValue = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $usernameValue        = htmlspecialchars($_POST['username'] ?? '');
+    $roleValue            = $_POST['role'] ?? 'user';
+    $passwordValue        = htmlspecialchars($_POST['password'] ?? '');
+    $confirmPasswordValue = htmlspecialchars($_POST['confirm_password'] ?? '');
+}
+
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username         = trim($_POST['username'] ?? '');
     $password         = $_POST['password'] ?? '';
@@ -91,12 +104,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
 
             <form class = "signup-form" method="post">
-                <input class = "signup-input" name="username" placeholder="Username" required>
-                <input class = "signup-input" name="password" type="password" placeholder="Password" required>
-                <input class = "signup-input" name="confirm_password" type="password" placeholder="Confirm Password" required>
+                <input class = "signup-input" name="username" placeholder="Username" value="<?= $usernameValue ?>" required>
+                <input class = "signup-input" name="password" type="password" placeholder="Password" value="<?= $passwordValue ?>" required>
+                <input class = "signup-input" name="confirm_password" type="password" placeholder="Confirm Password" value="<?= $confirmPasswordValue ?>" required>
                 <select class = "signup-form"name="role">
-                    <option value="qa">QA</option>
-                    <option value="developer">Developer</option>
+                    <option value="qa" <?= $roleValue === 'qa' ? 'selected' : '' ?>>QA</option>
+                    <option value="developer" <?= $roleValue === 'developer' ? 'selected' : '' ?>>Developer</option>
                 </select>
                 <button class = "btn-white" type="submit">Create User</button>
             </form>

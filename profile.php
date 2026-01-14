@@ -12,6 +12,17 @@ $users = json_decode(file_get_contents($usersFile), true) ?? [];
 $error = '';
 $success = '';
 
+$currentPasswordValue = '';
+$newPasswordValue     = '';
+$confirmPasswordValue = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$success) {
+    $currentPasswordValue = htmlspecialchars($_POST['current_password'] ?? '');
+    $newPasswordValue     = htmlspecialchars($_POST['new_password'] ?? '');
+    $confirmPasswordValue = htmlspecialchars($_POST['confirm_password'] ?? '');
+}
+
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $currentPassword = $_POST['current_password'] ?? '';
     $newPassword     = $_POST['new_password'] ?? '';
@@ -19,6 +30,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($newPassword !== $confirmPassword) {
         $error = 'New passwords do not match';
+    
+    
+        
+    } else if (!$error && (!preg_match('/[A-Z]/', $newPassword) || !preg_match('/[0-9]/', $newPassword))) {
+        $error = 'Password must contain at least one capital letter and one number';
+    
     } else {
         foreach ($users as &$u) {
             if ($u['id'] === $_SESSION['user']['id']) {
@@ -89,11 +106,11 @@ if (isset($_SESSION['user']['role'])) {
             <?php endif; ?>
 
             <form class ="profile-form" method="post">
-                <input class = "profile-input" type="password" name="current_password" placeholder="Current password" required>
-    
-                <input class = "profile-input" type="password" name="new_password" placeholder="New password" required>
-             
-                <input class = "profile-input" type="password" name="confirm_password" placeholder="Confirm new password" required>
+                <input class = "profile-input" type="password" name="current_password" placeholder="Current password" value="<?= $currentPasswordValue ?>" required>
+
+                <input class = "profile-input" type="password" name="new_password" placeholder="New password" value="<?= $newPasswordValue ?>" required>
+
+                <input class = "profile-input" type="password" name="confirm_password" placeholder="Confirm new password" value="<?= $confirmPasswordValue ?>" required>
           
                 <button class = "btn-black" type="submit">Change Password</button>
             </form>

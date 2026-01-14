@@ -14,7 +14,7 @@
     {
         "id": 3,
         "username": "NekuNeko",
-        "password_hash": "$2y$10$5J.0tvdO80jY3QWi.KBs9ew9guwXzVboQlmhFM1G9eA6ZYgxECCpa",
+        "password_hash": "$2y$10$qES.46trglK.vTeKhOXPre7vY5r.3uD.Md5bObv1Xw2dbNOCsTnBy",
         "role": "developer"
     },
     {
@@ -27,6 +27,12 @@
         "id": 5,
         "username": "FakePersona",
         "password_hash": "$2y$10$hkDdhU30CXeNItdhxcwg7uLNqn81HiFxMecswXLzdHXFN1ijnAqk2",
+        "role": "qa"
+    },
+    {
+        "id": 6,
+        "username": "Sample",
+        "password_hash": "$2y$10$3Y4lzW4M13KZ4bvpi5865u149Ep00mSCAYG06UgO9cQosZrSvmUNG",
         "role": "qa"
     }
 ]

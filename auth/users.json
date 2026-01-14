@@ -22,5 +22,11 @@
         "username": "ThirdehCat",
         "password_hash": "$2y$10$\/WcTjF0k3Ts\/qu9x6N8IUuOwlh9UVN1mri0BiHx82dkjZAxqtguUO",
         "role": "qa"
+    },
+    {
+        "id": 5,
+        "username": "FakePersona",
+        "password_hash": "$2y$10$hkDdhU30CXeNItdhxcwg7uLNqn81HiFxMecswXLzdHXFN1ijnAqk2",
+        "role": "qa"
     }
 ]

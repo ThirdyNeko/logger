@@ -64,35 +64,36 @@ $userId = (string) ($_SESSION['user']['id'] ?? '');
 $role   = $_SESSION['user']['role'] ?? '';
 
 /* ==========================
-   Load user ID → username map
+   Load QA users WITH logs
 ========================== */
 
-$userMap = [];
+$userMap = [];        // id => username
+$availableUsers = []; // list of QA user IDs
+
 $usersFile = __DIR__ . '/auth/users.json';
+$logsRoot  = __DIR__ . '/logs';
 
 if (is_file($usersFile)) {
     $users = json_decode(file_get_contents($usersFile), true);
+
     foreach ($users ?? [] as $u) {
-        if (isset($u['id'], $u['username'])) {
-            $userMap[(string)$u['id']] = $u['username'];
+        if (
+            isset($u['id'], $u['username'], $u['role']) &&
+            $u['role'] === 'qa'
+        ) {
+            $uid = (string) $u['id'];
+
+            // only include QA users that actually have logs
+            if (is_dir($logsRoot . "/user_{$uid}")) {
+                $userMap[$uid] = $u['username'];
+                $availableUsers[] = $uid;
+            }
         }
     }
 }
 
-/* ==========================
-   Discover users with logs
-========================== */
-
-$logsRoot = __DIR__ . '/logs';
-$availableUsers = [];
-
-if (is_dir($logsRoot)) {
-    foreach (glob($logsRoot . '/user_*', GLOB_ONLYDIR) as $dir) {
-        $availableUsers[] = str_replace('user_', '', basename($dir));
-    }
-}
-
 sort($availableUsers);
+
 
 /* ==========================
    Resolve selected user
@@ -180,7 +181,7 @@ if ($selectedSession && isset($filteredRemarked[$selectedSession])) {
 </head>
 <body>
 
-<h1>Previous Sessions – Remarks (Read-Only)</h1>
+<h1>Developer Menu</h1>
 
 <button class = "btn-white"type="button" onclick="window.location.href='auth/logout.php'">
     Logout

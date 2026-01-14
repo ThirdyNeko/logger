@@ -10,18 +10,40 @@ $error = '';
 $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username'] ?? '');
-    $password = $_POST['password'] ?? '';
-    $role     = $_POST['role'] ?? 'user';
+    $username         = trim($_POST['username'] ?? '');
+    $password         = $_POST['password'] ?? '';
+    $confirmPassword  = $_POST['confirm_password'] ?? '';
+    $role             = $_POST['role'] ?? 'user';
 
+    // --------------------------
+    // Password match check
+    // --------------------------
+    if ($password !== $confirmPassword) {
+        $error = 'Passwords do not match';
+    }
+
+    // --------------------------
+    // Password strength check
+    // --------------------------
+    if (!$error && (!preg_match('/[A-Z]/', $password) || !preg_match('/[0-9]/', $password))) {
+        $error = 'Password must contain at least one capital letter and one number';
+    }
+
+    // --------------------------
     // Check duplicate username
-    foreach ($users as $u) {
-        if ($u['username'] === $username) {
-            $error = 'Username already exists';
-            break;
+    // --------------------------
+    if (!$error) {
+        foreach ($users as $u) {
+            if ($u['username'] === $username) {
+                $error = 'Username already exists';
+                break;
+            }
         }
     }
 
+    // --------------------------
+    // Create user
+    // --------------------------
     if (!$error) {
         // Determine next integer ID
         $maxId = 0;
@@ -47,6 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $success = 'User created successfully';
     }
 }
+
 ?>
 <!doctype html>
 <html>
@@ -56,8 +79,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body class = "signup-body">
     <div class = "page-container">
-        <h2>Create User</h2>
+        <h1>Create User</h1>
         <div class="signup-card">
+            <h2> New User Details</h2>
             <?php if ($error): ?>
                 <p style="color:red"><?= htmlspecialchars($error) ?></p>
             <?php endif; ?>
@@ -69,18 +93,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <form class = "signup-form" method="post">
                 <input class = "signup-input" name="username" placeholder="Username" required>
                 <input class = "signup-input" name="password" type="password" placeholder="Password" required>
+                <input class = "signup-input" name="confirm_password" type="password" placeholder="Confirm Password" required>
                 <select class = "signup-form"name="role">
                     <option value="qa">QA</option>
                     <option value="developer">Developer</option>
                 </select>
                 <button class = "btn-white" type="submit">Create User</button>
             </form>
-        </div>
-        <button class="signup-return-button"
+            <button class="signup-return-button"
                             type="button" 
                             onclick="window.location.href='login.php'">
                             Back to login
-        </button>
+            </button>
+        </div>
+        
     </div>
 
 </body>

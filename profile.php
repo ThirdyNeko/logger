@@ -68,18 +68,18 @@ if (isset($_SESSION['user']['role'])) {
 </head>
 <body class="profile-body">
 
-    <div class="page-container">
+    <div class="page-container" style = "padding-top: 100px;">
         <h2>My Profile</h2>
-        <h2>Hello <?= htmlspecialchars($_SESSION['user']['username']) ?><br></h2> 
-
-        <p>
+        <h2>Hello <?= htmlspecialchars($_SESSION['user']['username']) ?><br></h2>         
+        <div class="profile-card" style = "margin-top: 100px;">
+            <h2> Change Password</h2>
+            <p>
             <strong>Username:</strong> <?= htmlspecialchars($_SESSION['user']['username']) ?><br>
             <strong>Role:</strong> 
             <span style="text-transform: uppercase;">
                 <?= htmlspecialchars($_SESSION['user']['role']) ?>
             </span>
-        </p>
-        <div class="profile-card">
+            </p>
             <?php if ($error): ?>
                 <p style="color:red"><?= htmlspecialchars($error) ?></p>
             <?php endif; ?>
@@ -97,9 +97,11 @@ if (isset($_SESSION['user']['role'])) {
           
                 <button class = "btn-black" type="submit">Change Password</button>
             </form>
+
+            <button class="profile-return-button" onclick="window.location.href='<?= htmlspecialchars($redirectUrl) ?>'">
+            Return to Dashboard
+            </button>
         </div>
-        <button class="profile-return-button" onclick="window.location.href='<?= htmlspecialchars($redirectUrl) ?>'">
-        Return to Dashboard</button>
     </div>
 </body>
 </html>

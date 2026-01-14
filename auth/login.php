@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';
 
-    foreach ($users as $user) {
+    foreach ($users as $index => $user) {
         if ($user['username'] === $username &&
             password_verify($password, $user['password_hash'])) {
 
@@ -21,6 +21,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'username' => $user['username'],
                 'role'     => $user['role']
             ];
+
+            // ✅ FIRST LOGIN CHECK
+            if (!empty($user['first_login'])) {
+
+                // mark as no longer first login
+                $users[$index]['first_login'] = false;
+
+                file_put_contents(
+                    __DIR__ . '/users.json',
+                    json_encode($users, JSON_PRETTY_PRINT)
+                );
+
+                header('Location: ../profile.php');
+                exit;
+            }
 
             // 🔁 ROLE-BASED REDIRECT
             switch ($user['role']) {
@@ -33,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     break;
 
                 default:
-                    header('Location: ../login.php'); // fallback
+                    header('Location: ../login.php');
             }
 
             exit;
@@ -68,11 +83,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <button class="btn-white" type="submit">Login</button>
             </form>
 
-            <button class="login-singup-button"
-                    type="button" 
-                    onclick="window.location.href='create_user.php'">
-                    Sign up
-            </button>
         </div>
     </div>
 </body>

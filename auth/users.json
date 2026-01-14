@@ -3,36 +3,42 @@
         "id": 1,
         "username": "tester",
         "password_hash": "$2y$10$w0O8qwquXvkjkiLel47X8.qtcEBhHC3AsJNvPA8YntZDNX.YnvyDC",
-        "role": "qa"
+        "role": "qa",
+        "first_login": false
     },
     {
         "id": 2,
         "username": "ThirdNeko",
         "password_hash": "$2y$10$VVhGk2MDmDQ02OeqlQ0ALOQZnLAZHxfhTpVCwIj\/HVR2WY110.e3S",
-        "role": "qa"
+        "role": "qa",
+        "first_login": false
     },
     {
         "id": 3,
         "username": "NekuNeko",
-        "password_hash": "$2y$10$qES.46trglK.vTeKhOXPre7vY5r.3uD.Md5bObv1Xw2dbNOCsTnBy",
-        "role": "developer"
+        "password_hash": "$2y$10$ivnbMneOHCINHXG1A\/9JTu.10bWEdkHYAd9DjL1owfyvX4Lcp9gC.",
+        "role": "developer",
+        "first_login": false
     },
     {
         "id": 4,
         "username": "ThirdehCat",
         "password_hash": "$2y$10$\/WcTjF0k3Ts\/qu9x6N8IUuOwlh9UVN1mri0BiHx82dkjZAxqtguUO",
-        "role": "qa"
+        "role": "qa",
+        "first_login": false
     },
     {
         "id": 5,
         "username": "FakePersona",
         "password_hash": "$2y$10$hkDdhU30CXeNItdhxcwg7uLNqn81HiFxMecswXLzdHXFN1ijnAqk2",
-        "role": "qa"
+        "role": "qa",
+        "first_login": false
     },
     {
         "id": 6,
         "username": "Sample",
         "password_hash": "$2y$10$3Y4lzW4M13KZ4bvpi5865u149Ep00mSCAYG06UgO9cQosZrSvmUNG",
-        "role": "qa"
+        "role": "qa",
+        "first_login": false
     }
 ]

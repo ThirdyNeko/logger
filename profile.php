@@ -46,7 +46,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 $u['password_hash'] = password_hash($newPassword, PASSWORD_DEFAULT);
-
+                // ✅ Mark first login as completed
+                $u['first_login'] = false;
                 file_put_contents(
                     $usersFile,
                     json_encode($users, JSON_PRETTY_PRINT)

@@ -52,7 +52,10 @@ $GLOBALS['__QA_RESPONSE_HASH__'] = null;
  */
 function qa_backend_log(array $data)
 {
-    session_start();
+    if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+        @session_start();
+    }
+
     $data['user_id'] = $_SESSION['user']['id'] ?? 'guest';
 
     global $BACKEND_RECEIVER;
@@ -210,40 +213,31 @@ set_error_handler(function ($severity, $message, $file, $line) {
 /* --------------------------------------------------
    SHUTDOWN SAFETY (last chance, once only)
 -------------------------------------------------- */
+
+register_shutdown_function(function () {
+    if (ob_get_level() > 0) {
+        @ob_end_flush();
+    }
+});
+
 register_shutdown_function(function () {
 
-    if ($GLOBALS['__QA_LOGGED__']) {
+    $error = error_get_last();
+
+    if (!$error) {
         return;
     }
 
-    if (empty($_POST) && empty($_GET)) {
+    if (in_array($error['type'], [E_DEPRECATED, E_USER_DEPRECATED])) {
         return;
     }
-
-    $output = ob_get_contents();
-    $json   = qa_extract_json($output);
-    if ($json === null) {
-        return;
-    }
-
-    $endpoint = $_SERVER['REQUEST_URI'] ?? '';
-    $request  = $_POST ?: $_GET;
-
-    $hash = qa_response_hash($endpoint, $request, $json);
-
-    if ($GLOBALS['__QA_RESPONSE_HASH__'] === $hash) {
-        return;
-    }
-
-    $GLOBALS['__QA_LOGGED__'] = true;
 
     qa_backend_log([
-        'type'      => 'backend-response',
-        'method'    => $_SERVER['REQUEST_METHOD'],
-        'endpoint'  => $endpoint,
-        'status'    => http_response_code(),
-        'request'   => $request,
-        'response'  => $json,
+        'type'      => 'backend-fatal',
+        'severity'  => $error['type'],
+        'message'   => $error['message'],
+        'file'      => $error['file'],
+        'line'      => $error['line'],
         'timestamp' => date('c')
     ]);
 });

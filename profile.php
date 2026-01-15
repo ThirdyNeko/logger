@@ -9,6 +9,14 @@ if (!isset($_SESSION['user'])) {
 $usersFile = __DIR__ . '/auth/users.json';
 $users = json_decode(file_get_contents($usersFile), true) ?? [];
 
+foreach ($users as $u) {
+    if ($u['id'] === $_SESSION['user']['id']) {
+        $_SESSION['user']['first_login'] = $u['first_login'];
+        break;
+    }
+}
+
+
 $error = '';
 $success = '';
 
@@ -48,6 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $u['password_hash'] = password_hash($newPassword, PASSWORD_DEFAULT);
                 // ✅ Mark first login as completed
                 $u['first_login'] = false;
+                $_SESSION['user']['first_login'] = false; // ✅ ADD THIS
                 file_put_contents(
                     $usersFile,
                     json_encode($users, JSON_PRETTY_PRINT)
@@ -115,9 +124,25 @@ if (isset($_SESSION['user']['role'])) {
                 <button class = "btn-black" type="submit">Change Password</button>
             </form>
 
-            <button class="profile-return-button" onclick="window.location.href='<?= htmlspecialchars($redirectUrl) ?>'">
-            Return to Dashboard
+            <button
+                class="profile-return-button"
+                onclick="handleReturn()"
+            >
+                Return to Dashboard
             </button>
+
+            <script>
+            function handleReturn() {
+                const firstLogin = <?= json_encode(!empty($_SESSION['user']['first_login'])) ?>;
+
+                if (firstLogin) {
+                    alert("You must change your password before accessing the dashboard.");
+                    return;
+                }
+
+                window.location.href = "<?= htmlspecialchars($redirectUrl) ?>";
+            }
+            </script>
         </div>
     </div>
 </body>

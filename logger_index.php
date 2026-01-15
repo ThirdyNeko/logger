@@ -70,17 +70,15 @@ $selectedRemarksIteration = $qaState['remarks_iteration'] ?? '';
  * Handle new session request
  */
 if (isset($_POST['new_session'])) {
-
-    $_SERVER['QA_SKIP_LOGGING'] = true; // 👈 THIS LINE (must be first)
+    // Skip logging for "new session" requests
+    $_SERVER['QA_SKIP_LOGGING'] = true;
 
     $rawName = trim($_POST['session_name'] ?? '');
-
     if ($rawName === '') {
         $rawName = 'Unnamed_Session';
     }
 
     $sessionName = qa_normalize_session_name($rawName);
-
     $existingNames = qa_load_session_names();
 
     if (in_array($sessionName, $existingNames, true)) {
@@ -96,7 +94,14 @@ if (isset($_POST['new_session'])) {
 
     header('Location: ' . $_SERVER['PHP_SELF']);
     exit;
+
+} else {
+    // All other requests: allow logging
+    if (isset($_SERVER['QA_SKIP_LOGGING'])) {
+        unset($_SERVER['QA_SKIP_LOGGING']);
+    }
 }
+
 
 
 $status = qa_get_logging_status();

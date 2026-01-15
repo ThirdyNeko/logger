@@ -52,8 +52,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $usersFile,
                     json_encode($users, JSON_PRETTY_PRINT)
                 );
-
                 $success = 'Password updated successfully';
+
                 break;
             }
         }
@@ -88,10 +88,9 @@ if (isset($_SESSION['user']['role'])) {
 
     <div class="page-container" style = "padding-top: 100px;">
         <h2>My Profile</h2>
-        <h2>Hello <?= htmlspecialchars($_SESSION['user']['username']) ?><br></h2>         
+        <h2>Hello <?= htmlspecialchars($_SESSION['user']['username']) ?><br></h2> 
         <div class="profile-card" style = "margin-top: 100px;">
             <h2> Change Password</h2>
-            <p>
             <strong>Username:</strong> <?= htmlspecialchars($_SESSION['user']['username']) ?><br>
             <strong>Role:</strong> 
             <span style="text-transform: uppercase;">

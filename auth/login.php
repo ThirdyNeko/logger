@@ -25,9 +25,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // ✅ FIRST LOGIN CHECK
             if (!empty($user['first_login'])) {
 
-                // mark as no longer first login
-                $users[$index]['first_login'] = false;
-
                 file_put_contents(
                     __DIR__ . '/users.json',
                     json_encode($users, JSON_PRETTY_PRINT)

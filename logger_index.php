@@ -528,8 +528,7 @@ Start a new session to resume logging.
 <div style="margin-bottom:15px;color:#555;">
 Current Log count:
 <strong><?= (int)$status['iteration'] ?></strong>
-|
-Logging status:
+| Logging status:
 <strong><?= $status['active'] ? 'ACTIVE' : 'STOPPED' ?></strong>
 </div>
 

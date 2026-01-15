@@ -44,9 +44,8 @@
     {
         "id": 7,
         "username": "April",
-        "password_hash": "$2y$10$w0O8qwquXvkjkiLel47X8.qtcEBhHC3AsJNvPA8YntZDNX.YnvyDC",
+        "password_hash": "$2y$10$y3pSK6kj75B5plHXl..CLe.Y5bqyyrD8\/53lcpsltg2Nf2CrG0IYO",
         "role": "qa",
-        "first_login": true
+        "first_login": false
     }
-
 ]

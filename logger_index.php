@@ -454,7 +454,7 @@ $currentRemark    = $remarked[$currentIteration]['remark'] ?? '';
         <button
             class="btn-white"
             type="button"
-            onclick="window.location.href='auth/logout.php'">
+            onclick="window.location.href='auth/logger_logout.php'">
             Logout
         </button>
 

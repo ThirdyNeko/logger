@@ -1,0 +1,53 @@
+{
+    "16": {
+        "name": "good",
+        "remark": "good",
+        "logs": [
+            {
+                "type": "frontend-io",
+                "url": "dirs\/newform\/actions\/get_verifyregion.php",
+                "method": "POST",
+                "request": "BranchName=SHOWROOM",
+                "response": "Incomplete! - Please fill in all required fields before proceeding.",
+                "status": 200,
+                "timestamp": "2026-01-15T06:36:02.315Z",
+                "iteration_id": 16,
+                "session_id": "TEST_10",
+                "user_id": 1
+            },
+            {
+                "type": "frontend-io",
+                "url": "dirs\/newform\/actions\/get_verifyregion.php",
+                "method": "POST",
+                "request": "BranchName=SHOWROOM",
+                "response": " {\"isSuccess\":\"success\",\"Data\":{\"BranchName\":\"SHOWROOM\",\"Region\":\"ILOILO CITY\"}}",
+                "status": 200,
+                "timestamp": "2026-01-15T06:36:02.364Z",
+                "iteration_id": 16,
+                "session_id": "TEST_10",
+                "user_id": 1
+            },
+            {
+                "type": "backend-response",
+                "method": "POST",
+                "endpoint": "\/service\/dirs\/newform\/actions\/get_verifyregion.php",
+                "status": 200,
+                "request": {
+                    "BranchName": "SHOWROOM"
+                },
+                "response": {
+                    "isSuccess": "success",
+                    "Data": {
+                        "BranchName": "SHOWROOM",
+                        "Region": "ILOILO CITY"
+                    }
+                },
+                "timestamp": "2026-01-15T07:36:02+01:00",
+                "user_id": 1,
+                "iteration_id": 16,
+                "session_id": "TEST_10"
+            }
+        ],
+        "saved_at": "January 15, 2026, 2:42 PM"
+    }
+}

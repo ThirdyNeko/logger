@@ -183,7 +183,7 @@ if ($selectedSession && isset($filteredRemarked[$selectedSession])) {
 
 <h1>Developer Menu</h1>
 
-<button class = "btn-white"type="button" onclick="window.location.href='auth/logout.php'">
+<button class = "btn-white"type="button" onclick="window.location.href='auth/logger_logout.php'">
     Logout
 </button>
 <button class = "btn-black"type="button" onclick="window.location.href='profile.php'" >

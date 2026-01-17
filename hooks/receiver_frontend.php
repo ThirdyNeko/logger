@@ -3,15 +3,9 @@
 session_start();
 $userId = $_SESSION['user']['id'] ?? 'guest';
 
-/* ==========================
-   User-specific log folder
-========================= */
-$logBase = __DIR__ . "/../../logger/logs/user_{$userId}";
-if (!is_dir($logBase)) {
-    mkdir($logBase, 0777, true); // create folder recursively
-}
-
 require_once __DIR__ . '/../../logger/iteration_logic/qa_iteration_helper.php';
+require_once __DIR__ . '/../config/db.php'; // adjust path as needed
+
 
 $data = json_decode(file_get_contents('php://input'), true);
 
@@ -86,9 +80,37 @@ if (isset($logEntry['output']) && !isset($logEntry['response'])) {
 }
 
 /* ==========================
-   Write log to user-specific folder
+   Insert log into database
 ========================= */
-$file = "{$logBase}/frontend_logs_{$session}.jsonl";
-file_put_contents($file, json_encode($logEntry) . PHP_EOL, FILE_APPEND);
+
+
+$db = qa_db(); // your mysqli connection helper
+
+$stmt = $db->prepare("
+    INSERT INTO qa_logs
+    (user_id, session_id, iteration_id, type, url, method, request_body, response_body, status_code, timestamp)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+");
+
+$requestJson  = isset($data['request'])  ? json_encode($data['request'], JSON_UNESCAPED_UNICODE)  : null;
+$responseJson = isset($data['response']) ? json_encode($data['response'], JSON_UNESCAPED_UNICODE) : null;
+
+$stmt->bind_param(
+    'sissssssis',
+    $userId,
+    $data['session_id'],
+    $data['iteration_id'],
+    $data['type'] ?? null,
+    $data['url'] ?? null,
+    $data['method'] ?? null,
+    $requestJson,
+    $responseJson,
+    $data['status'] ?? null,
+    $data['timestamp']
+);
+
+$stmt->execute();
+$stmt->close();
 
 http_response_code(204);
+

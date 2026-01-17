@@ -5,17 +5,15 @@ define('QA_SKIP_LOGGING', true);
 date_default_timezone_set('Asia/Manila');
 require_once __DIR__ . '/iteration_logic/qa_iteration_helper.php';
 
-/* ============================
-   REMARKS ITERATION STATE
-============================ */
+/* ==========================
+   SESSION STATE / REMARKS
+========================== */
 
 $qaState = qa_get_session_state();
-
 
 // Save selection
 if (isset($_GET['remark_iteration'])) {
     $qaState['remarks_iteration'] = $_GET['remark_iteration'];
-
     qa_save_session_state($qaState);
 }
 
@@ -54,16 +52,13 @@ function qa_save_session_name(string $name): void
     $stmt->execute();
 }
 
-
 // Restore selection
 $selectedRemarksIteration = $qaState['remarks_iteration'] ?? '';
 
-
-/**
- * Handle new session request
- */
+/* ==========================
+   Handle new session
+========================== */
 if (isset($_POST['new_session'])) {
-    // Skip logging for "new session" requests
     $_SERVER['QA_SKIP_LOGGING'] = true;
 
     $rawName = trim($_POST['session_name'] ?? '');
@@ -89,13 +84,10 @@ if (isset($_POST['new_session'])) {
     exit;
 
 } else {
-    // All other requests: allow logging
     if (isset($_SERVER['QA_SKIP_LOGGING'])) {
         unset($_SERVER['QA_SKIP_LOGGING']);
     }
 }
-
-
 
 $status = qa_get_logging_status();
 $sessionId = qa_get_session_id();
@@ -104,40 +96,55 @@ $currentSessionName = isset($sessionState['session_name'])
     ? str_replace('_', ' ', $sessionState['session_name'])
     : 'Unknown';
 
-
 $userId = $_SESSION['user']['id'] ?? 'guest';
-/* ✅ User-specific log directory */
-$logBase = __DIR__ . "/logs/user_{$userId}";
-if (!is_dir($logBase)) {
-    mkdir($logBase, 0777, true);
+
+/* ==========================
+   Load logs from database
+========================== */
+$db = qa_db(); // mysqli connection helper
+
+$stmt = $db->prepare("
+    SELECT *
+    FROM qa_logs
+    WHERE user_id = ? AND session_id = ?
+    ORDER BY iteration_id ASC, timestamp ASC
+");
+$stmt->bind_param('si', $userId, $sessionId);
+$stmt->execute();
+$result = $stmt->get_result();
+$allLogs = $result->fetch_all(MYSQLI_ASSOC);
+$stmt->close();
+
+/* ==========================
+   Group logs by iteration_id
+========================== */
+$grouped = [];
+foreach ($allLogs as $log) {
+    $id = $log['iteration_id'] ?? 'unknown';
+    $grouped[$id][] = $log;
 }
+ksort($grouped);
 
-/* Update log file paths to use per-user folder */
-$sessionId = qa_get_session_id(); // already exists
-$FRONTEND_LOG = "{$logBase}/frontend_logs_{$sessionId}.jsonl";
-$BACKEND_LOG  = "{$logBase}/backend_logs_{$sessionId}.jsonl";
-$REMARK_FILE  = "{$logBase}/remarked_logs_{$sessionId}.json";
+/* ==========================
+   Load remarked logs
+========================== */
+$REMARK_FILE = __DIR__ . "/logs/user_{$userId}/remarked_logs_{$sessionId}.json";
+$remarked = file_exists($REMARK_FILE)
+    ? json_decode(file_get_contents($REMARK_FILE), true)
+    : [];
 
+// Preserve selected iteration for dropdown
+$selectedRemarkIteration = $_GET['remark_iteration'] ?? '';
 
-$status = qa_get_logging_status();
-/*
-$status = [
-  'iteration' => int,
-  'active'    => bool,
-  'warn40'    => bool,
-  'warn50'    => bool
-];
-*/
+// Determine current iteration to display
+$currentIteration = $_GET['iteration']
+    ?? (count($grouped) ? array_key_last($grouped) : null);
+$currentLogs = $grouped[$currentIteration] ?? [];
+$currentRemark = $remarked[$currentIteration]['remark'] ?? '';
 
-/**
- * Load JSONL file
- */
-function load_jsonl($file) {
-    if (!file_exists($file)) return [];
-    $lines = file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    return array_map(fn($l) => json_decode($l, true), $lines);
-}
-
+/* ==========================
+   HELPER FUNCTIONS
+========================== */
 function format_log_value($value)
 {
     if (is_array($value) || is_object($value)) {
@@ -198,7 +205,6 @@ function group_error_logs(array $errorLogs): array
         }
     }
 
-    // Finalize line lists
     foreach ($grouped as &$g) {
         $g['_lines'] = array_values(array_unique($g['_lines']));
         sort($g['_lines']);
@@ -221,9 +227,6 @@ function render_log_entry(array $log): string
         $html .= '<strong>Type:</strong> ' . htmlspecialchars($log['type']) . '<br>';
     }
 
-    /* ============================
-       BACKEND ERROR DETAILS
-    ============================ */
     if (
         ($log['type'] ?? '') === 'backend-error'
         || ($log['type'] ?? '') === 'backend-exception'
@@ -256,19 +259,12 @@ function render_log_entry(array $log): string
                 . (int)$log['line']
                 . '<br>';
         }
-
     }
 
-    /* ============================
-       URL
-    ============================ */
     if (!empty($log['url'])) {
         $html .= '<strong>URL:</strong> ' . htmlspecialchars($log['url']) . '<br>';
     }
 
-    /* ============================
-       REQUEST
-    ============================ */
     if (!empty($log['request'])) {
         $html .= '<strong>Request:</strong><pre style="
             background:#f8f9fa;
@@ -292,9 +288,6 @@ function render_log_entry(array $log): string
             '</pre>';
     }
 
-    /* ============================
-       RESPONSE (if exists)
-    ============================ */
     if (!empty($log['response'])) {
         $html .= '<strong>Response:</strong><pre style="
             background:#f8f9fa;
@@ -317,88 +310,8 @@ function render_log_entry(array $log): string
     $html .= '</div>';
     return $html;
 }
-
-/**
- * Handle save request
- */
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $id         = $_POST['iteration_id'] ?? null;
-    $remark     = trim($_POST['remark'] ?? '');
-    $remarkName = trim($_POST['remark_name'] ?? '');
-
-    if ($id !== null && $remark !== '' && $remarkName !== '') {
-        $frontend = load_jsonl($FRONTEND_LOG);
-        $backend  = load_jsonl($BACKEND_LOG);
-
-        $merged = array_values(array_filter(
-            array_merge($frontend, $backend),
-            fn($l) => ($l['iteration_id'] ?? null) == $id
-        ));
-
-        $existing = file_exists($REMARK_FILE)
-            ? json_decode(file_get_contents($REMARK_FILE), true)
-            : [];
-
-        $existing[$id] = [
-            'name'     => $remarkName,
-            'remark'   => $remark,
-            'logs'     => $merged,
-            'saved_at' => date('F j, Y, g:i A')
-        ];
-
-
-        file_put_contents($REMARK_FILE, json_encode($existing, JSON_PRETTY_PRINT));
-    }
-
-    header(
-        'Location: ' . $_SERVER['PHP_SELF']
-        . '?iteration=' . urlencode($id)
-        . '&remark_iteration=' . urlencode($id)
-    );
-    exit;
-}
-
-/**
- * Load logs
- */
-$frontendLogs = load_jsonl($FRONTEND_LOG);
-$backendLogs  = load_jsonl($BACKEND_LOG);
-
-$allLogs = array_merge($frontendLogs, $backendLogs);
-
-/**
- * Group by iteration_id
- */
-$grouped = [];
-foreach ($allLogs as $log) {
-    $id = $log['iteration_id'] ?? 'unknown';
-    $grouped[$id][] = $log;
-}
-
-ksort($grouped);
-
-
-
-/**
- * Load remarked logs
- */
-$remarked = file_exists($REMARK_FILE)
-    ? json_decode(file_get_contents($REMARK_FILE), true)
-    : [];
-
-
-// Preserve selected iteration for Saved / Remarked Logs dropdown
-$selectedRemarkIteration = $_GET['remark_iteration'] ?? '';
-
-
-/**
- * Determine current iteration to display
- */
-$currentIteration = $_GET['iteration']
-    ?? (count($grouped) ? array_key_last($grouped) : null);
-$currentLogs      = $grouped[$currentIteration] ?? [];
-$currentRemark    = $remarked[$currentIteration]['remark'] ?? '';
 ?>
+
 <!DOCTYPE html>
 <html>
 <head>

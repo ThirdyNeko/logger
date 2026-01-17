@@ -52,30 +52,26 @@ $GLOBALS['__QA_RESPONSE_HASH__'] = null;
  */
 function qa_backend_log(array $data)
 {
-    if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+    if (session_status() === PHP_SESSION_NONE) {
         @session_start();
     }
 
     $data['user_id'] = $_SESSION['user']['id'] ?? 'guest';
 
-    global $BACKEND_RECEIVER;
+    $url = 'http://127.0.0.1/logger/hooks/receiver_backend.php';
 
-    $opts = [
-        'http' => [
-            'method'  => 'POST',
-            'header'  =>
-                "Content-Type: application/json\r\n" .
-                "X-QA-INTERNAL: 1\r\n",
-            'content' => json_encode($data),
-            'timeout' => 1
-        ]
-    ];
-
-    @file_get_contents($BACKEND_RECEIVER, false, stream_context_create($opts));
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/json',
+        'X-QA-INTERNAL: 1'
+    ]);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+    curl_setopt($ch, CURLOPT_TIMEOUT, 1);
+    curl_exec($ch);
+    curl_close($ch);
 }
-
-
-
 
 /**
  * Extract valid JSON from output

@@ -6,17 +6,6 @@ date_default_timezone_set('Asia/Manila');
 require_once __DIR__ . '/iteration_logic/qa_iteration_helper.php';
 
 /* ============================
-   USER-AWARE SESSION NAMES
-============================ */
-
-function qa_get_session_names_file(): string
-{
-    $userKey = qa_get_user_key();
-    return __DIR__ . "/iteration_logic/session_names_user_{$userKey}.json";
-}
-
-
-/* ============================
    REMARKS ITERATION STATE
 ============================ */
 
@@ -37,28 +26,32 @@ function qa_normalize_session_name(string $name): string
 
 function qa_load_session_names(): array
 {
-    $file = qa_get_session_names_file();
+    $db = qa_db();
+    $userId = qa_get_user_id();
 
-    if (!file_exists($file)) {
-        return [];
-    }
+    $stmt = $db->prepare("
+        SELECT session_name
+        FROM qa_sessions
+        WHERE user_id = ?
+        ORDER BY created_at DESC
+    ");
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
 
-    $data = json_decode(file_get_contents($file), true);
-    return is_array($data) ? $data : [];
+    return array_column($stmt->get_result()->fetch_all(MYSQLI_ASSOC), 'session_name');
 }
-
 
 function qa_save_session_name(string $name): void
 {
-    $file  = qa_get_session_names_file();
-    $names = qa_load_session_names();
+    $db = qa_db();
+    $userId = qa_get_user_id();
 
-    $names[] = $name;
-
-    file_put_contents(
-        $file,
-        json_encode(array_values(array_unique($names)), JSON_PRETTY_PRINT)
-    );
+    $stmt = $db->prepare("
+        INSERT IGNORE INTO qa_sessions (user_id, session_name)
+        VALUES (?, ?)
+    ");
+    $stmt->bind_param('is', $userId, $name);
+    $stmt->execute();
 }
 
 
@@ -469,7 +462,6 @@ $currentRemark    = $remarked[$currentIteration]['remark'] ?? '';
 
 </form>
 
-
 <script>
 function promptSessionName() {
     const name = prompt(
@@ -481,14 +473,15 @@ function promptSessionName() {
     }
 
     document.getElementById('session_name_input').value =
-        name.trim().toUpperCase().replace(/_/g, ' ');
+        qa_normalize_session_name_js(name);
 
     return true;
 }
+
+function qa_normalize_session_name_js(name) {
+    return name.trim().replace(/\s+/g, ' ').toUpperCase();
+}
 </script>
-
-
-
 
 <div style="
     margin-bottom:20px;

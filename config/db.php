@@ -1,7 +1,7 @@
 <?php
 $servername = "localhost";
 $username = "root";
-$password = "";
+$password = "Bimbim101602";
 $database = "qa_logger";
 
 // Create connection

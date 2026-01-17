@@ -1,37 +1,30 @@
 <?php
 
 date_default_timezone_set('Asia/Manila');
+require_once __DIR__ . '/../config/db.php';
 
 /* ============================
    USER BINDING
 ============================ */
 
-function qa_get_user_key(): string
+function qa_get_user_id(): int
 {
     // Priority 1: backend payload
     if (!empty($GLOBALS['__QA_USER_ID__'])) {
-        return (string)$GLOBALS['__QA_USER_ID__'];
+        return (int)$GLOBALS['__QA_USER_ID__'];
     }
 
-    // Priority 2: PHP session (UI)
+    // Priority 2: PHP session
     if (session_status() === PHP_SESSION_NONE) {
-        @session_start();
+        session_start();
     }
 
     if (!empty($_SESSION['user']['id'])) {
-        return (string)$_SESSION['user']['id'];
+        return (int)$_SESSION['user']['id'];
     }
 
-    // Fallback
-    return 'guest';
-}
-
-
-
-function qa_get_state_file(): string
-{
-    $userKey = qa_get_user_key();
-    return __DIR__ . "/qa_session_state_user_{$userKey}.json";
+    // ❌ NO guest rows in DB
+    throw new RuntimeException('Unauthenticated user');
 }
 
 /* ============================
@@ -57,29 +50,60 @@ function qa_default_session_state(): array
 
 function qa_get_session_state(): array
 {
-    $file = qa_get_state_file();
+    $userId = qa_get_user_id();
+    $db = qa_db();
 
-    if (!file_exists($file)) {
-        return qa_default_session_state();
-    }
+    $stmt = $db->prepare("
+        SELECT session_id, session_name, iteration,
+               remarks_iteration, last_second, logging_active
+        FROM qa_session_state
+        WHERE user_id = ?
+    ");
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
 
-    $state = json_decode(file_get_contents($file), true);
+    $row = $stmt->get_result()->fetch_assoc();
 
-    if (!is_array($state)) {
-        return qa_default_session_state();
-    }
-
-    return array_merge(qa_default_session_state(), $state);
+    return $row
+        ? array_merge(qa_default_session_state(), $row)
+        : qa_default_session_state();
 }
+
 
 
 function qa_save_session_state(array $state): void
 {
-    file_put_contents(
-        qa_get_state_file(),
-        json_encode($state, JSON_PRETTY_PRINT)
+    $userId = qa_get_user_id();
+    $db = qa_db();
+
+    $stmt = $db->prepare("
+        INSERT INTO qa_session_state
+        (user_id, session_id, session_name, iteration,
+         remarks_iteration, last_second, logging_active)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+            session_id = VALUES(session_id),
+            session_name = VALUES(session_name),
+            iteration = VALUES(iteration),
+            remarks_iteration = VALUES(remarks_iteration),
+            last_second = VALUES(last_second),
+            logging_active = VALUES(logging_active)
+    ");
+
+    $stmt->bind_param(
+        'ississi',
+        $userId,
+        $state['session_id'],
+        $state['session_name'],
+        $state['iteration'],
+        $state['remarks_iteration'],
+        $state['last_second'],
+        $state['logging_active']
     );
+
+    $stmt->execute();
 }
+
 
 /* ============================
    ITERATION LOGIC
@@ -164,6 +188,7 @@ function qa_create_new_session(string $sessionName): void
         'iteration'         => 0,
         'remarks_iteration' => '',
         'last_second'       => null,
-        'logging_active'    => true
+        'logging_active'    => 1
     ]);
 }
+

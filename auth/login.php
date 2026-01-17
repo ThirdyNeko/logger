@@ -34,14 +34,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // ✅ FIRST LOGIN CHECK
         if ((int)$user['first_login'] === 1) {
 
-            $update = $conn->prepare("
-                UPDATE users
-                SET first_login = 0
-                WHERE id = ?
-            ");
-            $update->bind_param("i", $user['id']);
-            $update->execute();
-
             header('Location: ../profile.php');
             exit;
         }

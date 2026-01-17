@@ -1,21 +1,34 @@
 <?php
 session_start();
+require __DIR__ . '/db.php';
 
 if (!isset($_SESSION['user'])) {
     header('Location: login.php');
     exit;
 }
 
-$usersFile = __DIR__ . '/auth/users.json';
-$users = json_decode(file_get_contents($usersFile), true) ?? [];
+/* --------------------------------------------------
+   Fetch latest user state from DB
+-------------------------------------------------- */
+$stmt = $conn->prepare("
+    SELECT password_hash, first_login
+    FROM users
+    WHERE id = ?
+    LIMIT 1
+");
+$stmt->bind_param("i", $_SESSION['user']['id']);
+$stmt->execute();
+$result = $stmt->get_result();
+$userRow = $result->fetch_assoc();
+$stmt->close();
 
-foreach ($users as $u) {
-    if ($u['id'] === $_SESSION['user']['id']) {
-        $_SESSION['user']['first_login'] = $u['first_login'];
-        break;
-    }
+if (!$userRow) {
+    session_destroy();
+    header('Location: login.php');
+    exit;
 }
 
+$_SESSION['user']['first_login'] = (bool)$userRow['first_login'];
 
 $error = '';
 $success = '';
@@ -30,63 +43,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$success) {
     $confirmPasswordValue = htmlspecialchars($_POST['confirm_password'] ?? '');
 }
 
-
+/* --------------------------------------------------
+   Handle password change
+-------------------------------------------------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
     $currentPassword = $_POST['current_password'] ?? '';
     $newPassword     = $_POST['new_password'] ?? '';
     $confirmPassword = $_POST['confirm_password'] ?? '';
 
     if ($newPassword !== $confirmPassword) {
         $error = 'New passwords do not match';
-    
-    
-        
-    } else if (!$error && (!preg_match('/[A-Z]/', $newPassword) || !preg_match('/[0-9]/', $newPassword))) {
+
+    } elseif (!preg_match('/[A-Z]/', $newPassword) || !preg_match('/[0-9]/', $newPassword)) {
         $error = 'Password must contain at least one capital letter and one number';
-    
+
+    } elseif (!password_verify($currentPassword, $userRow['password_hash'])) {
+        $error = 'Current password is incorrect';
+
     } else {
-        foreach ($users as &$u) {
-            if ($u['id'] === $_SESSION['user']['id']) {
+        $newHash = password_hash($newPassword, PASSWORD_DEFAULT);
 
-                if (!password_verify($currentPassword, $u['password_hash'])) {
-                    $error = 'Current password is incorrect';
-                    break;
-                }
+        $update = $conn->prepare("
+            UPDATE users
+            SET password_hash = ?, first_login = 0
+            WHERE id = ?
+        ");
+        $update->bind_param("si", $newHash, $_SESSION['user']['id']);
+        $update->execute();
+        $update->close();
 
-                $u['password_hash'] = password_hash($newPassword, PASSWORD_DEFAULT);
-                // ✅ Mark first login as completed
-                $u['first_login'] = false;
-                $_SESSION['user']['first_login'] = false; // ✅ ADD THIS
-                file_put_contents(
-                    $usersFile,
-                    json_encode($users, JSON_PRETTY_PRINT)
-                );
-                $success = 'Password updated successfully';
-
-                break;
-            }
-        }
-        unset($u);
+        $_SESSION['user']['first_login'] = false;
+        $success = 'Password updated successfully';
     }
 }
 
-$redirectUrl = '/auth/login.php'; // safe fallback
+/* --------------------------------------------------
+   Role-based redirect
+-------------------------------------------------- */
+$redirectUrl = 'login.php';
 
-if (isset($_SESSION['user']['role'])) {
-    switch ($_SESSION['user']['role']) {
-        case 'developer':
-            $redirectUrl = 'developer_viewer.php';
-            break;
+switch ($_SESSION['user']['role'] ?? '') {
+    case 'developer':
+        $redirectUrl = 'developer_viewer.php';
+        break;
 
-        case 'qa':
-            $redirectUrl = 'logger_index.php';
-            break;
-        
-        default:
-            $redirectUrl = '/auth/login.php';
-    }
+    case 'qa':
+        $redirectUrl = 'logger_index.php';
+        break;
 }
 ?>
+
 <!doctype html>
 <html>
 <head>

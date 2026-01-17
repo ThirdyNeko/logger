@@ -1,60 +1,76 @@
 <?php
 session_start();
-
-$users = json_decode(
-    file_get_contents(__DIR__ . '/users.json'),
-    true
-);
+require __DIR__ . '/../config/db.php';
 
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
     $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';
 
-    foreach ($users as $index => $user) {
-        if ($user['username'] === $username &&
-            password_verify($password, $user['password_hash'])) {
+    // 🔐 Fetch user
+    $stmt = $conn->prepare("
+        SELECT id, username, password_hash, role, first_login
+        FROM users
+        WHERE username = ?
+        LIMIT 1
+    ");
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
 
-            $_SESSION['user'] = [
-                'id'       => $user['id'],
-                'username' => $user['username'],
-                'role'     => $user['role']
-            ];
+    $result = $stmt->get_result();
+    $user   = $result->fetch_assoc();
 
-            // ✅ FIRST LOGIN CHECK
-            if (!empty($user['first_login'])) {
+    // ✅ Verify credentials
+    if ($user && password_verify($password, $user['password_hash'])) {
 
-                file_put_contents(
-                    __DIR__ . '/users.json',
-                    json_encode($users, JSON_PRETTY_PRINT)
-                );
+        $_SESSION['user'] = [
+            'id'       => $user['id'],
+            'username' => $user['username'],
+            'role'     => $user['role']
+        ];
 
-                header('Location: ../profile.php');
-                exit;
-            }
+        // ✅ FIRST LOGIN CHECK
+        if ((int)$user['first_login'] === 1) {
 
-            // 🔁 ROLE-BASED REDIRECT
-            switch ($user['role']) {
-                case 'developer':
-                    header('Location: ../developer_viewer.php');
-                    break;
+            $update = $conn->prepare("
+                UPDATE users
+                SET first_login = 0
+                WHERE id = ?
+            ");
+            $update->bind_param("i", $user['id']);
+            $update->execute();
 
-                case 'qa':
-                    header('Location: ../logger_index.php');
-                    break;
-
-                default:
-                    header('Location: ../login.php');
-            }
-
+            header('Location: ../profile.php');
             exit;
         }
+
+        // 🔁 ROLE-BASED REDIRECT
+        switch ($user['role']) {
+            case 'developer':
+                header('Location: ../developer_viewer.php');
+                break;
+
+            case 'qa':
+                header('Location: ../logger_index.php');
+                break;
+
+            case 'admin':
+                header('Location: ../create_user.php');
+                break;
+
+            default:
+                header('Location: ../login.php');
+        }
+
+        exit;
     }
 
     $error = 'Invalid credentials';
 }
 ?>
+
 <!doctype html>
 <html>
 <head>

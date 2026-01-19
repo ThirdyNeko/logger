@@ -1,116 +1,85 @@
 <?php
+// 🚫 Never log PHP deprecations
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
+
+require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../iteration_logic/qa_iteration_helper.php';
 
 session_start();
-$userId = $_SESSION['user']['id'] ?? 'guest';
 
-require_once __DIR__ . '/../../logger/iteration_logic/qa_iteration_helper.php';
-require_once __DIR__ . '/../config/db.php'; // adjust path as needed
-
-
+/* ==========================
+   Read frontend payload
+========================== */
 $data = json_decode(file_get_contents('php://input'), true);
-
-/* Validate input */
 if (!$data || empty($data['timestamp'])) {
     http_response_code(400);
     exit;
 }
 
-/* Assign iteration & session */
+/* ==========================
+   Bind user
+========================== */
+$GLOBALS['__QA_USER_ID__'] = $data['user_id'] ?? null;
+
+try {
+    $userId = qa_get_user_id();
+} catch (Exception $e) {
+    http_response_code(403);
+    exit;
+}
+
+/* ==========================
+   Assign iteration
+========================== */
 $iteration = qa_assign_iteration_id($data['timestamp']);
 if ($iteration === null) {
     http_response_code(204);
-    exit; // logging stopped
+    exit;
 }
 
-$session = qa_get_session_id();
-
-/* Add server-side meta info */
-$data['iteration_id'] = $iteration;
-$data['session_id']   = $session;
-$data['user_id']      = $userId;
+$sessionId = qa_get_session_id();
 
 /* ==========================
-   Normalize logs into frontend-io
-========================= */
-
-// If the log is UI type, convert to frontend-io
+   Normalize UI logs
+========================== */
 if (($data['type'] ?? '') === 'frontend-ui' || isset($data['ui_type'])) {
     $data['type'] = 'frontend-io';
-
-    // Use the UI message as the response
     $data['response'] = $data['message'] ?? '[UI message]';
-
-    // Fill missing network context from session, if available
-    $data['url'] = $data['url'] ?? ($_SESSION['__QA_LAST_URL__'] ?? null);
-    $data['method'] = $data['method'] ?? ($_SESSION['__QA_LAST_METHOD__'] ?? null);
-    $data['request'] = $data['request'] ?? ($_SESSION['__QA_LAST_REQUEST__'] ?? null);
-
-    // Clean up old UI fields
-    unset($data['message'], $data['ui_type']);
 }
 
 /* ==========================
-   Save last request for UI context
-========================= */
-if (($data['type'] ?? '') === 'frontend-io' && !empty($data['url'])) {
-    $_SESSION['__QA_LAST_URL__'] = $data['url'];
-    $_SESSION['__QA_LAST_METHOD__'] = $data['method'] ?? 'POST';
-    $_SESSION['__QA_LAST_REQUEST__'] = $data['request'] ?? null;
-}
-
-/* ==========================
-   Merge all original data (no loss)
-========================= */
-$logEntry = $data;
-
-// Enforce required fields
-$logEntry['type']      = $data['type'] ?? 'frontend-io';
-$logEntry['url']       = $data['url'] ?? null;
-$logEntry['method']    = $data['method'] ?? null;
-$logEntry['status']    = $data['status'] ?? 200; // default to 200
-$logEntry['timestamp'] = $data['timestamp'];
-$logEntry['iteration_id'] = $iteration;
-$logEntry['session_id']   = $session;
-$logEntry['user_id']      = $userId;
-
-// Normalize legacy output field
-if (isset($logEntry['output']) && !isset($logEntry['response'])) {
-    $logEntry['response'] = $logEntry['output'];
-    unset($logEntry['output']);
-}
-
-/* ==========================
-   Insert log into database
-========================= */
-
-
-$db = qa_db(); // your mysqli connection helper
+   Insert log
+========================== */
+$db = qa_db();
 
 $stmt = $db->prepare("
     INSERT INTO qa_logs
-    (user_id, session_id, iteration_id, type, url, method, request_body, response_body, status_code, timestamp)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    (user_id, session_id, iteration, type, endpoint, method,
+     request_body, response_body, status_code, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
 ");
 
-$requestJson  = isset($data['request'])  ? json_encode($data['request'], JSON_UNESCAPED_UNICODE)  : null;
-$responseJson = isset($data['response']) ? json_encode($data['response'], JSON_UNESCAPED_UNICODE) : null;
+$type        = $data['type'] ?? 'frontend-io';
+$endpoint    = $data['url'] ?? null;
+$method      = $data['method'] ?? null;
+$requestBody = isset($data['request']) ? json_encode($data['request']) : null;
+$responseBody= isset($data['response']) ? json_encode($data['response']) : null;
+$statusCode  = $data['status'] ?? 200;
 
 $stmt->bind_param(
-    'sissssssis',
+    'isisssssi',
     $userId,
-    $data['session_id'],
-    $data['iteration_id'],
-    $data['type'] ?? null,
-    $data['url'] ?? null,
-    $data['method'] ?? null,
-    $requestJson,
-    $responseJson,
-    $data['status'] ?? null,
-    $data['timestamp']
+    $sessionId,
+    $iteration,
+    $type,
+    $endpoint,
+    $method,
+    $requestBody,
+    $responseBody,
+    $statusCode
 );
 
 $stmt->execute();
 $stmt->close();
 
 http_response_code(204);
-

@@ -107,40 +107,31 @@ $stmt = $db->prepare("
     SELECT *
     FROM qa_logs
     WHERE user_id = ? AND session_id = ?
-    ORDER BY iteration_id ASC, timestamp ASC
+    ORDER BY iteration ASC, created_at ASC
 ");
-$stmt->bind_param('si', $userId, $sessionId);
+$stmt->bind_param('ss', $userId, $sessionId);
 $stmt->execute();
 $result = $stmt->get_result();
 $allLogs = $result->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
 
 /* ==========================
-   Group logs by iteration_id
+   Group logs by iteration
 ========================== */
 $grouped = [];
 foreach ($allLogs as $log) {
-    $id = $log['iteration_id'] ?? 'unknown';
+    $id = $log['iteration'] ?? 'unknown';
     $grouped[$id][] = $log;
 }
 ksort($grouped);
 
 /* ==========================
-   Load remarked logs
+   Determine current iteration
 ========================== */
-$REMARK_FILE = __DIR__ . "/logs/user_{$userId}/remarked_logs_{$sessionId}.json";
-$remarked = file_exists($REMARK_FILE)
-    ? json_decode(file_get_contents($REMARK_FILE), true)
+$currentIteration = $_GET['iteration'] ?? (count($grouped) ? array_key_last($grouped) : null);
+$currentLogs = $currentIteration !== null && isset($grouped[$currentIteration])
+    ? $grouped[$currentIteration]
     : [];
-
-// Preserve selected iteration for dropdown
-$selectedRemarkIteration = $_GET['remark_iteration'] ?? '';
-
-// Determine current iteration to display
-$currentIteration = $_GET['iteration']
-    ?? (count($grouped) ? array_key_last($grouped) : null);
-$currentLogs = $grouped[$currentIteration] ?? [];
-$currentRemark = $remarked[$currentIteration]['remark'] ?? '';
 
 /* ==========================
    HELPER FUNCTIONS
@@ -162,24 +153,9 @@ function format_log_value($value)
     return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
 }
 
-function format_severity(int $severity): string
-{
-    return match ($severity) {
-        E_NOTICE, E_USER_NOTICE      => "NOTICE ($severity)",
-        E_WARNING, E_USER_WARNING    => "WARNING ($severity)",
-        E_ERROR, E_USER_ERROR        => "ERROR ($severity)",
-        E_PARSE                     => "PARSE ERROR ($severity)",
-        default                     => "SEVERITY $severity",
-    };
-}
-
 function is_error_log(array $log): bool
 {
-    return in_array(
-        $log['type'] ?? '',
-        ['backend-error'],
-        true
-    );
+    return in_array($log['type'] ?? '', ['backend-error', 'backend-fatal'], true);
 }
 
 function group_error_logs(array $errorLogs): array
@@ -188,26 +164,19 @@ function group_error_logs(array $errorLogs): array
 
     foreach ($errorLogs as $log) {
         $keyParts = [
-            $log['message']  ?? '',
-            $log['severity'] ?? '',
-            $log['file']     ?? ''
+            $log['message'] ?? '',
+            $log['type'] ?? '',
+            $log['endpoint'] ?? ''
         ];
 
         $key = md5(implode('|', $keyParts));
 
         if (!isset($grouped[$key])) {
             $grouped[$key] = $log;
-            $grouped[$key]['_lines'] = [];
+            $grouped[$key]['_count'] = 0;
         }
 
-        if (!empty($log['line'])) {
-            $grouped[$key]['_lines'][] = (int)$log['line'];
-        }
-    }
-
-    foreach ($grouped as &$g) {
-        $g['_lines'] = array_values(array_unique($g['_lines']));
-        sort($g['_lines']);
+        $grouped[$key]['_count']++;
     }
 
     return array_values($grouped);
@@ -223,49 +192,23 @@ function render_log_entry(array $log): string
         background:#fafafa;
     ">';
 
+    if (!empty($log['iteration'])) {
+        $html .= '<strong>Iteration:</strong> ' . htmlspecialchars($log['iteration']) . '<br>';
+    }
     if (!empty($log['type'])) {
         $html .= '<strong>Type:</strong> ' . htmlspecialchars($log['type']) . '<br>';
     }
-
-    if (
-        ($log['type'] ?? '') === 'backend-error'
-        || ($log['type'] ?? '') === 'backend-exception'
-        || ($log['type'] ?? '') === 'backend-fatal'
-    ) {
-        if (isset($log['severity'])) {
-            $html .= '<strong>Severity:</strong> '
-                . htmlspecialchars(format_severity($log['severity']))
-                . '<br>';
-        }
-
-        if (!empty($log['message'])) {
-            $html .= '<strong>Message:</strong> '
-                . htmlspecialchars($log['message'])
-                . '<br>';
-        }
-
-        if (!empty($log['file'])) {
-            $html .= '<strong>File:</strong> '
-                . htmlspecialchars($log['file'])
-                . '<br>';
-        }
-
-        if (!empty($log['_lines'])) {
-            $html .= '<strong>Line:</strong> '
-                . htmlspecialchars(implode(', ', $log['_lines']))
-                . '<br>';
-        } elseif (!empty($log['line'])) {
-            $html .= '<strong>Line:</strong> '
-                . (int)$log['line']
-                . '<br>';
-        }
+    if (!empty($log['endpoint'])) {
+        $html .= '<strong>Endpoint:</strong> ' . htmlspecialchars($log['endpoint']) . '<br>';
+    }
+    if (!empty($log['method'])) {
+        $html .= '<strong>Method:</strong> ' . htmlspecialchars($log['method']) . '<br>';
+    }
+    if (isset($log['status_code'])) {
+        $html .= '<strong>Status:</strong> ' . (int)$log['status_code'] . '<br>';
     }
 
-    if (!empty($log['url'])) {
-        $html .= '<strong>URL:</strong> ' . htmlspecialchars($log['url']) . '<br>';
-    }
-
-    if (!empty($log['request'])) {
+    if (!empty($log['request_body'])) {
         $html .= '<strong>Request:</strong><pre style="
             background:#f8f9fa;
             color:#212529;
@@ -273,22 +216,16 @@ function render_log_entry(array $log): string
             margin:8px 0 12px 0;
             border-radius:6px;
             border:1px solid #dee2e6;
-            font-family: Consolas, Monaco, \"Courier New\", monospace;
+            font-family: Consolas, Monaco, \'Courier New\', monospace;
             font-size:13px;
             line-height:1.5;
             overflow-x:auto;
             white-space:pre-wrap;
             word-break:break-word;
-        ">' .
-            format_log_value(
-                is_string($log['request'])
-                    ? $log['request']
-                    : json_encode($log['request'], JSON_PRETTY_PRINT)
-            ) .
-            '</pre>';
+        ">' . format_log_value($log['request_body']) . '</pre>';
     }
 
-    if (!empty($log['response'])) {
+    if (!empty($log['response_body'])) {
         $html .= '<strong>Response:</strong><pre style="
             background:#f8f9fa;
             color:#212529;
@@ -296,20 +233,46 @@ function render_log_entry(array $log): string
             margin:8px 0 12px 0;
             border-radius:6px;
             border:1px solid #dee2e6;
-            font-family: Consolas, Monaco, \"Courier New\", monospace;
+            font-family: Consolas, Monaco, \'Courier New\', monospace;
             font-size:13px;
             line-height:1.5;
             overflow-x:auto;
             white-space:pre-wrap;
             word-break:break-word;
-        ">' .
-            format_log_value($log['response']) .
-            '</pre>';
+        ">' . format_log_value($log['response_body']) . '</pre>';
+    }
+
+    if (!empty($log['_count']) && $log['_count'] > 1) {
+        $html .= '<strong>Occurrences:</strong> ' . (int)$log['_count'] . '<br>';
+    }
+
+    if (!empty($log['created_at'])) {
+        $html .= '<strong>Created At:</strong> ' . htmlspecialchars($log['created_at']) . '<br>';
     }
 
     $html .= '</div>';
     return $html;
 }
+
+/* ==========================
+   Prepare logs for rendering
+========================== */
+$errorLogsRaw = [];
+$normalLogs   = [];
+
+foreach ($currentLogs as $log) {
+    if (is_error_log($log)) {
+        $errorLogsRaw[] = $log;
+    } else {
+        $normalLogs[] = $log;
+    }
+}
+
+// Group duplicate errors by message + severity + file
+$errorLogs = group_error_logs($errorLogsRaw);
+
+// Merge grouped errors with normal logs
+$logsToRender = array_merge($errorLogs, $normalLogs);
 ?>
 
 <!DOCTYPE html>
@@ -338,8 +301,6 @@ function render_log_entry(array $log): string
     <input type="hidden" name="session_name" id="session_name_input">
 
     <!-- Start New Session -->
-
-
     <button
         class="btn-black"
         type="submit"
@@ -354,7 +315,6 @@ function render_log_entry(array $log): string
         onclick="window.location.href='log_session_viewer.php'">
         View Sessions
     </button>
-
 
     <div style = "align-self: right; margin-left: auto; display: flex; gap: 10px;">
         <button
@@ -371,7 +331,6 @@ function render_log_entry(array $log): string
             Profile
         </button>
     </div>
-
 
 </form>
 
@@ -404,8 +363,6 @@ function qa_normalize_session_name_js(name) {
     <strong>Current Session:</strong><br>
     <?= htmlspecialchars($currentSessionName) ?>
 </div>
-
-
 
 <?php if ($status['warn40'] && !$status['warn50']): ?>
 <div style="
@@ -455,8 +412,6 @@ Current Log count:
     </select>
 </form>
 
-
-
 <div class="log-box">
 
     <form method="POST">
@@ -470,7 +425,6 @@ Current Log count:
                 type="text"
                 name="remark_name"
                 placeholder="Remark name: max 20 characters"
-                required
                 maxlength="20"
                 style="
                     padding:6px 8px;
@@ -482,8 +436,11 @@ Current Log count:
             >
         </div>
 
+        <!-- Render logs for this iteration -->
         <?php
-        // logs rendering stays EXACTLY the same
+        foreach ($logsToRender as $log) {
+            echo render_log_entry($log);
+        }
         ?>
 
         <input
@@ -506,166 +463,6 @@ Current Log count:
 </div>
 
 
-
-    <?php
-    // -------------------------------
-    // Prepare logs for rendering
-    // -------------------------------
-    $errorLogsRaw = [];
-    $normalLogs   = [];
-
-    foreach ($currentLogs as $log) {
-        if (is_error_log($log)) {
-            $errorLogsRaw[] = $log;
-        } else {
-            $normalLogs[] = $log;
-        }
-    }
-
-    // Group duplicate errors by message + severity + file
-    $errorLogs = group_error_logs($errorLogsRaw);
-
-    // Merge grouped errors with normal logs
-    $logsToRender = array_merge($errorLogs, $normalLogs);
-    ?>
-
-    <?php foreach ($logsToRender as $log): ?>
-        <?= render_log_entry($log) ?>
-    <?php endforeach; ?>
-
-</div>
-
-
-<hr>
-
-<h2>Saved / Remarked Logs</h2>
-
-<?php if (!$remarked): ?>
-<p>No remarked logs yet.</p>
-<?php endif; ?>
-
-<?php $remarkIds = array_keys($remarked); ?>
-
-<form method="GET">
-    <label for="remarkSelect"><strong>Select Activity Log:</strong></label>
-    <select
-        id="remarkSelect"
-        onchange="filterRemarks(this.value)"
-    >
-        <option value="">-- Select Activity Log --</option>
-
-        <?php foreach ($remarked as $rid => $entry): ?>
-            <option
-                value="<?= htmlspecialchars($rid) ?>"
-                <?= ((string)$rid === (string)$currentIteration) ? 'selected' : '' ?>
-            >
-                <?= htmlspecialchars($rid) ?>
-                <?php if (!empty($entry['name'])): ?>
-                    - <?= htmlspecialchars($entry['name']) ?>
-                <?php endif; ?>
-            </option>
-        <?php endforeach; ?>
-    </select>
-</form>
-
-
-
-<?php foreach ($remarked as $id => $entry): ?>
-<div class="log-box remark-item" data-iteration="<?= htmlspecialchars($id) ?>" style="display:none;">
-    <h3>Activity Log ID: <?= htmlspecialchars($id) ?></h3>
-
-    <?php if (!empty($entry['name'])): ?>
-        <strong>Remark Name:</strong>
-        <p><?= htmlspecialchars($entry['name']) ?></p>
-    <?php endif; ?>
-
-    <strong>Remark:</strong>
-
-    <p><?= nl2br(htmlspecialchars($entry['remark'])) ?></p>
-
-    <?php
-    /* ============================
-       SPLIT LOGS
-    ============================ */
-    $errorLogsRaw = [];
-    $normalLogs   = [];
-
-    foreach ($entry['logs'] as $log) {
-        if (is_error_log($log)) {
-            $errorLogsRaw[] = $log;
-        } else {
-            $normalLogs[] = $log;
-        }
-    }
-
-/* GROUP duplicate errors */
-$errorLogs = group_error_logs($errorLogsRaw);
-
-
-    /* ============================
-       PAGINATION (ERROR LOGS ONLY)
-    ============================ */
-    $errorsPerPage = 10;
-    $totalErrors  = count($errorLogs);
-    $totalPages   = max(1, ceil($totalErrors / $errorsPerPage));
-
-    $pageKey = 'error_page_' . $id;
-    $currentPage = max(1, min(
-        (int)($_GET[$pageKey] ?? 1),
-        $totalPages
-    ));
-
-    $offset = ($currentPage - 1) * $errorsPerPage;
-    $pagedErrors = array_slice($errorLogs, $offset, $errorsPerPage);
-    ?>
-
-    <?php if ($errorLogs): ?>
-        <h4 style="color:#842029;margin-top:15px;">🚨 Error Logs</h4>
-
-        <?php foreach ($pagedErrors as $elog): ?>
-            <?= render_log_entry($elog) ?>
-        <?php endforeach; ?>
-
-        <?php if ($totalPages > 1): ?>
-            <div style="margin-top:10px;">
-                <?php for ($p = 1; $p <= $totalPages; $p++): ?>
-                    <a
-                        href="?<?= http_build_query(array_merge($_GET, [$pageKey => $p])) ?>"
-                        style="
-                            margin-right:6px;
-                            padding:4px 8px;
-                            border:1px solid #ccc;
-                            border-radius:4px;
-                            text-decoration:none;
-                            <?= $p == $currentPage ? 'background:#842029;color:#fff;' : '' ?>
-                        "
-                    >
-                        <?= $p ?>
-                    </a>
-                <?php endfor; ?>
-            </div>
-        <?php endif; ?>
-    <?php endif; ?>
-
-    <?php if ($normalLogs): ?>
-        <h4 style="margin-top:15px;">📄 Other Logs</h4>
-        <?php foreach ($normalLogs as $nlog): ?>
-            <?= render_log_entry($nlog) ?>
-        <?php endforeach; ?>
-    <?php endif; ?>
-
-    <small>Saved at: <?= htmlspecialchars($entry['saved_at']) ?></small>
-</div>
-<?php endforeach; ?>
-
-<script>
-function filterRemarks(iterationId) {
-    document.querySelectorAll('.remark-item').forEach(el => {
-        el.style.display =
-            el.dataset.iteration === iterationId ? 'block' : 'none';
-    });
-}
-</script>
 
 <script>
 const CURRENT_ITERATION = <?= (int)$status['iteration'] ?>;
@@ -694,14 +491,6 @@ if (LOGGING_ACTIVE) {
     }, 2000);
 }
 </script>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const selected = "<?= htmlspecialchars($selectedRemarksIteration) ?>";
-    if (selected) {
-        filterRemarks(selected);
-    }
-});
-</script>
 
 </body>
 
@@ -713,6 +502,5 @@ document.addEventListener('DOMContentLoaded', () => {
     button { padding:6px 12px; margin-top:5px; }
     select { padding:4px; margin-bottom:10px; }
 </style>
-
 
 </html>

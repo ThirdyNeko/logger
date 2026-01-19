@@ -8,9 +8,8 @@ $userId    = $_SESSION['user']['id'] ?? 'guest';
 $sessionId = qa_get_session_id();
 
 /* ==========================
-   Helpers
+   Helpers for rendering logs
 ========================== */
-
 function format_log_value($value)
 {
     if (is_array($value) || is_object($value)) {
@@ -21,29 +20,27 @@ function format_log_value($value)
 
 function is_error_log(array $log): bool
 {
-    return in_array($log['type'] ?? '', ['backend-error'], true);
+    return in_array($log['type'] ?? '', ['backend-error', 'backend-fatal'], true);
 }
 
 function group_error_logs(array $errorLogs): array
 {
     $grouped = [];
     foreach ($errorLogs as $log) {
-        $keyParts = [$log['message'] ?? '', $log['severity'] ?? '', $log['file'] ?? ''];
+        $keyParts = [
+            $log['message'] ?? '',
+            $log['type'] ?? '',
+            $log['endpoint'] ?? ''
+        ];
+
         $key = md5(implode('|', $keyParts));
 
         if (!isset($grouped[$key])) {
             $grouped[$key] = $log;
-            $grouped[$key]['_lines'] = [];
+            $grouped[$key]['_count'] = 0;
         }
 
-        if (!empty($log['line'])) {
-            $grouped[$key]['_lines'][] = (int)$log['line'];
-        }
-    }
-
-    foreach ($grouped as &$g) {
-        $g['_lines'] = array_values(array_unique($g['_lines']));
-        sort($g['_lines']);
+        $grouped[$key]['_count']++;
     }
 
     return array_values($grouped);
@@ -51,50 +48,96 @@ function group_error_logs(array $errorLogs): array
 
 function render_log_entry(array $log): string
 {
-    $html = '<div style="border:1px solid #ddd;border-radius:6px;padding:12px;margin:10px 0;background:#fafafa;">';
-    if (!empty($log['type'])) $html .= '<strong>Type:</strong> ' . htmlspecialchars($log['type']) . '<br>';
-    if (!empty($log['request'])) $html .= '<strong>Request:</strong><pre>' . format_log_value($log['request']) . '</pre>';
-    if (!empty($log['response'])) $html .= '<strong>Response:</strong><pre>' . format_log_value($log['response']) . '</pre>';
+    $type = $log['type'] ?? '';
+    $html = '<div style="
+        border:1px solid #ddd;
+        border-radius:4px;
+        padding:10px;
+        margin-bottom:10px;
+        background:#fafafa;
+    ">';
+
+    if (!empty($type)) {
+        $html .= '<strong>Type:</strong> ' . htmlspecialchars($type) . '<br>';
+    }
+
+    if (!empty($log['request_body'])) {
+        $json = json_decode($log['request_body'], true);
+        $pretty = $json !== null ? json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : $log['request_body'];
+        $html .= '<strong>Request:</strong><pre>' . htmlspecialchars($pretty) . '</pre>';
+    }
+
+    if (!empty($log['response_body'])) {
+        $json = json_decode($log['response_body'], true);
+        $pretty = $json !== null ? json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : $log['response_body'];
+        $html .= '<strong>Response:</strong><pre>' . htmlspecialchars($pretty) . '</pre>';
+    }
+
+    if (!empty($log['_count']) && $log['_count'] > 1) {
+        $html .= '<strong>Occurrences:</strong> ' . (int)$log['_count'] . '<br>';
+    }
+
+    if (!empty($log['created_at'])) {
+        $html .= '<strong>Created At:</strong> ' . htmlspecialchars($log['created_at']) . '<br>';
+    }
+
     $html .= '</div>';
     return $html;
 }
 
 /* ==========================
-   Load remarked logs (per-user folder)
-========================== */
+   Load remarked iterations from DB
+========================= */
 
-$logBase = __DIR__ . "/logs/user_{$userId}";
+$db = qa_db();
 $remarked = [];
 
-if (is_dir($logBase)) {
-    $remarkFiles = glob("{$logBase}/remarked_logs_*.json");
-    foreach ($remarkFiles as $file) {
-        $sid = str_replace(['remarked_logs_', '.json'], '', basename($file));
-        $data = json_decode(file_get_contents($file), true);
-        if ($data && is_array($data)) {
-            $remarked[$sid] = [
-                'data' => $data,
-                'ctime' => filectime($file)
-            ];
-        }
-    }
+/*
+ Structure:
+ $remarked[session_id][iteration] = [
+     'name'   => remark_name,
+     'remark' => remark,
+     'ctime'  => timestamp
+ ];
+*/
+$stmt = $db->prepare("
+    SELECT session_id, iteration, remark_name, remark, created_at
+    FROM qa_remarks
+    WHERE user_id = ?
+");
+$stmt->bind_param('i', $userId);
+$stmt->execute();
+$res = $stmt->get_result();
+
+while ($row = $res->fetch_assoc()) {
+    $sid = $row['session_id'];
+    $iter = (int)$row['iteration'];
+
+    $remarked[$sid][$iter] = [
+        'name'   => $row['remark_name'],
+        'remark' => $row['remark'],
+        'ctime'  => strtotime($row['created_at'])
+    ];
 }
+$stmt->close();
 
 /* ==========================
    Filter by date range if provided
-========================== */
+========================= */
 $fromDate = $_GET['from_date'] ?? null;
 $toDate   = $_GET['to_date'] ?? null;
 $filteredRemarked = [];
 
-foreach ($remarked as $sid => $info) {
-    $dateKey = date('Y-m-d', $info['ctime']);
-    if ($fromDate && $toDate) {
-        if ($dateKey >= $fromDate && $dateKey <= $toDate) {
-            $filteredRemarked[$sid] = $info['data'];
+foreach ($remarked as $sid => $iterations) {
+    foreach ($iterations as $iter => $entry) {
+        $dateKey = date('Y-m-d', $entry['ctime']);
+        if ($fromDate && $toDate) {
+            if ($dateKey >= $fromDate && $dateKey <= $toDate) {
+                $filteredRemarked[$sid][$iter] = $entry;
+            }
+        } else {
+            $filteredRemarked[$sid][$iter] = $entry;
         }
-    } else {
-        $filteredRemarked[$sid] = $info['data'];
     }
 }
 
@@ -108,6 +151,8 @@ $iterations = [];
 if ($selectedSession && isset($filteredRemarked[$selectedSession])) {
     $iterations = array_keys($filteredRemarked[$selectedSession]);
 }
+
+
 
 ?>
 
@@ -166,7 +211,7 @@ if ($selectedSession && isset($filteredRemarked[$selectedSession])) {
     <select name="iteration" onchange="this.form.submit()">
         <option value="">-- Select Iteration --</option>
         <?php foreach ($iterations as $iter): ?>
-            <option value="<?= htmlspecialchars($iter) ?>" <?= ($iter === $selectedIteration ? 'selected' : '') ?>>
+            <option value="<?= htmlspecialchars($iter) ?>" <?= ($iter == $selectedIteration ? 'selected' : '') ?>>
                 <?= htmlspecialchars($iter) ?><?= !empty($filteredRemarked[$selectedSession][$iter]['name']) ? ' - '.$filteredRemarked[$selectedSession][$iter]['name'] : '' ?>
             </option>
         <?php endforeach; ?>
@@ -176,51 +221,78 @@ if ($selectedSession && isset($filteredRemarked[$selectedSession])) {
 
 <hr>
 
-<!-- DISPLAY LOGS -->
+<!-- DISPLAY REMARKS + LOGS ONLY AFTER FILTERS -->
 <?php
-if ($selectedSession && $selectedIteration && isset($filteredRemarked[$selectedSession][$selectedIteration])) {
-    $entry = $filteredRemarked[$selectedSession][$selectedIteration];
+$showRemarks = $selectedSession && $selectedIteration 
+    && isset($filteredRemarked[$selectedSession][$selectedIteration]);
+
+if ($showRemarks && $selectedSession) {
+
+    // Extract only the iteration number (parent iteration) from $selectedIteration
+    // Assumes format like "1 - Login Bug" or just "1"
+    $parentIteration = (int) preg_split('/\s*-\s*/', $selectedIteration)[0];
+
+    // Fetch logs referenced by this remark
+    $logs = [];
+    $stmt = $db->prepare("
+        SELECT *
+        FROM qa_logs
+        WHERE user_id = ? AND session_id = ? AND iteration = ?
+        ORDER BY created_at ASC
+    ");
+    // user_id = string, session_id = string, iteration = int
+    $stmt->bind_param('ssi', $userId, $selectedSession, $parentIteration);
+    $stmt->execute();
+    $logs = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+
+    // Separate error logs and normal logs
     $errorLogsRaw = [];
     $normalLogs   = [];
-    foreach ($entry['logs'] ?? [] as $log) {
+    foreach ($logs as $log) {
         if (is_error_log($log)) $errorLogsRaw[] = $log;
         else $normalLogs[] = $log;
     }
     $errorLogs = group_error_logs($errorLogsRaw);
+}
+
 ?>
 
-<?php if (!empty($entry['name'])): ?>
-<div class="log-box">
-    <strong>Remark Name:</strong> <?= htmlspecialchars($entry['name']) ?>
-</div>
-<?php endif; ?>
+<?php if ($showRemarks): ?>
 
-<?php if (!empty($entry['remark'])): ?>
-<div class="log-box">
-    <strong>Remark:</strong><br>
-    <?= nl2br(htmlspecialchars($entry['remark'])) ?>
-</div>
-<?php endif; ?>
+    <?php if (!empty($entry['name'])): ?>
+    <div class="log-box">
+        <strong>Remark Name:</strong> <?= htmlspecialchars($entry['name']) ?>
+    </div>
+    <?php endif; ?>
 
-<?php if (!empty($errorLogs)): ?>
-<div class="log-box" style="background:#fff3f3;">
-    <h3>⚠️ Error Logs</h3>
-    <?php foreach ($errorLogs as $log): ?>
-        <?= render_log_entry($log) ?>
-    <?php endforeach; ?>
-</div>
-<?php endif; ?>
+    <?php if (!empty($entry['remark'])): ?>
+    <div class="log-box">
+        <strong>Remark:</strong><br>
+        <?= nl2br(htmlspecialchars($entry['remark'])) ?>
+    </div>
+    <?php endif; ?>
 
-<?php if (!empty($normalLogs)): ?>
-<div class="log-box">
-    <h3>📄 Other Logs</h3>
-    <?php foreach ($normalLogs as $log): ?>
-        <?= render_log_entry($log) ?>
-    <?php endforeach; ?>
-</div>
-<?php endif; ?>
+    <!-- Display logs referenced by this remark -->
+    <?php if (!empty($errorLogs)): ?>
+    <div class="log-box" style="background:#fff3f3;">
+        <h3>⚠️ Error Logs</h3>
+        <?php foreach ($errorLogs as $log): ?>
+            <?= render_log_entry($log) ?>
+        <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
 
-<?php } ?>
+    <?php if (!empty($normalLogs)): ?>
+    <div class="log-box">
+        <h3>📄 Other Logs</h3>
+        <?php foreach ($normalLogs as $log): ?>
+            <?= render_log_entry($log) ?>
+        <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
+
+<?php endif; ?>
 
 </body>
 </html>

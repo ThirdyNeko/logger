@@ -194,10 +194,12 @@ set_error_handler(function ($severity, $message, $file, $line) {
 
     qa_backend_log([
         'type'      => 'backend-error',
-        'severity'  => $severity,
-        'message'   => $message,
-        'file'      => $file,
-        'line'      => $line,
+        'response'  => [
+            'severity' => $severity,
+            'message'  => $message,
+            'line'     => $line
+        ],
+        'endpoint'  => $file,
         'timestamp' => date('c')
     ]);
 
@@ -229,11 +231,13 @@ register_shutdown_function(function () {
     }
 
     qa_backend_log([
-        'type'      => 'backend-fatal',
-        'severity'  => $error['type'],
-        'message'   => $error['message'],
-        'file'      => $error['file'],
-        'line'      => $error['line'],
+        'type'      => 'backend-error',
+        'response'  => [
+            'severity' => $severity,
+            'message'  => $message,
+            'line'     => $line
+        ],
+        'endpoint'  => $file,
         'timestamp' => date('c')
     ]);
 });

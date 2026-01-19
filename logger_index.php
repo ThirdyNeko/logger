@@ -454,7 +454,7 @@ Current Log count:
             name="remark"
             placeholder="Enter QA remarks here..."
             required
-        ><?= htmlspecialchars($currentRemark) ?></textarea>
+        ></textarea>
 
         <br>
         <button type="submit">Save Remark</button>

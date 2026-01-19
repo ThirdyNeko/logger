@@ -184,6 +184,7 @@ function group_error_logs(array $errorLogs): array
 
 function render_log_entry(array $log): string
 {
+    $type = $log['type'] ?? '';
     $html = '<div style="
         border:1px solid #ddd;
         border-radius:4px;
@@ -192,23 +193,61 @@ function render_log_entry(array $log): string
         background:#fafafa;
     ">';
 
-    if (!empty($log['iteration'])) {
-        $html .= '<strong>Iteration:</strong> ' . htmlspecialchars($log['iteration']) . '<br>';
-    }
-    if (!empty($log['type'])) {
-        $html .= '<strong>Type:</strong> ' . htmlspecialchars($log['type']) . '<br>';
-    }
-    if (!empty($log['endpoint'])) {
-        $html .= '<strong>Endpoint:</strong> ' . htmlspecialchars($log['endpoint']) . '<br>';
-    }
-    if (!empty($log['method'])) {
-        $html .= '<strong>Method:</strong> ' . htmlspecialchars($log['method']) . '<br>';
-    }
-    if (isset($log['status_code'])) {
-        $html .= '<strong>Status:</strong> ' . (int)$log['status_code'] . '<br>';
+    // Always show type
+    $html .= '<strong>Type:</strong> ' . htmlspecialchars($type) . '<br>';
+
+    if ($type === 'backend-error') {
+        // Show full response for main log
+        $json = json_decode($log['response_body'], true);
+        $pretty = $json !== null ? json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : $log['response_body'];
+
+        $html .= '<strong>Response:</strong><pre style="background:#f8f9fa;color:#212529;padding:12px;border-radius:6px;border:1px solid #dee2e6;font-family:Consolas,monospace;font-size:13px;line-height:1.5;overflow-x:auto;white-space:pre-wrap;word-break:break-word;">' . htmlspecialchars($pretty) . '</pre>';
+
+    if (!empty($log['_count']) && $log['_count'] > 1) {
+        $extra = (int)$log['_count'] - 1;
+
+        $html .= '<strong>Occurrences:</strong> ' . (int)$log['_count'] . '<br>';
+
+        $html .= '<div style="
+            margin-top:6px;
+            padding:6px 10px;
+            background:#fff3cd;
+            border:1px solid #ffe69c;
+            border-radius:6px;
+            color:#664d03;
+            font-size:13px;
+        ">
+            + ' . $extra . ' more occurrence' . ($extra > 1 ? 's' : '') . ' of the same error
+        </div>';
     }
 
+        $html .= '</div>';
+        return $html; // early return
+    }
+
+    // Only show these fields for non-special types
+    if (!in_array($type, ['frontend-io', 'backend-response'], true)) {
+        if (!empty($log['iteration'])) {
+            $html .= '<strong>Iteration:</strong> ' . htmlspecialchars($log['iteration']) . '<br>';
+        }
+        if (!empty($log['method'])) {
+            $html .= '<strong>Method:</strong> ' . htmlspecialchars($log['method']) . '<br>';
+        }
+        if (isset($log['status_code'])) {
+            $html .= '<strong>Status:</strong> ' . (int)$log['status_code'] . '<br>';
+        }
+    }
+
+    // Endpoint is always shown for backend-response
+    if ($type === 'backend-response' && !empty($log['endpoint'])) {
+        $html .= '<strong>Endpoint:</strong> ' . htmlspecialchars($log['endpoint']) . '<br>';
+    }
+
+    // Request body (shown for all types)
     if (!empty($log['request_body'])) {
+        $json = json_decode($log['request_body'], true);
+        $pretty = $json !== null ? json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : $log['request_body'];
+
         $html .= '<strong>Request:</strong><pre style="
             background:#f8f9fa;
             color:#212529;
@@ -222,10 +261,14 @@ function render_log_entry(array $log): string
             overflow-x:auto;
             white-space:pre-wrap;
             word-break:break-word;
-        ">' . format_log_value($log['request_body']) . '</pre>';
+        ">' . htmlspecialchars($pretty) . '</pre>';
     }
 
+    // Response body (shown for all types)
     if (!empty($log['response_body'])) {
+        $json = json_decode($log['response_body'], true);
+        $pretty = $json !== null ? json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : $log['response_body'];
+
         $html .= '<strong>Response:</strong><pre style="
             background:#f8f9fa;
             color:#212529;
@@ -239,20 +282,67 @@ function render_log_entry(array $log): string
             overflow-x:auto;
             white-space:pre-wrap;
             word-break:break-word;
-        ">' . format_log_value($log['response_body']) . '</pre>';
+        ">' . htmlspecialchars($pretty) . '</pre>';
     }
 
+    // Occurrences for grouped errors
     if (!empty($log['_count']) && $log['_count'] > 1) {
         $html .= '<strong>Occurrences:</strong> ' . (int)$log['_count'] . '<br>';
     }
 
-    if (!empty($log['created_at'])) {
+    // Created at for non-frontend-io types
+    if ($type !== 'frontend-io' && !empty($log['created_at'])) {
         $html .= '<strong>Created At:</strong> ' . htmlspecialchars($log['created_at']) . '<br>';
     }
 
     $html .= '</div>';
     return $html;
 }
+
+ /* ==========================
+   STORE QA REMARK (NO DISPLAY)
+========================== */
+if ($_SERVER['REQUEST_METHOD'] === 'POST'
+    && isset($_POST['remark'], $_POST['iteration_id'])
+) {
+    define('QA_SKIP_LOGGING', true);
+
+    $db        = qa_db();
+    $userId    = qa_get_user_id();
+    $sessionId = qa_get_session_id();
+
+    $iteration  = (int) $_POST['iteration_id'];
+    $remark     = trim($_POST['remark']);
+    $remarkName = trim($_POST['remark_name'] ?? '');
+
+    if ($remark !== '') {
+        $stmt = $db->prepare("
+            INSERT INTO qa_remarks
+                (user_id, session_id, iteration, remark_name, remark)
+            VALUES (?, ?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE
+                remark_name = VALUES(remark_name),
+                remark = VALUES(remark)
+        ");
+
+        $stmt->bind_param(
+            'isiss',
+            $userId,
+            $sessionId,
+            $iteration,
+            $remarkName,
+            $remark
+        );
+
+        $stmt->execute();
+        $stmt->close();
+    }
+
+    // Silent redirect, no UI feedback
+    header('Location: ' . $_SERVER['PHP_SELF'] . '?iteration=' . $iteration);
+    exit;
+}
+
 
 /* ==========================
    Prepare logs for rendering

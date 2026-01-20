@@ -57,33 +57,123 @@ function render_log_entry(array $log): string
         background:#fafafa;
     ">';
 
-    if (!empty($type)) {
-        $html .= '<strong>Type:</strong> ' . htmlspecialchars($type) . '<br>';
+    // Always show type
+    $html .= '<strong>Type:</strong> ' . htmlspecialchars($type) . '<br>';
+
+    // --- Backend Error Styling ---
+    if ($type === 'backend-error') {
+        $json = json_decode($log['response_body'], true);
+        $pretty = $json !== null ? json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : $log['response_body'];
+
+        $html .= '<strong>Response:</strong>
+        <pre style="
+            background:#f8f9fa;
+            color:#212529;
+            padding:12px;
+            border-radius:6px;
+            border:1px solid #dee2e6;
+            font-family:Consolas,monospace;
+            font-size:13px;
+            line-height:1.5;
+            overflow-x:auto;
+            white-space:pre-wrap;
+            word-break:break-word;
+        ">' . htmlspecialchars($pretty) . '</pre>';
+
+        // Occurrences
+        if (!empty($log['_count']) && $log['_count'] > 1) {
+            $extra = (int)$log['_count'] - 1;
+            $html .= '<div style="
+                margin-top:6px;
+                padding:6px 10px;
+                background:#fff3cd;
+                border:1px solid #ffe69c;
+                border-radius:6px;
+                color:#664d03;
+                font-size:13px;
+            ">
+                + ' . $extra . ' more occurrence' . ($extra > 1 ? 's' : '') . ' of the same error
+            </div>';
+        }
+
+        $html .= '</div>';
+        return $html; // Early return for backend-error
     }
 
+    // --- Fields for non-special types ---
+    if (!in_array($type, ['frontend-io', 'backend-response'], true)) {
+        if (!empty($log['iteration'])) {
+            $html .= '<strong>Iteration:</strong> ' . htmlspecialchars($log['iteration']) . '<br>';
+        }
+        if (!empty($log['method'])) {
+            $html .= '<strong>Method:</strong> ' . htmlspecialchars($log['method']) . '<br>';
+        }
+        if (isset($log['status_code'])) {
+            $html .= '<strong>Status:</strong> ' . (int)$log['status_code'] . '<br>';
+        }
+    }
+
+    // Endpoint only for backend-response
+    if ($type === 'backend-response' && !empty($log['endpoint'])) {
+        $html .= '<strong>Endpoint:</strong> ' . htmlspecialchars($log['endpoint']) . '<br>';
+    }
+
+    // Request body (all types)
     if (!empty($log['request_body'])) {
         $json = json_decode($log['request_body'], true);
         $pretty = $json !== null ? json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : $log['request_body'];
-        $html .= '<strong>Request:</strong><pre>' . htmlspecialchars($pretty) . '</pre>';
+        $html .= '<strong>Request:</strong>
+        <pre style="
+            background:#f8f9fa;
+            color:#212529;
+            padding:12px 14px;
+            margin:8px 0 12px 0;
+            border-radius:6px;
+            border:1px solid #dee2e6;
+            font-family:Consolas,Monaco,\'Courier New\',monospace;
+            font-size:13px;
+            line-height:1.5;
+            overflow-x:auto;
+            white-space:pre-wrap;
+            word-break:break-word;
+        ">' . htmlspecialchars($pretty) . '</pre>';
     }
 
+    // Response body (all types)
     if (!empty($log['response_body'])) {
         $json = json_decode($log['response_body'], true);
         $pretty = $json !== null ? json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : $log['response_body'];
-        $html .= '<strong>Response:</strong><pre>' . htmlspecialchars($pretty) . '</pre>';
+        $html .= '<strong>Response:</strong>
+        <pre style="
+            background:#f8f9fa;
+            color:#212529;
+            padding:12px 14px;
+            margin:8px 0 12px 0;
+            border-radius:6px;
+            border:1px solid #dee2e6;
+            font-family:Consolas,Monaco,\'Courier New\',monospace;
+            font-size:13px;
+            line-height:1.5;
+            overflow-x:auto;
+            white-space:pre-wrap;
+            word-break:break-word;
+        ">' . htmlspecialchars($pretty) . '</pre>';
     }
 
+    // Occurrences for grouped errors
     if (!empty($log['_count']) && $log['_count'] > 1) {
         $html .= '<strong>Occurrences:</strong> ' . (int)$log['_count'] . '<br>';
     }
 
-    if (!empty($log['created_at'])) {
+    // Created at (skip for frontend-io)
+    if ($type !== 'frontend-io' && !empty($log['created_at'])) {
         $html .= '<strong>Created At:</strong> ' . htmlspecialchars($log['created_at']) . '<br>';
     }
 
     $html .= '</div>';
     return $html;
 }
+
 
 /* ==========================
    Load remarked iterations from DB

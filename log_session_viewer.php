@@ -176,40 +176,40 @@ function render_log_entry(array $log): string
 
 
 /* ==========================
-   Load remarked iterations from DB
-========================= */
+   LOAD REMARKS (FILTERED BY USER)
+========================== */
 
 $db = qa_db();
 $remarked = [];
 
-/*
- Structure:
- $remarked[session_id][iteration] = [
-     'name'   => remark_name,
-     'remark' => remark,
-     'ctime'  => timestamp
- ];
-*/
-$stmt = $db->prepare("
-    SELECT session_id, iteration, remark_name, remark, created_at
-    FROM qa_remarks
-    WHERE user_id = ?
-");
-$stmt->bind_param('i', $userId);
-$stmt->execute();
-$res = $stmt->get_result();
+if (!empty($userId)) {
+    $stmt = $db->prepare("
+        SELECT session_id, iteration, remark_name, remark, created_at
+        FROM qa_remarks
+        WHERE user_id = ?
+        ORDER BY created_at DESC
+    ");
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $res = $stmt->get_result();
 
-while ($row = $res->fetch_assoc()) {
-    $sid = $row['session_id'];
-    $iter = (int)$row['iteration'];
+    while ($row = $res->fetch_assoc()) {
+        $sid  = $row['session_id'];
+        $iter = (int) $row['iteration'];
 
-    $remarked[$sid][$iter] = [
-        'name'   => $row['remark_name'],
-        'remark' => $row['remark'],
-        'ctime'  => strtotime($row['created_at'])
-    ];
+        // Latest remark wins due to DESC order
+        if (!isset($remarked[$sid][$iter])) {
+            $remarked[$sid][$iter] = [
+                'name'   => $row['remark_name'],
+                'remark' => $row['remark'],
+                'ctime'  => strtotime($row['created_at'])
+            ];
+        }
+    }
+
+    $stmt->close();
 }
-$stmt->close();
+
 
 /* ==========================
    Filter by date range if provided
@@ -259,7 +259,7 @@ if ($selectedSession && isset($filteredRemarked[$selectedSession])) {
 </head>
 <body>
 
-<h1>Previous Sessions – Remarks (Read-Only)</h1>
+<h1>Previous Sessions – Remarks</h1>
 
 <button class="btn-white" onclick="window.location.href='logger_index.php'">Return to Logger</button>
 
@@ -313,8 +313,16 @@ if ($selectedSession && isset($filteredRemarked[$selectedSession])) {
 
 <!-- DISPLAY REMARKS + LOGS ONLY AFTER FILTERS -->
 <?php
-$showRemarks = $selectedSession && $selectedIteration 
-    && isset($filteredRemarked[$selectedSession][$selectedIteration]);
+$selectedIterationNum = (int) $selectedIteration;
+
+$showRemarks = $selectedSession
+    && $selectedIterationNum
+    && isset($filteredRemarked[$selectedSession][$selectedIterationNum]);
+
+$entry = $showRemarks
+    ? $filteredRemarked[$selectedSession][$selectedIterationNum]
+    : null;
+
 
 if ($showRemarks && $selectedSession) {
 

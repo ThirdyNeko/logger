@@ -276,7 +276,7 @@ if ($showRemarks) {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>QA Log Session Viewer</title>
+    <title>Developer QA Viewer</title>
     <link rel="stylesheet" href="css/design.css">
     <style>
         body { font-family:sans-serif; padding:20px; max-width:900px; margin:auto; background:#f4f6f8; }
@@ -287,7 +287,7 @@ if ($showRemarks) {
 </head>
 <body>
 
-<h1>Previous Sessions – Remarks (Read-Only)</h1>
+<h1>Developer QA Viewer</h1>
 <hr>
 
 <!-- HEADER BUTTONS -->

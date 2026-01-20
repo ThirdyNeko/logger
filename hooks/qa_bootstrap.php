@@ -39,7 +39,7 @@ if (
     return;
 }
 
-$BACKEND_RECEIVER = 'http://localhost/logger/hooks/receiver_backend.php';
+$BACKEND_RECEIVER = 'http://192.168.40.14/logger/hooks/receiver_backend.php';
 
 // --------------------------------------------------
 // INTERNAL STATE

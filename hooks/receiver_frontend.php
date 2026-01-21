@@ -1,4 +1,18 @@
 <?php
+/* ==========================
+   CORS (MUST BE FIRST)
+========================== */
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Headers: Content-Type, X-QA-INTERNAL');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Max-Age: 86400');
+
+// Handle preflight requests
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
+
 // 🚫 Never log PHP deprecations
 error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
 

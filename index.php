@@ -163,24 +163,40 @@ function group_error_logs(array $errorLogs): array
     $grouped = [];
 
     foreach ($errorLogs as $log) {
+        // Group by the actual error, NOT the endpoint
         $keyParts = [
-            $log['message'] ?? '',
             $log['type'] ?? '',
-            $log['endpoint'] ?? ''
+            $log['message'] ?? '',
+            $log['line'] ?? '',
+            $log['severity'] ?? ''
         ];
 
         $key = md5(implode('|', $keyParts));
 
         if (!isset($grouped[$key])) {
             $grouped[$key] = $log;
+
+            // Track all endpoints that triggered this error
+            $grouped[$key]['_endpoints'] = [];
             $grouped[$key]['_count'] = 0;
+        }
+
+        // Collect unique endpoints
+        if (!empty($log['endpoint'])) {
+            $grouped[$key]['_endpoints'][$log['endpoint']] = true;
         }
 
         $grouped[$key]['_count']++;
     }
 
+    // Normalize endpoint list
+    foreach ($grouped as &$group) {
+        $group['_endpoints'] = array_keys($group['_endpoints']);
+    }
+
     return array_values($grouped);
 }
+
 
 function render_log_entry(array $log): string
 {
@@ -581,16 +597,5 @@ if (LOGGING_ACTIVE) {
     }, 2000);
 }
 </script>
-
 </body>
-
-<style>
-    body { font-family: Arial; background:#f5f5f5; padding:20px; }
-    .log-box { background:#fff; padding:15px; margin-bottom:20px; border-radius:6px; }
-    pre { background:#111; color:#0f0; padding:10px; overflow:auto; }
-    textarea { width:100%; height:60px; }
-    button { padding:6px 12px; margin-top:5px; }
-    select { padding:4px; margin-bottom:10px; }
-</style>
-
 </html>

@@ -54,8 +54,16 @@ function render_log_entry(array $log): string
 
     // --- Backend Error Styling ---
     if ($type === 'backend-error') {
+
+        // ✅ SHOW ENDPOINT
+        if (!empty($log['endpoint'])) {
+            $html .= '<strong>Endpoint:</strong> ' . htmlspecialchars($log['endpoint']) . '<br>';
+        }
+
         $json = json_decode($log['response_body'], true);
-        $pretty = $json !== null ? json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : $log['response_body'];
+        $pretty = $json !== null
+            ? json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
+            : $log['response_body'];
 
         $html .= '<strong>Response:</strong>
         <pre style="
@@ -84,12 +92,17 @@ function render_log_entry(array $log): string
                 color:#664d03;
                 font-size:13px;
             ">
-                + ' . $extra . ' more occurrence' . ($extra > 1 ? 's' : '') . ' of the same error
+                + ' . $extra . ' more occurrence' . ($extra > 1 ? 's' : '') . '
             </div>';
         }
 
+        // Created at
+        if (!empty($log['created_at'])) {
+            $html .= '<strong>Created At:</strong> ' . htmlspecialchars($log['created_at']) . '<br>';
+        }
+
         $html .= '</div>';
-        return $html; // Early return for backend-error
+        return $html;
     }
 
     // --- Fields for non-special types ---
@@ -168,20 +181,20 @@ function render_log_entry(array $log): string
 
 
 /* ==========================
-   USERS WITH REMARKS
+   USERS LIST (qa ONLY)
 ========================== */
-// Fetch users with remarks along with their username
-$usersWithRemarks = [];
+// Fetch all users with role = 'qa'
+$qaUsers = [];
 $stmt = $db->prepare("
-    SELECT DISTINCT r.user_id, u.username
-    FROM qa_remarks r
-    LEFT JOIN users u ON u.id = r.user_id
-    ORDER BY u.username ASC
+    SELECT id, username
+    FROM users
+    WHERE role = 'qa'
+    ORDER BY username ASC
 ");
 $stmt->execute();
 $res = $stmt->get_result();
 while ($row = $res->fetch_assoc()) {
-    $usersWithRemarks[$row['user_id']] = $row['username'] ?? 'User '.$row['user_id'];
+    $qaUsers[$row['id']] = $row['username'] ?? 'User '.$row['id'];
 }
 $stmt->close();
 
@@ -234,42 +247,62 @@ foreach ($remarked as $sid => $iters) {
 krsort($filteredRemarked);
 
 /* ==========================
-   SESSION / ITERATION LIST
+   LOAD LOGS FOR SELECTED ITERATION ONLY
 ========================== */
-$iterations = [];
-if ($selectedSession && isset($filteredRemarked[$selectedSession])) {
-    $iterations = array_keys($filteredRemarked[$selectedSession]);
-}
+$logsToShow = [];
 
-/* ==========================
-   LOAD LOGS FOR REMARK
-========================== */
-$showRemarks = $selectedUser && $selectedSession && $selectedIteration
-    && isset($filteredRemarked[$selectedSession][$selectedIteration]);
-
-$errorLogs = $normalLogs = [];
-if ($showRemarks) {
-    $entry = $filteredRemarked[$selectedSession][$selectedIteration];
-    $parentIteration = (int)preg_split('/\s*-\s*/', $selectedIteration)[0];
-
+if ($selectedUser && $selectedSession && $selectedIteration !== '') {
     $stmt = $db->prepare("
         SELECT *
         FROM qa_logs
         WHERE user_id = ? AND session_id = ? AND iteration = ?
         ORDER BY created_at ASC
     ");
-    $stmt->bind_param('ssi', $selectedUser, $selectedSession, $parentIteration);
+    $stmt->bind_param('ssi', $selectedUser, $selectedSession, $selectedIteration);
     $stmt->execute();
-    $logs = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $logsToShow = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
 
-    $errorLogsRaw = [];
-    foreach ($logs as $log) {
-        if (is_error_log($log)) $errorLogsRaw[] = $log;
-        else $normalLogs[] = $log;
+    // Add remark info if exists
+    $remarkEntry = $filteredRemarked[$selectedSession][$selectedIteration] ?? null;
+    if ($remarkEntry) {
+        foreach ($logsToShow as &$log) {
+            $log['_remark_name'] = $remarkEntry['name'];
+            $log['_remark_text'] = $remarkEntry['remark'];
+        }
+        unset($log);
     }
-    $errorLogs = group_error_logs($errorLogsRaw);
 }
+
+/* ==========================
+   ITERATION LIST FOR SELECTED SESSION
+========================== */
+$iterations = [];
+if ($selectedSession && isset($filteredRemarked[$selectedSession])) {
+    // Include iterations with remarks
+    $iterations = array_keys($filteredRemarked[$selectedSession]);
+}
+
+// Also include iterations without remarks
+$stmt = $db->prepare("
+    SELECT DISTINCT iteration
+    FROM qa_logs
+    WHERE user_id = ? AND session_id = ?
+    ORDER BY iteration ASC
+");
+$stmt->bind_param('ss', $selectedUser, $selectedSession);
+$stmt->execute();
+$res = $stmt->get_result();
+while ($row = $res->fetch_assoc()) {
+    $iter = (int)$row['iteration'];
+    if (!in_array($iter, $iterations, true)) {
+        $iterations[] = $iter;
+    }
+}
+$stmt->close();
+sort($iterations);
+
+
 
 ?>
 
@@ -297,14 +330,14 @@ if ($showRemarks) {
 </div>
 
 <!-- USER SELECT -->
-<?php if (!empty($usersWithRemarks)): ?>
+<?php if (!empty($qaUsers)): ?>
 <form method="GET" style="margin-bottom:15px;">
     <input type="hidden" name="from_date" value="<?= htmlspecialchars($fromDate) ?>">
     <input type="hidden" name="to_date" value="<?= htmlspecialchars($toDate) ?>">
     <label><strong>Select User:</strong></label>
     <select name="user" onchange="this.form.submit()">
         <option value="">-- Select User --</option>
-        <?php foreach ($usersWithRemarks as $uid => $username): ?>
+        <?php foreach ($qaUsers as $uid => $username): ?>
             <option value="<?= htmlspecialchars($uid) ?>" <?= $uid == $selectedUser ? 'selected' : '' ?>>
                 <?= htmlspecialchars($username) ?>
             </option>
@@ -312,6 +345,7 @@ if ($showRemarks) {
     </select>
 </form>
 <?php endif; ?>
+
 
 <!-- DATE FILTER -->
 <form method="GET" style="margin-bottom:15px;">
@@ -321,7 +355,24 @@ if ($showRemarks) {
 </form>
 
 <!-- SESSION SELECT -->
-<?php if ($selectedUser && $filteredRemarked): ?>
+<?php if ($selectedUser): ?>
+<?php
+// Get all sessions from logs for this user
+$sessions = [];
+$stmt = $db->prepare("
+    SELECT DISTINCT session_id
+    FROM qa_logs
+    WHERE user_id = ?
+    ORDER BY session_id ASC
+");
+$stmt->bind_param('s', $selectedUser);
+$stmt->execute();
+$res = $stmt->get_result();
+while ($row = $res->fetch_assoc()) {
+    $sessions[] = $row['session_id'];
+}
+$stmt->close();
+?>
 <form method="GET" style="margin-bottom:15px;">
     <input type="hidden" name="user" value="<?= htmlspecialchars($selectedUser) ?>">
     <input type="hidden" name="from_date" value="<?= htmlspecialchars($fromDate) ?>">
@@ -329,7 +380,7 @@ if ($showRemarks) {
     <label><strong>Select Session:</strong></label>
     <select name="session" onchange="this.form.submit()">
         <option value="">-- Select Session --</option>
-        <?php foreach ($filteredRemarked as $sid => $_): ?>
+        <?php foreach ($sessions as $sid): ?>
             <option value="<?= htmlspecialchars($sid) ?>" <?= $sid === $selectedSession ? 'selected' : '' ?>>
                 <?= htmlspecialchars(str_replace('_',' ',$sid)) ?>
             </option>
@@ -338,6 +389,7 @@ if ($showRemarks) {
 </form>
 <?php endif; ?>
 
+
 <!-- ITERATION SELECT -->
 <?php if ($selectedSession && $iterations): ?>
 <form method="GET" style="margin-bottom:15px;">
@@ -345,48 +397,48 @@ if ($showRemarks) {
     <input type="hidden" name="session" value="<?= htmlspecialchars($selectedSession) ?>">
     <input type="hidden" name="from_date" value="<?= htmlspecialchars($fromDate) ?>">
     <input type="hidden" name="to_date" value="<?= htmlspecialchars($toDate) ?>">
-    <label><strong>Select Activity Log:</strong></label>
+    <label><strong>Select Iteration:</strong></label>
     <select name="iteration" onchange="this.form.submit()">
         <option value="">-- Select Iteration --</option>
         <?php foreach ($iterations as $iter): ?>
+            <?php
+            $remarkName = $filteredRemarked[$selectedSession][$iter]['name'] ?? '';
+            $label = $iter . ($remarkName ? ' - ' . $remarkName : '');
+            ?>
             <option value="<?= $iter ?>" <?= $iter == $selectedIteration ? 'selected' : '' ?>>
-                <?= $iter ?> - <?= htmlspecialchars($filteredRemarked[$selectedSession][$iter]['name']) ?>
+                <?= htmlspecialchars($label) ?>
             </option>
         <?php endforeach; ?>
     </select>
 </form>
 <?php endif; ?>
 
+
 <hr>
 
-<!-- REMARKS + LOGS -->
-<?php if ($showRemarks): ?>
-    <?php if (!empty($entry['name'])): ?>
-        <div class="log-box">
-            <strong>Remark Name:</strong> <?= htmlspecialchars($entry['name']) ?>
+<?php if (!empty($logsToShow)): ?>
+    <?php
+    // Show remark if exists
+    $remarkName = $logsToShow[0]['_remark_name'] ?? '';
+    $remarkText = $logsToShow[0]['_remark_text'] ?? '';
+    ?>
+    <?php if ($remarkName): ?>
+        <div class="log-box" style="background:#eaf4ff;">
+            <strong>Remark Name:</strong> <?= htmlspecialchars($remarkName) ?>
         </div>
     <?php endif; ?>
-    <?php if (!empty($entry['remark'])): ?>
-        <div class="log-box">
+    <?php if ($remarkText): ?>
+        <div class="log-box" style="background:#f9f9f9;">
             <strong>Remark:</strong><br>
-            <?= nl2br(htmlspecialchars($entry['remark'])) ?>
+            <?= nl2br(htmlspecialchars($remarkText)) ?>
         </div>
     <?php endif; ?>
 
-    <?php if (!empty($errorLogs)): ?>
-        <div class="log-box" style="background:#fff3f3;">
-            <h3>⚠️ Error Logs</h3>
-            <?php foreach ($errorLogs as $log) echo render_log_entry($log); ?>
-        </div>
-    <?php endif; ?>
-
-    <?php if (!empty($normalLogs)): ?>
-        <div class="log-box">
-            <h3>📄 Other Logs</h3>
-            <?php foreach ($normalLogs as $log) echo render_log_entry($log); ?>
-        </div>
-    <?php endif; ?>
+    <?php foreach ($logsToShow as $log): ?>
+        <?= render_log_entry($log) ?>
+    <?php endforeach; ?>
 <?php endif; ?>
+
 
 </body>
 </html>

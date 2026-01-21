@@ -2,7 +2,9 @@
     if (window.__QA_HOOK_INSTALLED__) return;
     window.__QA_HOOK_INSTALLED__ = true;
 
-    const FRONTEND_RECEIVER = 'http://localhost/logger/hooks/receiver_frontend.php';
+    const FRONTEND_RECEIVER =
+    `${window.location.origin}/logger/hooks/receiver_frontend.php`;
+
     const originalFetch = window.fetch.bind(window);
 
     /* ==========================
@@ -57,7 +59,9 @@
                 'X-QA-INTERNAL': '1'
             },
             body: JSON.stringify(payload)
-        }).catch(() => {});
+        }).catch(err => {
+            console.error('[QA LOGGER FAILED]', err);
+        });
     }
 
     /* ==========================
@@ -70,14 +74,20 @@
     }
 
     function logUIAsFrontendIO(message) {
-        if (!__qa_last_request) return; // skip if no request context
+        const ctx = __qa_last_request || {
+            url: location.href,
+            method: 'UI',
+            request: null,
+            status: 200
+        };
+
         qaSendFrontendLog({
             type: 'frontend-io',
-            url: __qa_last_request.url || null,
-            method: __qa_last_request.method || null,
-            request: __qa_last_request.request || null,
+            url: ctx.url,
+            method: ctx.method,
+            request: ctx.request,
             response: message,
-            status: __qa_last_request.status || 200,
+            status: ctx.status,
             timestamp: new Date().toISOString()
         });
     }
@@ -86,10 +96,11 @@
        FETCH
     ========================== */
     window.fetch = async (...args) => {
-        const url = args[0] instanceof Request ? args[0].url : args[0];
-        const options = args[1];
-        const method = (options?.method || 'GET').toUpperCase();
-        const body = options?.body || null;
+        const req = args[0] instanceof Request ? args[0] : null;
+        const url = req ? req.url : args[0];
+        const options = req ? req : args[1] || {};
+        const method = (options.method || 'GET').toUpperCase();
+        const body = options.body || null;
 
         if (isQaInternalRequest(url, options)) return originalFetch(...args);
 
@@ -278,5 +289,39 @@
         });
     }
 
+    /* ==========================
+       FORM SUBMIT HOOK
+    ========================== */
+    document.addEventListener('submit', function (e) {
+        const form = e.target;
+        if (!(form instanceof HTMLFormElement)) return;
+
+        const method = (form.method || 'GET').toUpperCase();
+        const url = form.action || window.location.href;
+
+        if (isQaInternalRequest(url)) return;
+
+        const formData = new FormData(form);
+        if (!hasValidRequestBody(formData)) return;
+
+        const normalizedBody = normalizeRequest(formData);
+        const dedupeKey = `${method}|${url}|${JSON.stringify(normalizedBody)}`;
+        if (shouldDedupe(dedupeKey)) return;
+
+        updateLastRequest(url, method, normalizedBody, 0);
+
+        qaSendFrontendLog({
+            type: 'frontend-io',
+            url,
+            method,
+            request: normalizedBody,
+            response: '[form submit]',
+            status: 0,
+            timestamp: new Date().toISOString()
+        });
+    }, true); // capture phase
+
     console.log('[QA] Frontend QA hook active (network + UI + validation + toast, logs normalized)');
 })();
+
+

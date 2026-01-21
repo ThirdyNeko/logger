@@ -2,9 +2,6 @@
 // Prefer the session user ID
 $userId = $_SESSION['user']['id'] ?? 'guest';
 
-// Then write logs to user-specific folder
-$logBase = __DIR__ . "/../../logs/user_{$userId}";
-if (!is_dir($logBase)) mkdir($logBase, 0777, true);
 
 // Rest of logging logic...
 
@@ -16,7 +13,7 @@ error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
 // --------------------------------------------------
 
 // Absolute path to logger directory
-$LOGGER_ROOT = realpath(__DIR__ . '/logger');
+$LOGGER_ROOT = realpath(__DIR__ . '/../../logger');
 
 // Current executing script
 $currentScript = realpath($_SERVER['SCRIPT_FILENAME'] ?? '');
@@ -134,10 +131,15 @@ ob_start(function ($output) {
     }
 
     // 🚫 No input = no backend response log
-    if (empty($_POST) && empty($_GET)) {
+    $hasInput =
+        !empty($_POST) ||
+        !empty($_GET) ||
+        file_get_contents('php://input') !== '';
+
+    if (!$hasInput) {
         return $output;
     }
-
+    
     $json = qa_extract_json($output);
     if ($json === null) {
         return $output;
@@ -197,9 +199,8 @@ set_error_handler(function ($severity, $message, $file, $line) {
         'response'  => [
             'severity' => $severity,
             'message'  => $message,
-            'line'     => $line
         ],
-        'endpoint'  => $file,
+        'endpoint'  => "$file:$line",
         'timestamp' => date('c')
     ]);
 
@@ -211,16 +212,12 @@ set_error_handler(function ($severity, $message, $file, $line) {
 /* --------------------------------------------------
    SHUTDOWN SAFETY (last chance, once only)
 -------------------------------------------------- */
-
-register_shutdown_function(function () {
-    if (ob_get_level() > 0) {
-        @ob_end_flush();
-    }
-});
-
 register_shutdown_function(function () {
 
     $error = error_get_last();
+    if (ob_get_level() > 0) {
+        @ob_end_flush();
+    }
 
     if (!$error) {
         return;
@@ -229,15 +226,15 @@ register_shutdown_function(function () {
     if (in_array($error['type'], [E_DEPRECATED, E_USER_DEPRECATED])) {
         return;
     }
-
+    
     qa_backend_log([
-        'type'      => 'backend-error',
-        'response'  => [
-            'severity' => $severity,
-            'message'  => $message,
-            'line'     => $line
+        'type' => 'backend-error',
+        'response' => [
+            'severity' => $error['type'],
+            'message'  => $error['message'],
+            'line'     => $error['line']
         ],
-        'endpoint'  => $file,
+        'endpoint'  => $error['file'],
         'timestamp' => date('c')
     ]);
 });

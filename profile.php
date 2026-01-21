@@ -89,7 +89,7 @@ switch ($_SESSION['user']['role'] ?? '') {
         break;
 
     case 'qa':
-        $redirectUrl = 'logger_index.php';
+        $redirectUrl = 'index.php';
         break;
 }
 ?>

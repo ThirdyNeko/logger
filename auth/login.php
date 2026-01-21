@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
 
             case 'qa':
-                header('Location: ../logger_index.php');
+                header('Location: ../index.php');
                 break;
 
             case 'admin':

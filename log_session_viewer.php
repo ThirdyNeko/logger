@@ -261,7 +261,7 @@ if ($selectedSession && isset($filteredRemarked[$selectedSession])) {
 
 <h1>Previous Sessions – Remarks</h1>
 
-<button class="btn-white" onclick="window.location.href='logger_index.php'">Return to Logger</button>
+<button class="btn-white" onclick="window.location.href='index.php'">Return to Logger</button>
 
 <hr>
 

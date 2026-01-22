@@ -30,11 +30,6 @@ if (!$data || empty($data['timestamp'])) {
     exit;
 }
 
-/* ==========================
-   Bind user
-========================== */
-$GLOBALS['__QA_USER_ID__'] = $data['user_id'] ?? null;
-
 try {
     $userId = qa_get_user_id();
 } catch (Exception $e) {
@@ -43,7 +38,7 @@ try {
 }
 
 /* ==========================
-   Assign iteration
+   Assign iteration & session
 ========================== */
 $iteration = qa_assign_iteration_id($data['timestamp']);
 if ($iteration === null) {
@@ -62,29 +57,38 @@ if (($data['type'] ?? '') === 'frontend-ui' || isset($data['ui_type'])) {
 }
 
 /* ==========================
-   Insert log
+   Extract log data
+========================== */
+$type         = $data['type'] ?? 'frontend-io';
+$program_name = $data['program_name'] ?? 'UNKNOWN_APP';
+$device_name  = $data['device_name'] ?? 'guest';
+$endpoint     = $data['url'] ?? null;
+$method       = $data['method'] ?? null;
+$requestBody  = isset($data['request']) ? json_encode($data['request']) : null;
+$responseBody = isset($data['response']) ? json_encode($data['response']) : null;
+$statusCode   = $data['status'] ?? 200;
+
+$user_id    = $device_name;
+$session_id = $program_name . '_Test_' . $iteration;
+
+/* ==========================
+   Insert frontend log
 ========================== */
 $db = qa_db();
 
 $stmt = $db->prepare("
     INSERT INTO qa_logs
-    (user_id, session_id, iteration, type, endpoint, method,
-     request_body, response_body, status_code, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+    (user_id, session_id, iteration, device_name, program_name, type, endpoint, method, request_body, response_body, status_code, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
 ");
 
-$type        = $data['type'] ?? 'frontend-io';
-$endpoint    = $data['url'] ?? null;
-$method      = $data['method'] ?? null;
-$requestBody = isset($data['request']) ? json_encode($data['request']) : null;
-$responseBody= isset($data['response']) ? json_encode($data['response']) : null;
-$statusCode  = $data['status'] ?? 200;
-
 $stmt->bind_param(
-    'isisssssi',
-    $userId,
-    $sessionId,
+    'ssisssssssi',
+    $user_id,
+    $session_id,
     $iteration,
+    $device_name,
+    $program_name,
     $type,
     $endpoint,
     $method,

@@ -1,6 +1,41 @@
 <?php
-// Prefer the session user ID
-$userId = $_SESSION['user']['id'] ?? 'guest';
+
+define('QA_APP_PROGRAM', qa_get_app_root_name());
+define('QA_DEVICE_NAME', qa_get_device_name());
+
+/**
+ * Get the name of the root folder of the app
+ */
+function qa_get_app_root_name(): string
+{
+    try {
+        // Get the requested URL path
+        $path = $_SERVER['REQUEST_URI'] ?? '';
+        $pathParts = array_filter(explode('/', $path)); // remove empty segments
+
+        // Take the first folder after domain as the app root
+        if (!empty($pathParts)) {
+            return array_values($pathParts)[0]; // first segment
+        }
+    } catch (Exception $e) {
+        // fallback
+    }
+
+    return 'UNKNOWN_APP';
+}
+function qa_get_device_name(): string
+{
+    // Check persistent cookie first
+    if (!empty($_COOKIE['qa_device_id'])) {
+        return $_COOKIE['qa_device_id'];
+    }
+
+    // Fallback to IP + User-Agent hash
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown_ip';
+    $ua = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown_ua';
+    return 'device_' . substr(md5($ip . '|' . $ua), 0, 12);
+}
+
 
 
 // Rest of logging logic...
@@ -53,7 +88,9 @@ function qa_backend_log(array $data)
         @session_start();
     }
 
-    $data['user_id'] = $_SESSION['user']['id'] ?? 'guest';
+    // Use the device_id from the payload if set
+    $data['user_id'] = $data['device_id'] ?? $_SESSION['user']['id'] ?? 'guest';
+    $data['program'] = $data['program'] ?? qa_get_app_root_name();
 
     $url = 'http://127.0.0.1/logger/hooks/receiver_backend.php';
 
@@ -69,6 +106,7 @@ function qa_backend_log(array $data)
     curl_exec($ch);
     curl_close($ch);
 }
+
 
 /**
  * Extract valid JSON from output
@@ -160,7 +198,8 @@ ob_start(function ($output) {
 
     qa_backend_log([
         'type'      => 'backend-response',
-        'method'    => $_SERVER['REQUEST_METHOD'],
+        'program_name' => QA_APP_PROGRAM,
+        'device_name' => QA_DEVICE_NAME,
         'endpoint'  => $endpoint,
         'status'    => http_response_code(),
         'request'   => $request,
@@ -196,6 +235,8 @@ set_error_handler(function ($severity, $message, $file, $line) {
 
     qa_backend_log([
         'type'      => 'backend-error',
+        'program_name' => QA_APP_PROGRAM,
+        'device_name' => QA_DEVICE_NAME,
         'response'  => [
             'severity' => $severity,
             'message'  => $message,
@@ -229,6 +270,8 @@ register_shutdown_function(function () {
     
     qa_backend_log([
         'type' => 'backend-error',
+        'program_name' => QA_APP_PROGRAM,
+        'device_name' => QA_DEVICE_NAME,
         'response' => [
             'severity' => $error['type'],
             'message'  => $error['message'],

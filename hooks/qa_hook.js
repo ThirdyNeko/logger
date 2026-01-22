@@ -1,4 +1,44 @@
 (() => {
+    // ---------------------------
+    // Persistent device ID
+    // ---------------------------
+    const COOKIE_NAME = 'qa_device_id';
+
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+    }
+
+    function setCookie(name, value, days = 365) {
+        const expires = new Date();
+        expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+        document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+    }
+
+    let QA_DEVICE_NAME = getCookie(COOKIE_NAME);
+    if (!QA_DEVICE_NAME) {
+        QA_DEVICE_NAME = 'device_' + crypto.randomUUID();
+        setCookie(COOKIE_NAME, QA_DEVICE_NAME, 365);
+    }
+
+    // ---------------------------
+    // App program name
+    // ---------------------------
+    const QA_APP_PROGRAM = (() => {
+        try {
+            // Get full path of current URL
+            const pathParts = window.location.pathname.split('/').filter(Boolean);
+            // Take the first folder after the domain as the root folder name
+            return pathParts.length > 0 ? pathParts[0] : 'UNKNOWN_APP';
+        } catch {
+            return 'UNKNOWN_APP';
+        }
+    })();
+
+
+
     if (window.__QA_HOOK_INSTALLED__) return;
     window.__QA_HOOK_INSTALLED__ = true;
 
@@ -83,6 +123,8 @@
 
         qaSendFrontendLog({
             type: 'frontend-io',
+            program_name: QA_APP_PROGRAM,   // ✅ add this
+            device_name: QA_DEVICE_NAME,
             url: ctx.url,
             method: ctx.method,
             request: ctx.request,
@@ -127,6 +169,8 @@
 
         qaSendFrontendLog({
             type: 'frontend-io',
+            program_name: QA_APP_PROGRAM,   // ✅ add this
+            device_name: QA_DEVICE_NAME,
             url,
             method,
             request: normalizedBody,
@@ -159,6 +203,8 @@
                     if (!shouldDedupe(dedupeKey)) {
                         qaSendFrontendLog({
                             type: 'frontend-io',
+                            program_name: QA_APP_PROGRAM,   // ✅ add this
+                            device_name: QA_DEVICE_NAME,
                             url,
                             method,
                             request: normalizedBody,
@@ -177,6 +223,8 @@
                     if (!shouldDedupe(dedupeKey)) {
                         qaSendFrontendLog({
                             type: 'frontend-io',
+                            program_name: QA_APP_PROGRAM,   // ✅ add this
+                            device_name: QA_DEVICE_NAME,
                             url,
                             method,
                             request: normalizedBody,
@@ -224,6 +272,8 @@
 
                 qaSendFrontendLog({
                     type: 'frontend-io',
+                    program_name: QA_APP_PROGRAM,   // ✅ add this
+                    device_name: QA_DEVICE_NAME,
                     url: this._qa_url,
                     method: this._qa_method,
                     request: normalizedBody,
@@ -312,6 +362,8 @@
 
         qaSendFrontendLog({
             type: 'frontend-io',
+            program_name: QA_APP_PROGRAM,   // ✅ add this
+            device_name: QA_DEVICE_NAME,
             url,
             method,
             request: normalizedBody,

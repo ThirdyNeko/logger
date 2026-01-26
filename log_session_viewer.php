@@ -555,6 +555,41 @@ $stmt->close();
 </div>
 <?php endif; ?>
 
+<script>
+let lastIteration = <?= (int)$selectedIteration ?: 0 ?>;
+const selectedProgram = "<?= htmlspecialchars($selectedProgram) ?>";
+const selectedSession = "<?= htmlspecialchars($selectedSession) ?>";
+
+// Only poll if a program and session are selected
+if (selectedProgram && selectedSession) {
+    setInterval(async () => {
+        try {
+            const res = await fetch('iteration_logic/logger_iteration_status.php?program=' 
+                + encodeURIComponent(selectedProgram) 
+                + '&session=' + encodeURIComponent(selectedSession), 
+                { cache: 'no-store' });
+            const data = await res.json();
+
+            console.log('Polling result:', data, 'lastIteration:', lastIteration);
+
+            // If a new iteration exists, reload to that iteration
+            if (data.active && data.iteration > lastIteration) {
+                console.log('New iteration detected:', data.iteration);
+                window.location.href = '<?= $_SERVER['PHP_SELF'] ?>'
+                    + '?user=' + encodeURIComponent(selectedProgram)
+                    + '&session=' + encodeURIComponent(selectedSession)
+                    + '&iteration=' + data.iteration
+                    + '&from_date=<?= htmlspecialchars($fromDate) ?>'
+                    + '&to_date=<?= htmlspecialchars($toDate) ?>';
+            }
+        } catch (e) {
+            console.error('Polling error', e);
+        }
+    }, 2000); // poll every 2 seconds
+}
+</script>
+
+
 
 
 </body>

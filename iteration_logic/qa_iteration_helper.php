@@ -33,32 +33,33 @@ function qa_generate_next_session_id(string $program, string $userId): string
 {
     $db = qa_db();
 
-    // Count existing sessions for this user/program
     $stmt = $db->prepare("
-        SELECT COUNT(*) FROM qa_session_state
-        WHERE user_id = ? AND session_id LIKE CONCAT(?, '%')
+        SELECT COUNT(*)
+        FROM qa_session_state
+        WHERE user_id = ? AND program_name = ?
     ");
     $stmt->bind_param('ss', $userId, $program);
     $stmt->execute();
     $count = (int)$stmt->get_result()->fetch_row()[0];
 
-    // Return the next session ID
     return $program . '_Test_' . ($count + 1);
 }
 
 function qa_get_session_state(): array
 {
-    $userId = qa_get_user_id();
+    $userId  = qa_get_user_id();
     $program = $GLOBALS['__QA_PROGRAM__'] ?? 'UNKNOWN_APP';
     $db = qa_db();
 
+    // Get the MOST RECENT session for this user + program
     $stmt = $db->prepare("
-        SELECT session_id, iteration,
-               remarks_iteration, last_second
+        SELECT session_id, iteration, remarks_iteration, last_second, program_name
         FROM qa_session_state
-        WHERE user_id = ?
+        WHERE user_id = ? AND program_name = ?
+        ORDER BY session_id DESC
+        LIMIT 1
     ");
-    $stmt->bind_param('s', $userId);
+    $stmt->bind_param('ss', $userId, $program);
     $stmt->execute();
     $row = $stmt->get_result()->fetch_assoc();
 
@@ -66,19 +67,8 @@ function qa_get_session_state(): array
         return array_merge(qa_default_session_state(), $row);
     }
 
-    // 🔥 Auto-create session based on program_name
-    $sessionId = qa_generate_next_session_id($program, $userId);
-
-    $state = [
-        'session_id'        => $sessionId,
-        'iteration'         => 0,
-        'remarks_iteration' => '',
-        'last_second'       => null
-    ];
-
-    qa_save_session_state($state);
-
-    return $state;
+    // No session yet for this program → create one
+    return qa_create_new_session($program, $userId);
 }
 
 
@@ -90,24 +80,27 @@ function qa_save_session_state(array $state): void
     $userId = qa_get_user_id();
     $db = qa_db();
 
-    // Make sure DB has a unique key: (user_id, session_id)
     $stmt = $db->prepare("
         INSERT INTO qa_session_state
-        (user_id, session_id, iteration, remarks_iteration, last_second)
-        VALUES (?, ?, ?, ?, ?)
+        (user_id, session_id, iteration, remarks_iteration, last_second, program_name)
+        VALUES (?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
             iteration = VALUES(iteration),
             remarks_iteration = VALUES(remarks_iteration),
-            last_second = VALUES(last_second)
+            last_second = VALUES(last_second),
+            program_name = VALUES(program_name)
     ");
 
+    $program = $state['program_name'] ?? ($GLOBALS['__QA_PROGRAM__'] ?? 'UNKNOWN_APP');
+
     $stmt->bind_param(
-        'ssiss',
+        'ssisss',
         $userId,
         $state['session_id'],
         $state['iteration'],
         $state['remarks_iteration'],
-        $state['last_second']
+        $state['last_second'],
+        $program
     );
 
     $stmt->execute();
@@ -118,7 +111,9 @@ function qa_save_session_state(array $state): void
 ============================ */
 function qa_assign_iteration_id(string $timestamp): ?int
 {
-    $state = qa_get_session_state();
+    $state   = qa_get_session_state();
+    $userId  = qa_get_user_id();
+    $program = $GLOBALS['__QA_PROGRAM__'] ?? 'UNKNOWN_APP';
 
     try {
         $dt = new DateTime($timestamp, new DateTimeZone('Asia/Manila'));
@@ -131,7 +126,15 @@ function qa_assign_iteration_id(string $timestamp): ?int
     $normalizedEpoch = intdiv($epoch, $bucketSize) * $bucketSize;
     $normalizedKey = date('Y-m-d H:i:s', $normalizedEpoch);
 
+    // New time bucket → increment iteration
     if (($state['last_second'] ?? null) !== $normalizedKey) {
+
+        // 🚨 HIT LIMIT → create new session
+        if ($state['iteration'] >= 10) {
+            $state = qa_create_new_session($program, $userId);
+            return 0;
+        }
+
         $state['iteration']++;
         $state['last_second'] = $normalizedKey;
         qa_save_session_state($state);
@@ -139,6 +142,7 @@ function qa_assign_iteration_id(string $timestamp): ?int
 
     return $state['iteration'];
 }
+
 
 /* ============================
    READ-ONLY HELPERS
@@ -149,14 +153,23 @@ function qa_get_session_id(): string
 }
 
 /* ============================
-   SESSION RESET
+   SESSION RESET / CREATE NEW SESSION
 ============================ */
-function qa_create_new_session(string $sessionId): void
+function qa_create_new_session(string $program, string $userId): array
 {
-    qa_save_session_state([
+    $sessionId = qa_generate_next_session_id($program, $userId);
+
+    $state = [
         'session_id'        => $sessionId,
         'iteration'         => 0,
         'remarks_iteration' => '',
-        'last_second'       => null
-    ]);
+        'last_second'       => null,
+        'program_name'      => $program
+    ];
+
+    qa_save_session_state($state);
+
+    return $state;
 }
+
+

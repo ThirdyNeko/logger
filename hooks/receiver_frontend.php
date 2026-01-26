@@ -36,17 +36,24 @@ try {
     http_response_code(403);
     exit;
 }
+$GLOBALS['__QA_USER_ID__']    = $data['device_name'];
+$GLOBALS['__QA_PROGRAM__']   = $data['program_name'];
 
 /* ==========================
    Assign iteration & session
 ========================== */
+
+// Assign iteration (returns int)
 $iteration = qa_assign_iteration_id($data['timestamp']);
 if ($iteration === null) {
     http_response_code(204);
     exit;
 }
 
-$sessionId = qa_get_session_id();
+// Fetch session state to get session_id
+$state = qa_get_session_state();
+$session_id = $state['session_id'];
+
 
 /* ==========================
    Normalize UI logs
@@ -67,9 +74,7 @@ $method       = $data['method'] ?? null;
 $requestBody  = isset($data['request']) ? json_encode($data['request']) : null;
 $responseBody = isset($data['response']) ? json_encode($data['response']) : null;
 $statusCode   = $data['status'] ?? 200;
-
 $user_id    = $device_name;
-$session_id = $program_name . '_Test_' . $iteration;
 
 /* ==========================
    Insert frontend log

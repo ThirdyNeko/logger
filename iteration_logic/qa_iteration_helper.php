@@ -28,6 +28,24 @@ function qa_default_session_state(): array
 /* ============================
    STATE HANDLING
 ============================ */
+
+function qa_generate_next_session_id(string $program, string $userId): string
+{
+    $db = qa_db();
+
+    // Count existing sessions for this user/program
+    $stmt = $db->prepare("
+        SELECT COUNT(*) FROM qa_session_state
+        WHERE user_id = ? AND session_id LIKE CONCAT(?, '%')
+    ");
+    $stmt->bind_param('ss', $userId, $program);
+    $stmt->execute();
+    $count = (int)$stmt->get_result()->fetch_row()[0];
+
+    // Return the next session ID
+    return $program . '_Test_' . ($count + 1);
+}
+
 function qa_get_session_state(): array
 {
     $userId = qa_get_user_id();
@@ -49,15 +67,7 @@ function qa_get_session_state(): array
     }
 
     // 🔥 Auto-create session based on program_name
-    $stmt = $db->prepare("
-        SELECT COUNT(*) FROM qa_session_state
-        WHERE session_id LIKE CONCAT(?, '%')
-    ");
-    $stmt->bind_param('s', $program);
-    $stmt->execute();
-    $count = (int)$stmt->get_result()->fetch_row()[0];
-
-    $sessionId = $program . '_Test_' . ($count + 1);
+    $sessionId = qa_generate_next_session_id($program, $userId);
 
     $state = [
         'session_id'        => $sessionId,
@@ -71,18 +81,21 @@ function qa_get_session_state(): array
     return $state;
 }
 
+
+/* ============================
+   SAVE SESSION STATE
+============================ */
 function qa_save_session_state(array $state): void
 {
     $userId = qa_get_user_id();
     $db = qa_db();
 
+    // Make sure DB has a unique key: (user_id, session_id)
     $stmt = $db->prepare("
         INSERT INTO qa_session_state
-        (user_id, session_id, iteration,
-         remarks_iteration, last_second)
+        (user_id, session_id, iteration, remarks_iteration, last_second)
         VALUES (?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
-            session_id = VALUES(session_id),
             iteration = VALUES(iteration),
             remarks_iteration = VALUES(remarks_iteration),
             last_second = VALUES(last_second)

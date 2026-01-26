@@ -1,4 +1,5 @@
 <?php
+session_name('QA_LOGGER_SESSION');
 session_start();
 require __DIR__ . '/config/db.php';
 
@@ -89,7 +90,7 @@ switch ($_SESSION['user']['role'] ?? '') {
         break;
 
     case 'qa':
-        $redirectUrl = 'index.php';
+        $redirectUrl = 'log_session_viewer.php';
         break;
 }
 ?>

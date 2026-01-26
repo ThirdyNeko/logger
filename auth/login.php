@@ -1,5 +1,7 @@
 <?php
+session_name('QA_LOGGER_SESSION');
 session_start();
+
 require __DIR__ . '/../config/db.php';
 
 $error = '';
@@ -45,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
 
             case 'qa':
-                header('Location: ../index.php');
+                header('Location: ../log_session_viewer.php');
                 break;
 
             case 'admin':

@@ -1,16 +1,16 @@
 <?php
+session_name('QA_LOGGER_SESSION');
 
 require_once __DIR__ . '/auth/require_login.php';
 date_default_timezone_set('Asia/Manila');
 require_once __DIR__ . '/iteration_logic/qa_iteration_helper.php';
 
-$userId = $_SESSION['user']['id'] ?? 'guest';
 $db = qa_db();
 
 /* ==========================
    INPUT STATE
 ========================== */
-$selectedUser      = $_GET['user'] ?? '';
+$selectedProgram     = $_GET['user'] ?? '';
 $selectedSession   = $_GET['session'] ?? '';
 $selectedIteration = $_GET['iteration'] ?? '';
 $fromDate          = $_GET['from_date'] ?? '';
@@ -181,21 +181,25 @@ function render_log_entry(array $log): string
 
 
 /* ==========================
-   USERS LIST (qa ONLY)
+   PROGRAM LIST (FROM LOGS)
 ========================== */
-// Fetch all users with role = 'qa'
-$qaUsers = [];
+
+$programs = [];
+
 $stmt = $db->prepare("
-    SELECT id, username
-    FROM users
-    WHERE role = 'qa'
-    ORDER BY username ASC
+    SELECT DISTINCT program_name
+    FROM qa_logs
+    WHERE program_name IS NOT NULL
+    ORDER BY program_name ASC
 ");
 $stmt->execute();
 $res = $stmt->get_result();
+
 while ($row = $res->fetch_assoc()) {
-    $qaUsers[$row['id']] = $row['username'] ?? 'User '.$row['id'];
+    $programs[$row['program_name']] =
+        $row['program_name'] ?: 'Unknown Program (' . $row['program_name'] . ')';
 }
+
 $stmt->close();
 
 
@@ -204,14 +208,14 @@ $stmt->close();
 ========================== */
 $remarked = [];
 
-if ($selectedUser) {
+if ($selectedProgram) {
     $stmt = $db->prepare("
-        SELECT session_id, iteration, remark_name, remark, created_at
+        SELECT session_id, iteration, remark_name, remark, created_at, user_id, username
         FROM qa_remarks
-        WHERE user_id = ?
+        WHERE program_name = ?
         ORDER BY created_at DESC
     ");
-    $stmt->bind_param('s', $selectedUser);
+    $stmt->bind_param('s', $selectedProgram);
     $stmt->execute();
     $res = $stmt->get_result();
 
@@ -220,13 +224,16 @@ if ($selectedUser) {
         $iter = (int)$row['iteration'];
 
         $remarked[$sid][$iter] = [
-            'name'   => $row['remark_name'],
-            'remark' => $row['remark'],
-            'ctime'  => strtotime($row['created_at'])
+            'name'     => $row['remark_name'],
+            'remark'   => $row['remark'],
+            'ctime'    => strtotime($row['created_at']),
+            'user_id'  => $row['user_id'],
+            'username' => $row['username'] ?? 'Unknown'
         ];
     }
     $stmt->close();
 }
+
 
 /* ==========================
    DATE FILTER
@@ -251,14 +258,14 @@ krsort($filteredRemarked);
 ========================== */
 $logsToShow = [];
 
-if ($selectedUser && $selectedSession && $selectedIteration !== '') {
+if ($selectedProgram && $selectedSession && $selectedIteration !== '') {
     $stmt = $db->prepare("
         SELECT *
         FROM qa_logs
-        WHERE user_id = ? AND session_id = ? AND iteration = ?
+        WHERE program_name = ? AND session_id = ? AND iteration = ?
         ORDER BY created_at ASC
     ");
-    $stmt->bind_param('ssi', $selectedUser, $selectedSession, $selectedIteration);
+    $stmt->bind_param('ssi', $selectedProgram, $selectedSession, $selectedIteration);
     $stmt->execute();
     $logsToShow = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
@@ -287,10 +294,10 @@ if ($selectedSession && isset($filteredRemarked[$selectedSession])) {
 $stmt = $db->prepare("
     SELECT DISTINCT iteration
     FROM qa_logs
-    WHERE user_id = ? AND session_id = ?
+    WHERE program_name = ? AND session_id = ?
     ORDER BY iteration ASC
 ");
-$stmt->bind_param('ss', $selectedUser, $selectedSession);
+$stmt->bind_param('ss', $selectedProgram, $selectedSession);
 $stmt->execute();
 $res = $stmt->get_result();
 while ($row = $res->fetch_assoc()) {
@@ -330,16 +337,16 @@ sort($iterations);
 </div>
 
 <!-- USER SELECT -->
-<?php if (!empty($qaUsers)): ?>
+<?php if (!empty($programs)): ?>
 <form method="GET" style="margin-bottom:15px;">
     <input type="hidden" name="from_date" value="<?= htmlspecialchars($fromDate) ?>">
     <input type="hidden" name="to_date" value="<?= htmlspecialchars($toDate) ?>">
-    <label><strong>Select User:</strong></label>
+    <label><strong>Select Program:</strong></label>
     <select name="user" onchange="this.form.submit()">
-        <option value="">-- Select User --</option>
-        <?php foreach ($qaUsers as $uid => $username): ?>
-            <option value="<?= htmlspecialchars($uid) ?>" <?= $uid == $selectedUser ? 'selected' : '' ?>>
-                <?= htmlspecialchars($username) ?>
+        <option value="">-- Select Program --</option>
+        <?php foreach ($programs as $programId => $programName): ?>
+            <option value="<?= htmlspecialchars($programId) ?>" <?= $programId == $selectedProgram ? 'selected' : '' ?>>
+                <?= htmlspecialchars($programName) ?>
             </option>
         <?php endforeach; ?>
     </select>
@@ -349,23 +356,23 @@ sort($iterations);
 
 <!-- DATE FILTER -->
 <form method="GET" style="margin-bottom:15px;">
-    <input type="hidden" name="user" value="<?= htmlspecialchars($selectedUser) ?>">
+    <input type="hidden" name="user" value="<?= htmlspecialchars($selectedProgram) ?>">
     <label>From: <input type="date" name="from_date" value="<?= htmlspecialchars($fromDate) ?>" onchange="this.form.submit()"></label>
     <label>To: <input type="date" name="to_date" value="<?= htmlspecialchars($toDate) ?>" onchange="this.form.submit()"></label>
 </form>
 
 <!-- SESSION SELECT -->
-<?php if ($selectedUser): ?>
+<?php if ($selectedProgram): ?>
 <?php
 // Get all sessions from logs for this user
 $sessions = [];
 $stmt = $db->prepare("
     SELECT DISTINCT session_id
     FROM qa_logs
-    WHERE user_id = ?
+    WHERE program_name = ?
     ORDER BY session_id ASC
 ");
-$stmt->bind_param('s', $selectedUser);
+$stmt->bind_param('s', $selectedProgram);
 $stmt->execute();
 $res = $stmt->get_result();
 while ($row = $res->fetch_assoc()) {
@@ -374,7 +381,7 @@ while ($row = $res->fetch_assoc()) {
 $stmt->close();
 ?>
 <form method="GET" style="margin-bottom:15px;">
-    <input type="hidden" name="user" value="<?= htmlspecialchars($selectedUser) ?>">
+    <input type="hidden" name="user" value="<?= htmlspecialchars($selectedProgram) ?>">
     <input type="hidden" name="from_date" value="<?= htmlspecialchars($fromDate) ?>">
     <input type="hidden" name="to_date" value="<?= htmlspecialchars($toDate) ?>">
     <label><strong>Select Session:</strong></label>
@@ -393,7 +400,7 @@ $stmt->close();
 <!-- ITERATION SELECT -->
 <?php if ($selectedSession && $iterations): ?>
 <form method="GET" style="margin-bottom:15px;">
-    <input type="hidden" name="user" value="<?= htmlspecialchars($selectedUser) ?>">
+    <input type="hidden" name="user" value="<?= htmlspecialchars($selectedProgram) ?>">
     <input type="hidden" name="session" value="<?= htmlspecialchars($selectedSession) ?>">
     <input type="hidden" name="from_date" value="<?= htmlspecialchars($fromDate) ?>">
     <input type="hidden" name="to_date" value="<?= htmlspecialchars($toDate) ?>">
@@ -418,13 +425,14 @@ $stmt->close();
 
 <?php if (!empty($logsToShow)): ?>
     <?php
-    // Show remark if exists
     $remarkName = $logsToShow[0]['_remark_name'] ?? '';
     $remarkText = $logsToShow[0]['_remark_text'] ?? '';
+    $remarkUser = $filteredRemarked[$selectedSession][$selectedIteration]['username'] ?? 'Unknown';
     ?>
-    <?php if ($remarkName): ?>
+    <?php if ($remarkName || $remarkText): ?>
         <div class="log-box" style="background:#eaf4ff;">
-            <strong>Remark Name:</strong> <?= htmlspecialchars($remarkName) ?>
+            <strong>Remark Name:</strong> <?= htmlspecialchars($remarkName) ?><br>
+            <small>By: <?= htmlspecialchars($remarkUser) ?></small>
         </div>
     <?php endif; ?>
     <?php if ($remarkText): ?>

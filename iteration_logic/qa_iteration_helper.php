@@ -33,12 +33,13 @@ function qa_generate_next_session_id(string $program, string $userId): string
 {
     $db = qa_db();
 
+    // Count **all sessions for this program**, not just the user
     $stmt = $db->prepare("
-        SELECT COUNT(*)
+        SELECT COUNT(*) 
         FROM qa_session_state
-        WHERE user_id = ? AND program_name = ?
+        WHERE program_name = ?
     ");
-    $stmt->bind_param('ss', $userId, $program);
+    $stmt->bind_param('s', $program);
     $stmt->execute();
     $count = (int)$stmt->get_result()->fetch_row()[0];
 
@@ -111,9 +112,9 @@ function qa_save_session_state(array $state): void
 ============================ */
 function qa_assign_iteration_id(string $timestamp): ?int
 {
-    $state   = qa_get_session_state();
     $userId  = qa_get_user_id();
     $program = $GLOBALS['__QA_PROGRAM__'] ?? 'UNKNOWN_APP';
+    $state   = qa_get_session_state();
 
     try {
         $dt = new DateTime($timestamp, new DateTimeZone('Asia/Manila'));
@@ -126,15 +127,17 @@ function qa_assign_iteration_id(string $timestamp): ?int
     $normalizedEpoch = intdiv($epoch, $bucketSize) * $bucketSize;
     $normalizedKey = date('Y-m-d H:i:s', $normalizedEpoch);
 
-    // New time bucket → increment iteration
+    // Only increment if new bucket
     if (($state['last_second'] ?? null) !== $normalizedKey) {
 
-        // 🚨 HIT LIMIT → create new session
-        if ($state['iteration'] >= 10) {
+        // 🚨 Hit iteration limit → create new session
+        if ($state['iteration'] >= 50) {
+            // Always generate a **new session ID per user**
             $state = qa_create_new_session($program, $userId);
-            return 0;
+            return 0; // iteration resets
         }
 
+        // Normal increment
         $state['iteration']++;
         $state['last_second'] = $normalizedKey;
         qa_save_session_state($state);
@@ -142,6 +145,7 @@ function qa_assign_iteration_id(string $timestamp): ?int
 
     return $state['iteration'];
 }
+
 
 
 /* ============================

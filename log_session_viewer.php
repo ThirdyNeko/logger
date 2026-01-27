@@ -80,6 +80,7 @@ $selectedIteration = $_GET['iteration'] ?? '';
 $fromDate          = $_GET['from_date'] ?? '';
 $toDate            = $_GET['to_date'] ?? '';
 
+
 /* ==========================
    Helpers
 ========================== */
@@ -634,63 +635,63 @@ $stmt->close();
 <?php endif; ?>
 
 <?php
-// ==========================
-// Determine the latest iteration for the current session
-// ==========================
-$maxIteration = 0;
-if ($selectedProgram && $selectedSession) {
+$latestLog = ['session_id' => '', 'iteration' => 0];
+
+if ($selectedProgram) {
     $stmt = $db->prepare("
-        SELECT MAX(iteration) AS max_iter
+        SELECT session_id, iteration
         FROM qa_logs
-        WHERE program_name = ? AND session_id = ?
+        WHERE program_name = ?
+        ORDER BY created_at DESC
+        LIMIT 1
     ");
-    $stmt->bind_param('ss', $selectedProgram, $selectedSession);
+    $stmt->bind_param('s', $selectedProgram);
     $stmt->execute();
     $res = $stmt->get_result()->fetch_assoc();
     $stmt->close();
-    $maxIteration = (int)($res['max_iter'] ?? 0);
+
+    if ($res) {
+        $latestLog = [
+            'session_id' => $res['session_id'],
+            'iteration' => (int)$res['iteration']
+        ];
+    }
 }
 ?>
 
 <script>
-let lastIteration = <?= (int)$selectedIteration ?: 0 ?>;
 const selectedProgram = "<?= htmlspecialchars($selectedProgram) ?>";
-const selectedSession = "<?= htmlspecialchars($selectedSession) ?>";
-const currentMaxIteration = <?= $maxIteration ?>; // max iteration when page loaded
+const latestSessionOnLoad = "<?= htmlspecialchars($latestLog['session_id']) ?>";
+const latestIterationOnLoad = <?= $latestLog['iteration'] ?>;
 
-// Only poll if a program and session are selected
-if (selectedProgram && selectedSession) {
+if (selectedProgram) {
     setInterval(async () => {
         try {
             const res = await fetch('iteration_logic/logger_iteration_status.php?program=' 
-                + encodeURIComponent(selectedProgram) 
-                + '&session=' + encodeURIComponent(selectedSession), 
+                + encodeURIComponent(selectedProgram), 
                 { cache: 'no-store' });
             const data = await res.json();
 
-            console.log('Polling result:', data, 'lastIteration:', lastIteration, 'currentMaxIteration:', currentMaxIteration);
+            // Only redirect if a new iteration or session has been added after page load
+            const hasNewIteration =
+                data.latestIteration > latestIterationOnLoad
+                || data.latestSession !== latestSessionOnLoad;
 
-            // Only jump to latest if user is already on the latest iteration
-            const isViewingLatest = lastIteration === currentMaxIteration;
-
-            if (data.active && data.iteration > lastIteration && isViewingLatest) {
-                console.log('New iteration detected, going to latest:', data.iteration);
+            if (data.active && hasNewIteration) {
                 window.location.href = '<?= $_SERVER['PHP_SELF'] ?>'
                     + '?user=' + encodeURIComponent(selectedProgram)
-                    + '&session=' + encodeURIComponent(selectedSession)
-                    + '&iteration=' + data.iteration
+                    + '&session=' + encodeURIComponent(data.latestSession)
+                    + '&iteration=' + data.latestIteration
                     + '&from_date=<?= htmlspecialchars($fromDate) ?>'
                     + '&to_date=<?= htmlspecialchars($toDate) ?>';
             }
+
         } catch (e) {
             console.error('Polling error', e);
         }
-    }, 2000); // poll every 2 seconds
+    }, 2000);
 }
 </script>
-
-
-
 
 </body>
 </html>

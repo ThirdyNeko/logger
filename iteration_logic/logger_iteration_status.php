@@ -2,26 +2,33 @@
 require_once __DIR__ . '/../config/db.php';
 
 $program = $_GET['program'] ?? '';
-$session = $_GET['session'] ?? '';
 
-$response = ['iteration' => 0, 'active' => false];
+$response = [
+    'latestSession' => '',
+    'latestIteration' => 0,
+    'active' => false
+];
 
-if ($program && $session) {
+if ($program) {
     $db = qa_db();
 
-    // Get the max iteration for the selected program & session
     $stmt = $db->prepare("
-        SELECT MAX(iteration) AS max_iter
+        SELECT session_id, iteration
         FROM qa_logs
-        WHERE program_name = ? AND session_id = ?
+        WHERE program_name = ?
+        ORDER BY created_at DESC
+        LIMIT 1
     ");
-    $stmt->bind_param('ss', $program, $session);
+    $stmt->bind_param('s', $program);
     $stmt->execute();
     $res = $stmt->get_result()->fetch_assoc();
     $stmt->close();
 
-    $response['iteration'] = (int)($res['max_iter'] ?? 0);
-    $response['active'] = $response['iteration'] > 0;
+    if ($res) {
+        $response['latestSession'] = $res['session_id'];
+        $response['latestIteration'] = (int)$res['iteration'];
+        $response['active'] = true;
+    }
 }
 
 header('Content-Type: application/json');

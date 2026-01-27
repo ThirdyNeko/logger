@@ -20,6 +20,36 @@ if ($username) {
 
     $userId = $userRow['id'] ?? null;
 }
+/* ==========================
+   RENAME SESSION
+========================== */
+if ($_SERVER['REQUEST_METHOD'] === 'POST'
+    && isset($_POST['rename_session'], $_POST['program'], $_POST['session'])
+) {
+    define('QA_SKIP_LOGGING', true);
+
+    $program   = $_POST['program'];
+    $sessionId = $_POST['session'];
+    $name      = trim($_POST['rename_session']);
+
+    if ($program && $sessionId && $name !== '') {
+        $stmt = $db->prepare("
+            INSERT INTO qa_session_names (program_name, session_id, session_name)
+            VALUES (?, ?, ?)
+            ON DUPLICATE KEY UPDATE session_name = VALUES(session_name)
+        ");
+        $stmt->bind_param('sss', $program, $sessionId, $name);
+        $stmt->execute();
+        $stmt->close();
+    }
+
+    // Stay on same selection
+    header('Location: ' . $_SERVER['PHP_SELF']
+        . '?user=' . urlencode($program)
+        . '&session=' . urlencode($sessionId)
+    );
+    exit;
+}
 
 /* ==========================
    STORE QA REMARK (VIEWER)
@@ -80,6 +110,26 @@ $selectedIteration = $_GET['iteration'] ?? '';
 $fromDate          = $_GET['from_date'] ?? '';
 $toDate            = $_GET['to_date'] ?? '';
 
+/* ==========================
+   LOAD SESSION NAMES
+========================== */
+$sessionNames = [];
+
+if ($selectedProgram) {
+    $stmt = $db->prepare("
+        SELECT session_id, session_name
+        FROM qa_session_names
+        WHERE program_name = ?
+    ");
+    $stmt->bind_param('s', $selectedProgram);
+    $stmt->execute();
+    $res = $stmt->get_result();
+
+    while ($row = $res->fetch_assoc()) {
+        $sessionNames[$row['session_id']] = $row['session_name'];
+    }
+    $stmt->close();
+}
 
 /* ==========================
    Helpers
@@ -521,14 +571,39 @@ $stmt->close();
     <select name="session" onchange="this.form.submit()">
         <option value="">-- Select Session --</option>
         <?php foreach ($sessions as $sid): ?>
+            <?php
+            $label = $sessionNames[$sid]
+                ?? str_replace('_',' ', $sid);
+            ?>
             <option value="<?= htmlspecialchars($sid) ?>" <?= $sid === $selectedSession ? 'selected' : '' ?>>
-                <?= htmlspecialchars(str_replace('_',' ',$sid)) ?>
+                <?= htmlspecialchars($label) ?>
             </option>
         <?php endforeach; ?>
     </select>
 </form>
 <?php endif; ?>
 
+<?php if ($selectedProgram && $selectedSession): ?>
+<div class="log-box" style="background:#fff7e6; margin-bottom:15px;">
+    <form method="POST" style="display:flex; gap:8px; align-items:center;">
+        <input type="hidden" name="program" value="<?= htmlspecialchars($selectedProgram) ?>">
+        <input type="hidden" name="session" value="<?= htmlspecialchars($selectedSession) ?>">
+
+        <input
+            type="text"
+            name="rename_session"
+            placeholder="Rename this session"
+            maxlength="50"
+            value="<?= htmlspecialchars($sessionNames[$selectedSession] ?? '') ?>"
+            style="flex:1; padding:6px 8px;"
+        >
+
+        <button class="btn-black" type="submit">
+            Rename
+        </button>
+    </form>
+</div>
+<?php endif; ?>
 
 <!-- ITERATION SELECT -->
 <?php if ($selectedSession && $iterations): ?>

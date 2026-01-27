@@ -17,6 +17,27 @@ $fromDate          = $_GET['from_date'] ?? '';
 $toDate            = $_GET['to_date'] ?? '';
 
 /* ==========================
+   LOAD SESSION NAMES
+========================== */
+$sessionNames = [];
+
+if ($selectedProgram) {
+    $stmt = $db->prepare("
+        SELECT session_id, session_name
+        FROM qa_session_names
+        WHERE program_name = ?
+    ");
+    $stmt->bind_param('s', $selectedProgram);
+    $stmt->execute();
+    $res = $stmt->get_result();
+
+    while ($row = $res->fetch_assoc()) {
+        $sessionNames[$row['session_id']] = $row['session_name'];
+    }
+    $stmt->close();
+}
+
+/* ==========================
    Helpers
 ========================== */
 function is_error_log(array $log): bool
@@ -460,8 +481,12 @@ $stmt->close();
     <select name="session" onchange="this.form.submit()">
         <option value="">-- Select Session --</option>
         <?php foreach ($sessions as $sid): ?>
+            <?php
+            $label = $sessionNames[$sid]
+                ?? str_replace('_',' ', $sid);
+            ?>
             <option value="<?= htmlspecialchars($sid) ?>" <?= $sid === $selectedSession ? 'selected' : '' ?>>
-                <?= htmlspecialchars(str_replace('_',' ',$sid)) ?>
+                <?= htmlspecialchars($label) ?>
             </option>
         <?php endforeach; ?>
     </select>

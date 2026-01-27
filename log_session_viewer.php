@@ -91,14 +91,44 @@ function is_error_log(array $log): bool
 function group_error_logs(array $errorLogs): array
 {
     $grouped = [];
+
     foreach ($errorLogs as $log) {
-        $key = md5(($log['message'] ?? '').($log['type'] ?? '').($log['endpoint'] ?? ''));
+        // Decode response_body safely
+        $decoded = json_decode($log['response_body'] ?? '', true);
+
+        $message  = $decoded['message'] ?? '';
+        $severity = $decoded['severity'] ?? '';
+
+        // 🔑 Logical grouping key
+        $key = md5(
+            ($log['type'] ?? '') . '|' . $message . '|' . $severity
+        );
+
         if (!isset($grouped[$key])) {
-            $grouped[$key] = $log;
-            $grouped[$key]['_count'] = 0;
+            $base = $log;
+
+            // Remove per-occurrence fields
+            unset($base['endpoint']);
+
+            $base['_count'] = 0;
+            $base['_endpoints'] = [];
+
+            $grouped[$key] = $base;
         }
+
+        // Collect endpoints
+        if (!empty($log['endpoint'])) {
+            $grouped[$key]['_endpoints'][$log['endpoint']] = true;
+        }
+
         $grouped[$key]['_count']++;
     }
+
+    // Normalize endpoint list
+    foreach ($grouped as &$group) {
+        $group['_endpoints'] = array_keys($group['_endpoints']);
+    }
+
     return array_values($grouped);
 }
 
@@ -119,50 +149,91 @@ function render_log_entry(array $log): string
     // --- Backend Error Styling ---
     if ($type === 'backend-error') {
 
-        // ✅ SHOW ENDPOINT
-        if (!empty($log['endpoint'])) {
-            $html .= '<strong>Endpoint:</strong> ' . htmlspecialchars($log['endpoint']) . '<br>';
+        // Normalize endpoints first
+        if (!empty($log['_endpoints']) && is_array($log['_endpoints'])) {
+            $endpoints = $log['_endpoints'];
+        } elseif (!empty($log['endpoint'])) {
+            $endpoints = [$log['endpoint']];
+        } else {
+            $endpoints = [];
         }
 
-        $json = json_decode($log['response_body'], true);
-        $pretty = $json !== null
-            ? json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
-            : $log['response_body'];
-
-        $html .= '<strong>Response:</strong>
-        <pre style="
-            background:#f8f9fa;
-            color:#212529;
-            padding:12px;
+        // 🔴 Error container styling override
+        $html = '<div style="
+            border:1px solid #f1aeb5;
+            border-left:6px solid #dc3545;
             border-radius:6px;
-            border:1px solid #dee2e6;
-            font-family:Consolas,monospace;
-            font-size:13px;
-            line-height:1.5;
-            overflow-x:auto;
-            white-space:pre-wrap;
-            word-break:break-word;
-        ">' . htmlspecialchars($pretty) . '</pre>';
+            padding:12px;
+            margin-bottom:12px;
+            background:#f8d7da;
+        ">';
 
-        // Occurrences
+        $html .= '<strong style="color:#842029;">Backend Error</strong><br>';
+
+        // 📍 Endpoints (grouped)
+        if (!empty($endpoints)) {
+            $html .= '<strong>Endpoints:</strong><br>';
+            foreach ($endpoints as $ep) {
+                $parts = explode(':', $ep, 2);
+                $file = $parts[0];
+                $line = $parts[1] ?? '';
+
+                $html .= '• <code>' . htmlspecialchars($file) . '</code>';
+                if ($line !== '') {
+                    $html .= ' : <code>' . htmlspecialchars($line) . '</code>';
+                }
+                $html .= '<br>';
+            }
+        }
+
+        // 📦 Response (single)
+        if (!empty($log['response_body'])) {
+            $json = json_decode($log['response_body'], true);
+            $pretty = $json !== null
+                ? json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
+                : $log['response_body'];
+
+            $html .= '<div style="margin-top:10px;">
+                <strong>Response:</strong>
+                <pre style="
+                    background:#f1f3f5;
+                    color:#212529;
+                    padding:12px;
+                    border-radius:6px;
+                    border:1px solid #ced4da;
+                    font-family:Consolas,monospace;
+                    font-size:13px;
+                    line-height:1.5;
+                    overflow-x:auto;
+                    white-space:pre-wrap;
+                    word-break:break-word;
+                ">' . htmlspecialchars($pretty) . '</pre>
+            </div>';
+        }
+
+        // 🟡 Occurrences (old UX preserved)
         if (!empty($log['_count']) && $log['_count'] > 1) {
             $extra = (int)$log['_count'] - 1;
+
             $html .= '<div style="
-                margin-top:6px;
-                padding:6px 10px;
+                margin-top:8px;
+                padding:8px 12px;
                 background:#fff3cd;
                 border:1px solid #ffe69c;
                 border-radius:6px;
                 color:#664d03;
                 font-size:13px;
             ">
-                + ' . $extra . ' more occurrence' . ($extra > 1 ? 's' : '') . '
+                <strong>Occurrences:</strong> ' . (int)$log['_count'] . '<br>
+                + ' . $extra . ' more occurrence' . ($extra > 1 ? 's' : '') . ' of the same error
             </div>';
         }
 
-        // Created at
+        // 🕒 Created at
         if (!empty($log['created_at'])) {
-            $html .= '<strong>Created At:</strong> ' . htmlspecialchars($log['created_at']) . '<br>';
+            $html .= '<div style="margin-top:6px;font-size:12px;color:#6c757d;">
+                Created at: ' . htmlspecialchars($log['created_at']) . '
+            </div>';
         }
 
         $html .= '</div>';
@@ -502,9 +573,16 @@ $stmt->close();
         </div>
     <?php endif; ?>
 
-    <?php foreach ($logsToShow as $log): ?>
-        <?= render_log_entry($log) ?>
-    <?php endforeach; ?>
+    <?php if (!empty($logsToShow)): ?>
+        <?php
+        // Group backend-error logs before rendering
+        $logsToRender = group_error_logs($logsToShow);
+        ?>
+        
+        <?php foreach ($logsToRender as $log): ?>
+            <?= render_log_entry($log) ?>
+        <?php endforeach; ?>
+    <?php endif; ?>
 <?php endif; ?>
 
 <?php if (!empty($selectedIteration) && !empty($logsToShow)): ?>
@@ -555,10 +633,30 @@ $stmt->close();
 </div>
 <?php endif; ?>
 
+<?php
+// ==========================
+// Determine the latest iteration for the current session
+// ==========================
+$maxIteration = 0;
+if ($selectedProgram && $selectedSession) {
+    $stmt = $db->prepare("
+        SELECT MAX(iteration) AS max_iter
+        FROM qa_logs
+        WHERE program_name = ? AND session_id = ?
+    ");
+    $stmt->bind_param('ss', $selectedProgram, $selectedSession);
+    $stmt->execute();
+    $res = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    $maxIteration = (int)($res['max_iter'] ?? 0);
+}
+?>
+
 <script>
 let lastIteration = <?= (int)$selectedIteration ?: 0 ?>;
 const selectedProgram = "<?= htmlspecialchars($selectedProgram) ?>";
 const selectedSession = "<?= htmlspecialchars($selectedSession) ?>";
+const currentMaxIteration = <?= $maxIteration ?>; // max iteration when page loaded
 
 // Only poll if a program and session are selected
 if (selectedProgram && selectedSession) {
@@ -570,11 +668,13 @@ if (selectedProgram && selectedSession) {
                 { cache: 'no-store' });
             const data = await res.json();
 
-            console.log('Polling result:', data, 'lastIteration:', lastIteration);
+            console.log('Polling result:', data, 'lastIteration:', lastIteration, 'currentMaxIteration:', currentMaxIteration);
 
-            // If a new iteration exists, reload to that iteration
-            if (data.active && data.iteration > lastIteration) {
-                console.log('New iteration detected:', data.iteration);
+            // Only jump to latest if user is already on the latest iteration
+            const isViewingLatest = lastIteration === currentMaxIteration;
+
+            if (data.active && data.iteration > lastIteration && isViewingLatest) {
+                console.log('New iteration detected, going to latest:', data.iteration);
                 window.location.href = '<?= $_SERVER['PHP_SELF'] ?>'
                     + '?user=' + encodeURIComponent(selectedProgram)
                     + '&session=' + encodeURIComponent(selectedSession)

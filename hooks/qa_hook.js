@@ -17,11 +17,21 @@
         document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
     }
 
+    function generateUUID() {
+        // Simple RFC4122 v4 compliant UUID
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            const r = Math.random() * 16 | 0;
+            const v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+
     let QA_DEVICE_NAME = getCookie(COOKIE_NAME);
     if (!QA_DEVICE_NAME) {
-        QA_DEVICE_NAME = 'device_' + crypto.randomUUID();
+        QA_DEVICE_NAME = 'device_' + generateUUID();
         setCookie(COOKIE_NAME, QA_DEVICE_NAME, 365);
     }
+
 
     // ---------------------------
     // App program name

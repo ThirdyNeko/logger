@@ -7,6 +7,43 @@ require_once __DIR__ . '/iteration_logic/qa_iteration_helper.php';
 
 $db = qa_db();
 
+/* ==========================
+   INPUT STATE
+========================== */
+$selectedProgram     = $_GET['user'] ?? '';
+$selectedSession   = $_GET['session'] ?? '';
+$selectedIteration = $_GET['iteration'] ?? '';
+$fromDate          = $_GET['from_date'] ?? '';
+$toDate            = $_GET['to_date'] ?? '';
+
+
+$latestSessionByProgram = [];
+
+if (!empty($selectedProgram)) {
+    $stmt = $db->prepare("
+        SELECT session_id
+        FROM qa_logs
+        WHERE program_name = ?
+        ORDER BY created_at DESC
+        LIMIT 1
+    ");
+    $stmt->bind_param('s', $selectedProgram);
+    $stmt->execute();
+    $res = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    if ($res) {
+        $latestSessionByProgram[$selectedProgram] = $res['session_id'];
+    }
+}
+
+$isActiveSession =
+    $selectedProgram
+    && $selectedSession
+    && isset($latestSessionByProgram[$selectedProgram])
+    && $selectedSession === $latestSessionByProgram[$selectedProgram];
+
+
 $username = $_SESSION['user']['username'] ?? '';
 $userId = null;
 
@@ -32,7 +69,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'
     $sessionId = $_POST['session'];
     $name      = trim($_POST['rename_session']);
 
-    if ($program && $sessionId && $name !== '') {
+    // 🔒 Only allow rename if this is the latest session FOR THAT PROGRAM
+    if (
+        $name !== ''
+        && isset($latestSessionByProgram[$program])
+        && $sessionId === $latestSessionByProgram[$program]
+    ) {
         $stmt = $db->prepare("
             INSERT INTO qa_session_names (program_name, session_id, session_name)
             VALUES (?, ?, ?)
@@ -43,7 +85,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'
         $stmt->close();
     }
 
-    // Stay on same selection
     header('Location: ' . $_SERVER['PHP_SELF']
         . '?user=' . urlencode($program)
         . '&session=' . urlencode($sessionId)
@@ -99,16 +140,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'
     );
     exit;
 }
-
-
-/* ==========================
-   INPUT STATE
-========================== */
-$selectedProgram     = $_GET['user'] ?? '';
-$selectedSession   = $_GET['session'] ?? '';
-$selectedIteration = $_GET['iteration'] ?? '';
-$fromDate          = $_GET['from_date'] ?? '';
-$toDate            = $_GET['to_date'] ?? '';
 
 /* ==========================
    LOAD SESSION NAMES
@@ -635,23 +666,31 @@ $stmt->close();
 
 <?php if ($selectedProgram && $selectedSession): ?>
 <div class="log-box" style="background:#fff7e6; margin-bottom:15px;">
-    <form method="POST" style="display:flex; gap:8px; align-items:center;">
-        <input type="hidden" name="program" value="<?= htmlspecialchars($selectedProgram) ?>">
-        <input type="hidden" name="session" value="<?= htmlspecialchars($selectedSession) ?>">
+    <?php if ($isActiveSession): ?>
+        <form method="POST" style="display:flex; gap:8px; align-items:center;">
+            <input type="hidden" name="program" value="<?= htmlspecialchars($selectedProgram) ?>">
+            <input type="hidden" name="session" value="<?= htmlspecialchars($selectedSession) ?>">
 
-        <input
-            type="text"
-            name="rename_session"
-            placeholder="Rename this session"
-            maxlength="50"
-            value="<?= htmlspecialchars($sessionNames[$selectedSession] ?? '') ?>"
-            style="flex:1; padding:6px 8px;"
-        >
+            <input
+                type="text"
+                name="rename_session"
+                placeholder="Rename active session"
+                maxlength="50"
+                value="<?= htmlspecialchars($sessionNames[$selectedSession] ?? '') ?>"
+                style="flex:1; padding:6px 8px;"
+            >
 
-        <button class="btn-black" type="submit">
-            Rename
-        </button>
-    </form>
+            <button class="btn-black" type="submit">
+                Rename
+            </button>
+        </form>
+    <?php else: ?>
+        <strong>Session Name:</strong>
+        <?= htmlspecialchars($sessionNames[$selectedSession] ?? str_replace('_',' ', $selectedSession)) ?>
+        <div style="margin-top:6px;font-size:12px;color:#6c757d;">
+            🔒 Only the currently active session can be renamed
+        </div>
+    <?php endif; ?>
 </div>
 <?php endif; ?>
 
@@ -761,6 +800,7 @@ $stmt->close();
 
 <?php
 $latestLog = ['session_id' => '', 'iteration' => 0];
+
 
 if ($selectedProgram) {
     $stmt = $db->prepare("

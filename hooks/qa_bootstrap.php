@@ -255,29 +255,24 @@ set_error_handler(function ($severity, $message, $file, $line) {
 -------------------------------------------------- */
 register_shutdown_function(function () {
 
+    static $handled = false;
+    if ($handled) return;
+    $handled = true;
+
     $error = error_get_last();
-    if (ob_get_level() > 0) {
-        @ob_end_flush();
-    }
+    if (!$error) return;
 
-    if (!$error) {
-        return;
-    }
+    $fatal = [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR];
+    if (!in_array($error['type'], $fatal, true)) return;
 
-    if (in_array($error['type'], [E_DEPRECATED, E_USER_DEPRECATED])) {
-        return;
-    }
-    
-    qa_backend_log([
-        'type' => 'backend-error',
-        'program_name' => QA_APP_PROGRAM,
-        'device_name' => QA_DEVICE_NAME,
-        'response' => [
-            'severity' => $error['type'],
-            'message'  => $error['message'],
-            'line'     => $error['line']
-        ],
-        'endpoint'  => $error['file'],
-        'timestamp' => date('c')
-    ]);
+    // 🚫 NEVER touch output buffers here
+    // 🚫 NEVER start sessions
+    // 🚫 NEVER curl
+
+    error_log('[QA_FATAL] ' . json_encode([
+        'file' => $error['file'],
+        'line' => $error['line'],
+        'msg'  => $error['message'],
+    ]));
 });
+

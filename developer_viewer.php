@@ -387,10 +387,23 @@ if ($selectedSession && isset($filteredRemarked[$selectedSession])) {
 $stmt = $db->prepare("
     SELECT DISTINCT iteration
     FROM qa_logs
-    WHERE program_name = ? AND session_id = ?
+    WHERE program_name = ?
+    AND session_id = ?
+    AND (
+            (? = '' OR ? = '')
+            OR DATE(created_at) BETWEEN ? AND ?
+        )
     ORDER BY iteration ASC
 ");
-$stmt->bind_param('ss', $selectedProgram, $selectedSession);
+$stmt->bind_param(
+    'ssssss',
+    $selectedProgram,
+    $selectedSession,
+    $fromDate,
+    $toDate,
+    $fromDate,
+    $toDate
+);
 $stmt->execute();
 $res = $stmt->get_result();
 while ($row = $res->fetch_assoc()) {
@@ -450,29 +463,66 @@ sort($iterations);
 <!-- DATE FILTER -->
 <form method="GET" style="margin-bottom:15px;">
     <input type="hidden" name="user" value="<?= htmlspecialchars($selectedProgram) ?>">
-    <label>From: <input type="date" name="from_date" value="<?= htmlspecialchars($fromDate) ?>" onchange="this.form.submit()"></label>
-    <label>To: <input type="date" name="to_date" value="<?= htmlspecialchars($toDate) ?>" onchange="this.form.submit()"></label>
+    <input type="hidden" name="session" value="">
+    <input type="hidden" name="iteration" value="">
+
+    <label>
+        From:
+        <input type="date"
+               name="from_date"
+               value="<?= htmlspecialchars($fromDate) ?>"
+               onchange="this.form.submit()">
+    </label>
+
+    <label>
+        To:
+        <input type="date"
+               name="to_date"
+               value="<?= htmlspecialchars($toDate) ?>"
+               onchange="this.form.submit()">
+    </label>
 </form>
 
 <!-- SESSION SELECT -->
 <?php if ($selectedProgram): ?>
 <?php
-// Get all sessions from logs for this user
+// Get sessions from logs (DATE FILTER APPLIED HERE)
 $sessions = [];
-$stmt = $db->prepare("
-    SELECT DISTINCT session_id
-    FROM qa_logs
-    WHERE program_name = ?
-    ORDER BY session_id ASC
-");
-$stmt->bind_param('s', $selectedProgram);
+
+if ($fromDate && $toDate) {
+    $stmt = $db->prepare("
+        SELECT DISTINCT session_id
+        FROM qa_logs
+        WHERE program_name = ?
+          AND DATE(created_at) BETWEEN ? AND ?
+        ORDER BY session_id ASC
+    ");
+    $stmt->bind_param(
+        'sss',
+        $selectedProgram,
+        $fromDate,
+        $toDate
+    );
+} else {
+    $stmt = $db->prepare("
+        SELECT DISTINCT session_id
+        FROM qa_logs
+        WHERE program_name = ?
+        ORDER BY session_id ASC
+    ");
+    $stmt->bind_param('s', $selectedProgram);
+}
+
 $stmt->execute();
 $res = $stmt->get_result();
+
 while ($row = $res->fetch_assoc()) {
     $sessions[] = $row['session_id'];
 }
+
 $stmt->close();
 ?>
+
 <form method="GET" style="margin-bottom:15px;">
     <input type="hidden" name="user" value="<?= htmlspecialchars($selectedProgram) ?>">
     <input type="hidden" name="from_date" value="<?= htmlspecialchars($fromDate) ?>">

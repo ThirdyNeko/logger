@@ -211,7 +211,7 @@ ob_start(function ($output) {
 });
 
 /* --------------------------------------------------
-   PHP ERRORS (always log)
+   PHP ERRORS (always log, deduplicated)
 -------------------------------------------------- */
 set_error_handler(function ($severity, $message, $file, $line) {
 
@@ -220,7 +220,7 @@ set_error_handler(function ($severity, $message, $file, $line) {
         return true; // fully handled, stop propagation
     }
 
-    // Prevent recursion
+    // Prevent recursion (avoid logging inside the logger)
     if (!empty($_SERVER['HTTP_X_QA_INTERNAL'])) {
         return true;
     }
@@ -233,21 +233,34 @@ set_error_handler(function ($severity, $message, $file, $line) {
         return true;
     }
 
+    // ----------------------------
+    // DEDUPLICATION: one log per unique issue per request
+    // ----------------------------
+    static $seen = [];
+    $key = $file . ':' . $line . ':' . $message;
+
+    if (isset($seen[$key])) {
+        return true; // already logged, skip
+    }
+    $seen[$key] = true;
+
+    // ----------------------------
+    // LOG IT
+    // ----------------------------
     qa_backend_log([
-        'type'      => 'backend-error',
-        'program_name' => QA_APP_PROGRAM,
+        'type'        => 'backend-error',
+        'program_name'=> QA_APP_PROGRAM,
         'device_name' => QA_DEVICE_NAME,
-        'response'  => [
+        'response'    => [
             'severity' => $severity,
             'message'  => $message,
         ],
-        'endpoint'  => "$file:$line",
-        'timestamp' => date('c')
+        'endpoint'    => "$file:$line",
+        'timestamp'   => date('c')
     ]);
 
     return true; // stop PHP from re-processing
 });
-
 
 
 /* --------------------------------------------------

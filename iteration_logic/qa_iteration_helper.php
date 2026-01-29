@@ -19,7 +19,7 @@ function qa_default_session_state(): array
 {
     return [
         'session_id'        => 'UNKNOWN',
-        'iteration'         => 0,
+        'iteration'         => 1,
         'remarks_iteration' => '',
         'last_second'       => null
     ];
@@ -134,7 +134,7 @@ function qa_assign_iteration_id(string $timestamp): ?int
         if ($state['iteration'] >= 50) {
             // Always generate a **new session ID per user**
             $state = qa_create_new_session($program, $userId);
-            return 0; // iteration resets
+            return 1; // iteration resets
         }
 
         // Normal increment
@@ -165,7 +165,7 @@ function qa_create_new_session(string $program, string $userId): array
 
     $state = [
         'session_id'        => $sessionId,
-        'iteration'         => 0,
+        'iteration'         => 1,
         'remarks_iteration' => '',
         'last_second'       => null,
         'program_name'      => $program

@@ -93,6 +93,14 @@ function group_error_logs(array $errorLogs): array
 function render_log_entry(array $log): string
 {
     $type = $log['type'] ?? '';
+    // 🔁 Normalize endpoints (ALWAYS)
+    $endpoints = [];
+
+    if (!empty($log['_endpoints']) && is_array($log['_endpoints'])) {
+        $endpoints = $log['_endpoints'];
+    } elseif (!empty($log['endpoint'])) {
+        $endpoints = [$log['endpoint']];
+    }
     $html = '<div style="
         border:1px solid #ddd;
         border-radius:4px;
@@ -104,17 +112,25 @@ function render_log_entry(array $log): string
     // Always show type
     $html .= '<strong>Type:</strong> ' . htmlspecialchars($type) . '<br>';
 
+    // 📍 Endpoints (always shown)
+    if (!empty($endpoints)) {
+        $html .= '<strong>Endpoints:</strong><br>';
+        foreach ($endpoints as $ep) {
+            $parts = explode(':', $ep, 2);
+            $file = $parts[0];
+            $line = $parts[1] ?? '';
+
+            $html .= '• <code>' . htmlspecialchars($file) . '</code>';
+            if ($line !== '') {
+                $html .= ' : <code>' . htmlspecialchars($line) . '</code>';
+            }
+            $html .= '<br>';
+        }
+    }
+
     // --- Backend Error Styling ---
     if ($type === 'backend-error') {
 
-        // Normalize endpoints first
-        if (!empty($log['_endpoints']) && is_array($log['_endpoints'])) {
-            $endpoints = $log['_endpoints'];
-        } elseif (!empty($log['endpoint'])) {
-            $endpoints = [$log['endpoint']];
-        } else {
-            $endpoints = [];
-        }
 
         // 🔴 Error container styling override
         $html = '<div style="
@@ -128,7 +144,7 @@ function render_log_entry(array $log): string
 
         $html .= '<strong style="color:#842029;">Backend Error</strong><br>';
 
-        // 📍 Endpoints (grouped)
+        // 📍 Endpoints (always shown — preserved)
         if (!empty($endpoints)) {
             $html .= '<strong>Endpoints:</strong><br>';
             foreach ($endpoints as $ep) {
@@ -143,6 +159,7 @@ function render_log_entry(array $log): string
                 $html .= '<br>';
             }
         }
+
 
         // 📦 Response (single)
         if (!empty($log['response_body'])) {
@@ -211,11 +228,6 @@ function render_log_entry(array $log): string
         }
     }
 
-    // Endpoint only for backend-response
-    if ($type === 'backend-response' && !empty($log['endpoint'])) {
-        $html .= '<strong>Endpoint:</strong> ' . htmlspecialchars($log['endpoint']) . '<br>';
-    }
-
     // Request body (all types)
     if (!empty($log['request_body'])) {
         $json = json_decode($log['request_body'], true);
@@ -271,7 +283,6 @@ function render_log_entry(array $log): string
     $html .= '</div>';
     return $html;
 }
-
 
 /* ==========================
    PROGRAM LIST (FROM LOGS)

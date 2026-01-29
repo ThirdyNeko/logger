@@ -134,23 +134,14 @@ switch ($_SESSION['user']['role'] ?? '') {
 
             <button
                 class="profile-return-button"
-                onclick="handleReturn()"
+                id="returnBtn"
+                data-first-login="<?= $_SESSION['user']['first_login'] ? '1' : '0' ?>"
+                data-redirect="<?= htmlspecialchars($redirectUrl) ?>"
             >
                 Return to Dashboard
             </button>
 
-            <script>
-            function handleReturn() {
-                const firstLogin = <?= json_encode(!empty($_SESSION['user']['first_login'])) ?>;
-
-                if (firstLogin) {
-                    alert("You must change your password before accessing the dashboard.");
-                    return;
-                }
-
-                window.location.href = "<?= htmlspecialchars($redirectUrl) ?>";
-            }
-            </script>
+            <script src="scripts/profile.js"></script>
         </div>
     </div>
 </body>

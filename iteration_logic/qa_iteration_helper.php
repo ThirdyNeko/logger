@@ -19,7 +19,7 @@ function qa_default_session_state(): array
 {
     return [
         'session_id'        => 'UNKNOWN',
-        'iteration'         => 1,
+        'iteration'         => 0,
         'remarks_iteration' => '',
         'last_second'       => null
     ];
@@ -165,7 +165,7 @@ function qa_create_new_session(string $program, string $userId): array
 
     $state = [
         'session_id'        => $sessionId,
-        'iteration'         => 1,
+        'iteration'         => 0,
         'remarks_iteration' => '',
         'last_second'       => null,
         'program_name'      => $program

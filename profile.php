@@ -90,7 +90,7 @@ switch ($_SESSION['user']['role'] ?? '') {
         break;
 
     case 'qa':
-        $redirectUrl = 'log_session_viewer.php';
+        $redirectUrl = 'index.php';
         break;
 }
 ?>

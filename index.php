@@ -1,158 +1,170 @@
 <?php
-require_once __DIR__ . '/auth/require_login.php';
-define('QA_SKIP_LOGGING', true);
+session_name('QA_LOGGER_SESSION');
 
+require_once __DIR__ . '/auth/require_login.php';
 date_default_timezone_set('Asia/Manila');
 require_once __DIR__ . '/iteration_logic/qa_iteration_helper.php';
 
+$db = qa_db();
+
 /* ==========================
-   SESSION STATE / REMARKS
+   INPUT STATE
 ========================== */
+$selectedProgram     = $_GET['user'] ?? '';
+$selectedSession   = $_GET['session'] ?? '';
+$selectedIteration = $_GET['iteration'] ?? '';
+$fromDate          = $_GET['from_date'] ?? '';
+$toDate            = $_GET['to_date'] ?? '';
 
-$qaState = qa_get_session_state();
 
-// Save selection
-if (isset($_GET['remark_iteration'])) {
-    $qaState['remarks_iteration'] = $_GET['remark_iteration'];
-    qa_save_session_state($qaState);
-}
+$latestSessionByProgram = [];
 
-function qa_normalize_session_name(string $name): string
-{
-    return strtoupper(trim(preg_replace('/\s+/', ' ', $name)));
-}
-
-function qa_load_session_names(): array
-{
-    $db = qa_db();
-    $userId = qa_get_user_id();
-
+if (!empty($selectedProgram)) {
     $stmt = $db->prepare("
-        SELECT session_name
-        FROM qa_sessions
-        WHERE user_id = ?
+        SELECT session_id
+        FROM qa_logs
+        WHERE program_name = ?
         ORDER BY created_at DESC
+        LIMIT 1
     ");
-    $stmt->bind_param('i', $userId);
+    $stmt->bind_param('s', $selectedProgram);
     $stmt->execute();
+    $res = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
 
-    return array_column($stmt->get_result()->fetch_all(MYSQLI_ASSOC), 'session_name');
+    if ($res) {
+        $latestSessionByProgram[$selectedProgram] = $res['session_id'];
+    }
 }
 
-function qa_save_session_name(string $name): void
-{
-    $db = qa_db();
-    $userId = qa_get_user_id();
+$isActiveSession =
+    $selectedProgram
+    && $selectedSession
+    && isset($latestSessionByProgram[$selectedProgram])
+    && $selectedSession === $latestSessionByProgram[$selectedProgram];
 
-    $stmt = $db->prepare("
-        INSERT IGNORE INTO qa_sessions (user_id, session_name)
-        VALUES (?, ?)
-    ");
-    $stmt->bind_param('is', $userId, $name);
-    $stmt->execute();
+
+$username = $_SESSION['user']['username'] ?? '';
+$userId = null;
+
+if ($username) {
+    $stmtUser = $db->prepare("SELECT id FROM users WHERE username = ? LIMIT 1");
+    $stmtUser->bind_param('s', $username);
+    $stmtUser->execute();
+    $res = $stmtUser->get_result();
+    $userRow = $res->fetch_assoc();
+    $stmtUser->close();
+
+    $userId = $userRow['id'] ?? null;
 }
-
-// Restore selection
-$selectedRemarksIteration = $qaState['remarks_iteration'] ?? '';
-
 /* ==========================
-   Handle new session
+   RENAME SESSION
 ========================== */
-if (isset($_POST['new_session'])) {
-    $_SERVER['QA_SKIP_LOGGING'] = true;
+if ($_SERVER['REQUEST_METHOD'] === 'POST'
+    && isset($_POST['rename_session'], $_POST['program'], $_POST['session'])
+) {
+    define('QA_SKIP_LOGGING', true);
 
-    $rawName = trim($_POST['session_name'] ?? '');
-    if ($rawName === '') {
-        $rawName = 'Unnamed_Session';
+    $program   = $_POST['program'];
+    $sessionId = $_POST['session'];
+    $name      = trim($_POST['rename_session']);
+
+    // 🔒 Only allow rename if this is the latest session FOR THAT PROGRAM
+    if (
+        $name !== ''
+        && isset($latestSessionByProgram[$program])
+        && $sessionId === $latestSessionByProgram[$program]
+    ) {
+        $stmt = $db->prepare("
+            INSERT INTO qa_session_names (program_name, session_id, session_name)
+            VALUES (?, ?, ?)
+            ON DUPLICATE KEY UPDATE session_name = VALUES(session_name)
+        ");
+        $stmt->bind_param('sss', $program, $sessionId, $name);
+        $stmt->execute();
+        $stmt->close();
     }
 
-    $sessionName = qa_normalize_session_name($rawName);
-    $existingNames = qa_load_session_names();
-
-    if (in_array($sessionName, $existingNames, true)) {
-        echo "<script>
-            alert('⚠️ Session name already exists for your account. Please choose a different name.');
-            window.history.back();
-        </script>";
-        exit;
-    }
-
-    qa_create_new_session($sessionName);
-    qa_save_session_name($sessionName);
-
-    header('Location: ' . $_SERVER['PHP_SELF']);
+    header('Location: ' . $_SERVER['PHP_SELF']
+        . '?user=' . urlencode($program)
+        . '&session=' . urlencode($sessionId)
+    );
     exit;
-
-} else {
-    if (isset($_SERVER['QA_SKIP_LOGGING'])) {
-        unset($_SERVER['QA_SKIP_LOGGING']);
-    }
 }
 
-$status = qa_get_logging_status();
-$sessionId = qa_get_session_id();
-$sessionState = qa_get_session_state();
-$currentSessionName = isset($sessionState['session_name'])
-    ? str_replace('_', ' ', $sessionState['session_name'])
-    : 'Unknown';
-
-$userId = $_SESSION['user']['id'] ?? 'guest';
-
 /* ==========================
-   Load logs from database
-========================== */
-$db = qa_db(); // mysqli connection helper
+   STORE QA REMARK (VIEWER)
+========================= */
+if ($_SERVER['REQUEST_METHOD'] === 'POST'
+    && isset($_POST['remark'], $_POST['iteration'])
+) {
+    define('QA_SKIP_LOGGING', true);
+    
+    $program   = $_POST['program'] ?? '';
+    $sessionId = $_POST['session'] ?? '';
+    $iteration = (int) $_POST['iteration'];
 
-$stmt = $db->prepare("
-    SELECT *
-    FROM qa_logs
-    WHERE user_id = ? AND session_id = ?
-    ORDER BY iteration ASC, created_at ASC
-");
-$stmt->bind_param('ss', $userId, $sessionId);
-$stmt->execute();
-$result = $stmt->get_result();
-$allLogs = $result->fetch_all(MYSQLI_ASSOC);
-$stmt->close();
+    $remark     = trim($_POST['remark']);
+    $remarkName = trim($_POST['remark_name'] ?? '');
 
-/* ==========================
-   Group logs by iteration
-========================== */
-$grouped = [];
-foreach ($allLogs as $log) {
-    $id = $log['iteration'] ?? 'unknown';
-    $grouped[$id][] = $log;
-}
-ksort($grouped);
+    if ($userId && $username && $program && $sessionId && $remark !== '') {
+        $stmt = $db->prepare("
+            INSERT INTO qa_remarks
+                (user_id, username, program_name, session_id, iteration, remark_name, remark)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE
+                remark_name = VALUES(remark_name),
+                remark = VALUES(remark),
+                username = VALUES(username)
+        ");
 
-/* ==========================
-   Determine current iteration
-========================== */
-$currentIteration = $_GET['iteration'] ?? (count($grouped) ? array_key_last($grouped) : null);
-$currentLogs = $currentIteration !== null && isset($grouped[$currentIteration])
-    ? $grouped[$currentIteration]
-    : [];
-
-/* ==========================
-   HELPER FUNCTIONS
-========================== */
-function format_log_value($value)
-{
-    if (is_array($value) || is_object($value)) {
-        return htmlspecialchars(
-            json_encode($value, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
-            ENT_QUOTES,
-            'UTF-8'
+        $stmt->bind_param(
+            'isssiss',
+            $userId,
+            $username,
+            $program,
+            $sessionId,
+            $iteration,
+            $remarkName,
+            $remark
         );
+
+        $stmt->execute();
+        $stmt->close();
     }
 
-    if ($value === null) {
-        return '<em>null</em>';
-    }
-
-    return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+    header('Location: ' . $_SERVER['PHP_SELF']
+        . '?user=' . urlencode($program)
+        . '&session=' . urlencode($sessionId)
+        . '&iteration=' . $iteration
+    );
+    exit;
 }
 
+/* ==========================
+   LOAD SESSION NAMES
+========================== */
+$sessionNames = [];
+
+if ($selectedProgram) {
+    $stmt = $db->prepare("
+        SELECT session_id, session_name
+        FROM qa_session_names
+        WHERE program_name = ?
+    ");
+    $stmt->bind_param('s', $selectedProgram);
+    $stmt->execute();
+    $res = $stmt->get_result();
+
+    while ($row = $res->fetch_assoc()) {
+        $sessionNames[$row['session_id']] = $row['session_name'];
+    }
+    $stmt->close();
+}
+
+/* ==========================
+   Helpers
+========================== */
 function is_error_log(array $log): bool
 {
     return in_array($log['type'] ?? '', ['backend-error', 'backend-fatal'], true);
@@ -163,25 +175,30 @@ function group_error_logs(array $errorLogs): array
     $grouped = [];
 
     foreach ($errorLogs as $log) {
-        // Group by the actual error, NOT the endpoint
-        $keyParts = [
-            $log['type'] ?? '',
-            $log['message'] ?? '',
-            $log['line'] ?? '',
-            $log['severity'] ?? ''
-        ];
+        // Decode response_body safely
+        $decoded = json_decode($log['response_body'] ?? '', true);
 
-        $key = md5(implode('|', $keyParts));
+        $message  = $decoded['message'] ?? '';
+        $severity = $decoded['severity'] ?? '';
+
+        // 🔑 Logical grouping key
+        $key = md5(
+            ($log['type'] ?? '') . '|' . $message . '|' . $severity
+        );
 
         if (!isset($grouped[$key])) {
-            $grouped[$key] = $log;
+            $base = $log;
 
-            // Track all endpoints that triggered this error
-            $grouped[$key]['_endpoints'] = [];
-            $grouped[$key]['_count'] = 0;
+            // Remove per-occurrence fields
+            unset($base['endpoint']);
+
+            $base['_count'] = 0;
+            $base['_endpoints'] = [];
+
+            $grouped[$key] = $base;
         }
 
-        // Collect unique endpoints
+        // Collect endpoints
         if (!empty($log['endpoint'])) {
             $grouped[$key]['_endpoints'][$log['endpoint']] = true;
         }
@@ -197,10 +214,17 @@ function group_error_logs(array $errorLogs): array
     return array_values($grouped);
 }
 
-
 function render_log_entry(array $log): string
 {
     $type = $log['type'] ?? '';
+    // 🔁 Normalize endpoints (ALWAYS)
+    $endpoints = [];
+
+    if (!empty($log['_endpoints']) && is_array($log['_endpoints'])) {
+        $endpoints = $log['_endpoints'];
+    } elseif (!empty($log['endpoint'])) {
+        $endpoints = [$log['endpoint']];
+    }
     $html = '<div style="
         border:1px solid #ddd;
         border-radius:4px;
@@ -212,36 +236,110 @@ function render_log_entry(array $log): string
     // Always show type
     $html .= '<strong>Type:</strong> ' . htmlspecialchars($type) . '<br>';
 
-    if ($type === 'backend-error') {
-        // Show full response for main log
-        $json = json_decode($log['response_body'], true);
-        $pretty = $json !== null ? json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : $log['response_body'];
+    // 📍 Endpoints (always shown)
+    if (!empty($endpoints)) {
+        $html .= '<strong>Endpoints:</strong><br>';
+        foreach ($endpoints as $ep) {
+            $parts = explode(':', $ep, 2);
+            $file = $parts[0];
+            $line = $parts[1] ?? '';
 
-        $html .= '<strong>Response:</strong><pre style="background:#f8f9fa;color:#212529;padding:12px;border-radius:6px;border:1px solid #dee2e6;font-family:Consolas,monospace;font-size:13px;line-height:1.5;overflow-x:auto;white-space:pre-wrap;word-break:break-word;">' . htmlspecialchars($pretty) . '</pre>';
-
-    if (!empty($log['_count']) && $log['_count'] > 1) {
-        $extra = (int)$log['_count'] - 1;
-
-        $html .= '<strong>Occurrences:</strong> ' . (int)$log['_count'] . '<br>';
-
-        $html .= '<div style="
-            margin-top:6px;
-            padding:6px 10px;
-            background:#fff3cd;
-            border:1px solid #ffe69c;
-            border-radius:6px;
-            color:#664d03;
-            font-size:13px;
-        ">
-            + ' . $extra . ' more occurrence' . ($extra > 1 ? 's' : '') . ' of the same error
-        </div>';
+            $html .= '• <code>' . htmlspecialchars($file) . '</code>';
+            if ($line !== '') {
+                $html .= ' : <code>' . htmlspecialchars($line) . '</code>';
+            }
+            $html .= '<br>';
+        }
     }
+
+    // --- Backend Error Styling ---
+    if ($type === 'backend-error') {
+
+
+        // 🔴 Error container styling override
+        $html = '<div style="
+            border:1px solid #f1aeb5;
+            border-left:6px solid #dc3545;
+            border-radius:6px;
+            padding:12px;
+            margin-bottom:12px;
+            background:#f8d7da;
+        ">';
+
+        $html .= '<strong style="color:#842029;">Backend Error</strong><br>';
+
+        // 📍 Endpoints (always shown — preserved)
+        if (!empty($endpoints)) {
+            $html .= '<strong>Endpoints:</strong><br>';
+            foreach ($endpoints as $ep) {
+                $parts = explode(':', $ep, 2);
+                $file = $parts[0];
+                $line = $parts[1] ?? '';
+
+                $html .= '• <code>' . htmlspecialchars($file) . '</code>';
+                if ($line !== '') {
+                    $html .= ' : <code>' . htmlspecialchars($line) . '</code>';
+                }
+                $html .= '<br>';
+            }
+        }
+
+
+        // 📦 Response (single)
+        if (!empty($log['response_body'])) {
+            $json = json_decode($log['response_body'], true);
+            $pretty = $json !== null
+                ? json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
+                : $log['response_body'];
+
+            $html .= '<div style="margin-top:10px;">
+                <strong>Response:</strong>
+                <pre style="
+                    background:#f1f3f5;
+                    color:#212529;
+                    padding:12px;
+                    border-radius:6px;
+                    border:1px solid #ced4da;
+                    font-family:Consolas,monospace;
+                    font-size:13px;
+                    line-height:1.5;
+                    overflow-x:auto;
+                    white-space:pre-wrap;
+                    word-break:break-word;
+                ">' . htmlspecialchars($pretty) . '</pre>
+            </div>';
+        }
+
+        // 🟡 Occurrences (old UX preserved)
+        if (!empty($log['_count']) && $log['_count'] > 1) {
+            $extra = (int)$log['_count'] - 1;
+
+            $html .= '<div style="
+                margin-top:8px;
+                padding:8px 12px;
+                background:#fff3cd;
+                border:1px solid #ffe69c;
+                border-radius:6px;
+                color:#664d03;
+                font-size:13px;
+            ">
+                <strong>Occurrences:</strong> ' . (int)$log['_count'] . '<br>
+                + ' . $extra . ' more occurrence' . ($extra > 1 ? 's' : '') . ' of the same error
+            </div>';
+        }
+
+        // 🕒 Created at
+        if (!empty($log['created_at'])) {
+            $html .= '<div style="margin-top:6px;font-size:12px;color:#6c757d;">
+                Created at: ' . htmlspecialchars($log['created_at']) . '
+            </div>';
+        }
 
         $html .= '</div>';
-        return $html; // early return
+        return $html;
     }
 
-    // Only show these fields for non-special types
+    // --- Fields for non-special types ---
     if (!in_array($type, ['frontend-io', 'backend-response'], true)) {
         if (!empty($log['iteration'])) {
             $html .= '<strong>Iteration:</strong> ' . htmlspecialchars($log['iteration']) . '<br>';
@@ -254,24 +352,19 @@ function render_log_entry(array $log): string
         }
     }
 
-    // Endpoint is always shown for backend-response
-    if ($type === 'backend-response' && !empty($log['endpoint'])) {
-        $html .= '<strong>Endpoint:</strong> ' . htmlspecialchars($log['endpoint']) . '<br>';
-    }
-
-    // Request body (shown for all types)
+    // Request body (all types)
     if (!empty($log['request_body'])) {
         $json = json_decode($log['request_body'], true);
         $pretty = $json !== null ? json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : $log['request_body'];
-
-        $html .= '<strong>Request:</strong><pre style="
+        $html .= '<strong>Request:</strong>
+        <pre style="
             background:#f8f9fa;
             color:#212529;
             padding:12px 14px;
             margin:8px 0 12px 0;
             border-radius:6px;
             border:1px solid #dee2e6;
-            font-family: Consolas, Monaco, \'Courier New\', monospace;
+            font-family:Consolas,Monaco,\'Courier New\',monospace;
             font-size:13px;
             line-height:1.5;
             overflow-x:auto;
@@ -280,19 +373,19 @@ function render_log_entry(array $log): string
         ">' . htmlspecialchars($pretty) . '</pre>';
     }
 
-    // Response body (shown for all types)
+    // Response body (all types)
     if (!empty($log['response_body'])) {
         $json = json_decode($log['response_body'], true);
         $pretty = $json !== null ? json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : $log['response_body'];
-
-        $html .= '<strong>Response:</strong><pre style="
+        $html .= '<strong>Response:</strong>
+        <pre style="
             background:#f8f9fa;
             color:#212529;
             padding:12px 14px;
             margin:8px 0 12px 0;
             border-radius:6px;
             border:1px solid #dee2e6;
-            font-family: Consolas, Monaco, \'Courier New\', monospace;
+            font-family:Consolas,Monaco,\'Courier New\',monospace;
             font-size:13px;
             line-height:1.5;
             overflow-x:auto;
@@ -306,7 +399,7 @@ function render_log_entry(array $log): string
         $html .= '<strong>Occurrences:</strong> ' . (int)$log['_count'] . '<br>';
     }
 
-    // Created at for non-frontend-io types
+    // Created at (skip for frontend-io)
     if ($type !== 'frontend-io' && !empty($log['created_at'])) {
         $html .= '<strong>Created At:</strong> ' . htmlspecialchars($log['created_at']) . '<br>';
     }
@@ -315,287 +408,467 @@ function render_log_entry(array $log): string
     return $html;
 }
 
- /* ==========================
-   STORE QA REMARK (NO DISPLAY)
+
+/* ==========================
+   PROGRAM LIST (FROM LOGS)
 ========================== */
-if ($_SERVER['REQUEST_METHOD'] === 'POST'
-    && isset($_POST['remark'], $_POST['iteration_id'])
-) {
-    define('QA_SKIP_LOGGING', true);
 
-    $db        = qa_db();
-    $userId    = qa_get_user_id();
-    $sessionId = qa_get_session_id();
+$programs = [];
 
-    $iteration  = (int) $_POST['iteration_id'];
-    $remark     = trim($_POST['remark']);
-    $remarkName = trim($_POST['remark_name'] ?? '');
+$stmt = $db->prepare("
+    SELECT DISTINCT program_name
+    FROM qa_logs
+    WHERE program_name IS NOT NULL
+    ORDER BY program_name ASC
+");
+$stmt->execute();
+$res = $stmt->get_result();
 
-    if ($remark !== '') {
-        $stmt = $db->prepare("
-            INSERT INTO qa_remarks
-                (user_id, session_id, iteration, remark_name, remark)
-            VALUES (?, ?, ?, ?, ?)
-            ON DUPLICATE KEY UPDATE
-                remark_name = VALUES(remark_name),
-                remark = VALUES(remark)
-        ");
-
-        $stmt->bind_param(
-            'isiss',
-            $userId,
-            $sessionId,
-            $iteration,
-            $remarkName,
-            $remark
-        );
-
-        $stmt->execute();
-        $stmt->close();
-    }
-
-    // Silent redirect, no UI feedback
-    header('Location: ' . $_SERVER['PHP_SELF'] . '?iteration=' . $iteration);
-    exit;
+while ($row = $res->fetch_assoc()) {
+    $programs[$row['program_name']] =
+        $row['program_name'] ?: 'Unknown Program (' . $row['program_name'] . ')';
 }
+
+$stmt->close();
 
 
 /* ==========================
-   Prepare logs for rendering
+   LOAD REMARKS (FILTERED BY USER)
 ========================== */
-$errorLogsRaw = [];
-$normalLogs   = [];
+$remarked = [];
 
-foreach ($currentLogs as $log) {
-    if (is_error_log($log)) {
-        $errorLogsRaw[] = $log;
-    } else {
-        $normalLogs[] = $log;
+if ($selectedProgram) {
+    $stmt = $db->prepare("
+        SELECT session_id, iteration, remark_name, remark, created_at
+        FROM qa_remarks
+        WHERE program_name = ?
+        ORDER BY created_at DESC
+    ");
+    $stmt->bind_param('s', $selectedProgram);
+    $stmt->execute();
+    $res = $stmt->get_result();
+
+    while ($row = $res->fetch_assoc()) {
+        $sid  = $row['session_id'];
+        $iter = (int)$row['iteration'];
+
+        $remarked[$sid][$iter] = [
+            'name'   => $row['remark_name'],
+            'remark' => $row['remark'],
+            'ctime'  => strtotime($row['created_at'])
+        ];
+    }
+    $stmt->close();
+}
+
+/* ==========================
+   DATE FILTER
+========================== */
+$filteredRemarked = [];
+foreach ($remarked as $sid => $iters) {
+    foreach ($iters as $iter => $entry) {
+        $dateKey = date('Y-m-d', $entry['ctime']);
+        if ($fromDate && $toDate) {
+            if ($dateKey >= $fromDate && $dateKey <= $toDate) {
+                $filteredRemarked[$sid][$iter] = $entry;
+            }
+        } else {
+            $filteredRemarked[$sid][$iter] = $entry;
+        }
+    }
+}
+krsort($filteredRemarked);
+
+/* ==========================
+   LOAD LOGS FOR SELECTED ITERATION ONLY
+========================== */
+$logsToShow = [];
+
+if ($selectedProgram && $selectedSession && $selectedIteration !== '') {
+    $stmt = $db->prepare("
+        SELECT *
+        FROM qa_logs
+        WHERE program_name = ? AND session_id = ? AND iteration = ?
+        ORDER BY created_at ASC
+    ");
+    $stmt->bind_param('ssi', $selectedProgram, $selectedSession, $selectedIteration);
+    $stmt->execute();
+    $logsToShow = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+
+    // Add remark info if exists
+    $remarkEntry = $filteredRemarked[$selectedSession][$selectedIteration] ?? null;
+    if ($remarkEntry) {
+        foreach ($logsToShow as &$log) {
+            $log['_remark_name'] = $remarkEntry['name'];
+            $log['_remark_text'] = $remarkEntry['remark'];
+        }
+        unset($log);
     }
 }
 
-// Group duplicate errors by message + severity + file
-$errorLogs = group_error_logs($errorLogsRaw);
+/* ==========================
+   ITERATION LIST FOR SELECTED SESSION
+========================== */
+$iterations = [];
+if ($selectedSession && isset($filteredRemarked[$selectedSession])) {
+    // Include iterations with remarks
+    $iterations = array_keys($filteredRemarked[$selectedSession]);
+}
 
-// Merge grouped errors with normal logs
-$logsToRender = array_merge($errorLogs, $normalLogs);
+// Also include iterations without remarks
+$stmt = $db->prepare("
+    SELECT DISTINCT iteration
+    FROM qa_logs
+    WHERE program_name = ?
+    AND session_id = ?
+    AND (
+            (? = '' OR ? = '')
+            OR DATE(created_at) BETWEEN ? AND ?
+        )
+    ORDER BY iteration ASC
+");
+$stmt->bind_param(
+    'ssssss',
+    $selectedProgram,
+    $selectedSession,
+    $fromDate,
+    $toDate,
+    $fromDate,
+    $toDate
+);
+$stmt->execute();
+$res = $stmt->get_result();
+while ($row = $res->fetch_assoc()) {
+    $iter = (int)$row['iteration'];
+    if (!in_array($iter, $iterations, true)) {
+        $iterations[] = $iter;
+    }
+}
+$stmt->close();
+sort($iterations);
+
+
+
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <title>QA Logger Viewer</title>
-    <style>
-        body { font-family: Arial; background:#f5f5f5; padding:20px; }
-        .log-box { background:#fff; padding:15px; margin-bottom:20px; border-radius:6px; }
-        pre { background:#111; color:#0f0; padding:10px; overflow:auto; }
-        textarea { width:100%; height:60px; }
-        button { padding:6px 12px; margin-top:5px; }
-        select { padding:4px; margin-bottom:10px; }
-    </style>
+    <title>QA Logger</title>
     <link rel="stylesheet" href="css/design.css">
+    <style>
+        body { font-family:sans-serif; padding:20px; max-width:900px; margin:auto; background:#f4f6f8; }
+        .log-box { background:#fff; border:1px solid #ccc; border-radius:6px; padding:15px; margin-bottom:15px; }
+        select, input[type=date] { padding:5px; margin-top:5px; }
+        .header-buttons { display:flex; gap:10px; justify-content:flex-end; margin-bottom:15px; }
+    </style>
 </head>
 <body>
 
 <h1>QA Logger/Viewer</h1>
+<hr>
 
-
-<form method="POST" style="margin-bottom:15px; display:flex; gap:10px; align-items:center;"
-      onsubmit="return promptSessionName();">
-
-    <input type="hidden" name="session_name" id="session_name_input">
-
-    <!-- Start New Session -->
-    <button
-        class="btn-black"
-        type="submit"
-        name="new_session">
-        Start New Session
-    </button>
-
-    <!-- Go to Session Viewer -->
-    <button
-        class="btn-white"
-        type="button"
-        onclick="window.location.href='log_session_viewer.php'">
-        View Sessions
-    </button>
-
-    <div style = "align-self: right; margin-left: auto; display: flex; gap: 10px;">
-        <button
-            class="btn-white"
-            type="button"
-            onclick="window.location.href='auth/logger_logout.php'">
-            Logout
-        </button>
-
-        <button
-            class="btn-black"
-            type="button"
-            onclick="window.location.href='profile.php'">
-            Profile
-        </button>
-    </div>
-
-</form>
-
-<script>
-function promptSessionName() {
-    const name = prompt(
-        "Enter Session Name:\n\nExample:\n• Login QA\n• Checkout Bug\n• Regression Round 2"
-    );
-
-    if (name === null) {
-        return false; // user cancelled
-    }
-
-    document.getElementById('session_name_input').value =
-        qa_normalize_session_name_js(name);
-
-    return true;
-}
-
-function qa_normalize_session_name_js(name) {
-    return name.trim().replace(/\s+/g, ' ').toUpperCase();
-}
-</script>
-
-<div style="
-    margin-bottom:20px;
-    border-radius:4px;
-    font-size: 25px;
-">
-    <strong>Current Session:</strong><br>
-    <?= htmlspecialchars($currentSessionName) ?>
+<!-- HEADER BUTTONS -->
+<div class="header-buttons">
+    <button class="btn-white" type="button" onclick="window.location.href='auth/logger_logout.php'">Logout</button>
+    <button class="btn-black" type="button" onclick="window.location.href='profile.php'">Profile</button>
 </div>
 
-<?php if ($status['warn40'] && !$status['warn50']): ?>
-<div style="
-    background:#fff3cd;
-    border:1px solid #ffecb5;
-    color:#664d03;
-    padding:10px;
-    margin-bottom:15px;
-    border-radius:4px;
-">
-⚠️ <strong>Warning:</strong>
-Iteration count is high (<?= $status['iteration'] ?>/50).
-</div>
-<?php endif; ?>
-
-<?php if ($status['warn50']): ?>
-<div style="
-    background:#f8d7da;
-    border:1px solid #f5c2c7;
-    color:#842029;
-    padding:10px;
-    margin-bottom:15px;
-    border-radius:4px;
-">
-🚨 <strong>Logging stopped.</strong><br>
-Maximum logs limit (50) reached.<br>
-Start a new session to resume logging.
-</div>
-<?php endif; ?>
-
-<div style="margin-bottom:15px;color:#555;">
-Current Log count:
-<strong><?= (int)$status['iteration'] ?></strong>
-| Logging status:
-<strong><?= $status['active'] ? 'ACTIVE' : 'STOPPED' ?></strong>
-</div>
-
-
-<form method="GET">
-    <label for="iteration">Select Activity Log:</label>
-    <select name="iteration" id="iteration" onchange="this.form.submit()">
-        <?php foreach ($grouped as $id => $_): ?>
-        <option value="<?= htmlspecialchars($id) ?>" <?= $id == $currentIteration ? 'selected' : '' ?>>
-            <?= htmlspecialchars($id) ?>
-        </option>
+<!-- USER SELECT -->
+<?php if (!empty($programs)): ?>
+<form method="GET" style="margin-bottom:15px;">
+    <input type="hidden" name="from_date" value="<?= htmlspecialchars($fromDate) ?>">
+    <input type="hidden" name="to_date" value="<?= htmlspecialchars($toDate) ?>">
+    <label><strong>Select Program:</strong></label>
+    <select name="user" onchange="this.form.submit()">
+        <option value="">-- Select Program --</option>
+        <?php foreach ($programs as $programId => $programName): ?>
+            <option value="<?= htmlspecialchars($programId) ?>" <?= $programId == $selectedProgram ? 'selected' : '' ?>>
+                <?= htmlspecialchars($programName) ?>
+            </option>
         <?php endforeach; ?>
     </select>
 </form>
+<?php endif; ?>
 
-<div class="log-box">
 
-    <form method="POST">
+<!-- DATE FILTER -->
+<form method="GET" style="margin-bottom:15px;">
+    <input type="hidden" name="user" value="<?= htmlspecialchars($selectedProgram) ?>">
+    <input type="hidden" name="session" value="">
+    <input type="hidden" name="iteration" value="">
 
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
-            <h3 style="margin:0;">
-                Activity Log ID: <?= htmlspecialchars($currentIteration) ?>
-            </h3>
+    <label>
+        From:
+        <input type="date"
+               name="from_date"
+               value="<?= htmlspecialchars($fromDate) ?>"
+               onchange="this.form.submit()">
+    </label>
+
+    <label>
+        To:
+        <input type="date"
+               name="to_date"
+               value="<?= htmlspecialchars($toDate) ?>"
+               onchange="this.form.submit()">
+    </label>
+</form>
+
+<!-- SESSION SELECT -->
+<?php if ($selectedProgram): ?>
+<?php
+// Get sessions from logs (DATE FILTER APPLIED HERE)
+$sessions = [];
+
+if ($fromDate && $toDate) {
+    $stmt = $db->prepare("
+        SELECT DISTINCT session_id
+        FROM qa_logs
+        WHERE program_name = ?
+          AND DATE(created_at) BETWEEN ? AND ?
+        ORDER BY session_id ASC
+    ");
+    $stmt->bind_param(
+        'sss',
+        $selectedProgram,
+        $fromDate,
+        $toDate
+    );
+} else {
+    $stmt = $db->prepare("
+        SELECT DISTINCT session_id
+        FROM qa_logs
+        WHERE program_name = ?
+        ORDER BY session_id ASC
+    ");
+    $stmt->bind_param('s', $selectedProgram);
+}
+
+$stmt->execute();
+$res = $stmt->get_result();
+
+while ($row = $res->fetch_assoc()) {
+    $sessions[] = $row['session_id'];
+}
+
+$stmt->close();
+?>
+
+<form method="GET" style="margin-bottom:15px;">
+    <input type="hidden" name="user" value="<?= htmlspecialchars($selectedProgram) ?>">
+    <input type="hidden" name="from_date" value="<?= htmlspecialchars($fromDate) ?>">
+    <input type="hidden" name="to_date" value="<?= htmlspecialchars($toDate) ?>">
+    <label><strong>Select Session:</strong></label>
+    <select name="session" onchange="this.form.submit()">
+        <option value="">-- Select Session --</option>
+        <?php foreach ($sessions as $sid): ?>
+            <?php
+            $label = $sessionNames[$sid]
+                ?? str_replace('_',' ', $sid);
+            ?>
+            <option value="<?= htmlspecialchars($sid) ?>" <?= $sid === $selectedSession ? 'selected' : '' ?>>
+                <?= htmlspecialchars($label) ?>
+            </option>
+        <?php endforeach; ?>
+    </select>
+</form>
+<?php endif; ?>
+
+<?php if ($selectedProgram && $selectedSession): ?>
+<div class="log-box" style="background:#fff7e6; margin-bottom:15px;">
+    <?php if ($isActiveSession): ?>
+        <form method="POST" style="display:flex; gap:8px; align-items:center;">
+            <input type="hidden" name="program" value="<?= htmlspecialchars($selectedProgram) ?>">
+            <input type="hidden" name="session" value="<?= htmlspecialchars($selectedSession) ?>">
 
             <input
                 type="text"
-                name="remark_name"
-                placeholder="Remark name: max 20 characters"
-                maxlength="20"
-                style="
-                    padding:6px 8px;
-                    border:1px solid #ccc;
-                    border-radius:4px;
-                    min-width:220px;
-                "
-                value="<?= htmlspecialchars($remarked[$currentIteration]['name'] ?? '') ?>"
+                name="rename_session"
+                placeholder="Rename active session"
+                maxlength="50"
+                value="<?= htmlspecialchars($sessionNames[$selectedSession] ?? '') ?>"
+                style="flex:1; padding:6px 8px;"
             >
-        </div>
 
-        <!-- Render logs for this iteration -->
+            <button class="btn-black" type="submit">
+                Rename
+            </button>
+        </form>
+    <?php else: ?>
+        <strong>Session Name:</strong>
+        <?= htmlspecialchars($sessionNames[$selectedSession] ?? str_replace('_',' ', $selectedSession)) ?>
+        <div style="margin-top:6px;font-size:12px;color:#6c757d;">
+            🔒 Only the currently active session can be renamed
+        </div>
+    <?php endif; ?>
+</div>
+<?php endif; ?>
+
+<!-- ITERATION SELECT -->
+<?php if ($selectedSession && $iterations): ?>
+<form method="GET" style="margin-bottom:15px;">
+    <input type="hidden" name="user" value="<?= htmlspecialchars($selectedProgram) ?>">
+    <input type="hidden" name="session" value="<?= htmlspecialchars($selectedSession) ?>">
+    <input type="hidden" name="from_date" value="<?= htmlspecialchars($fromDate) ?>">
+    <input type="hidden" name="to_date" value="<?= htmlspecialchars($toDate) ?>">
+    <label><strong>Select Iteration:</strong></label>
+    <select name="iteration" onchange="this.form.submit()">
+        <option value="">-- Select Iteration --</option>
+        <?php foreach ($iterations as $iter): ?>
+            <?php
+            $remarkName = $filteredRemarked[$selectedSession][$iter]['name'] ?? '';
+            $label = $iter . ($remarkName ? ' - ' . $remarkName : '');
+            ?>
+            <option value="<?= $iter ?>" <?= $iter == $selectedIteration ? 'selected' : '' ?>>
+                <?= htmlspecialchars($label) ?>
+            </option>
+        <?php endforeach; ?>
+    </select>
+</form>
+<?php endif; ?>
+
+
+<hr>
+
+<?php if (!empty($logsToShow)): ?>
+    <?php
+    // Show remark if exists
+    $remarkName = $logsToShow[0]['_remark_name'] ?? '';
+    $remarkText = $logsToShow[0]['_remark_text'] ?? '';
+    ?>
+    <?php if ($remarkName): ?>
+        <div class="log-box" style="background:#eaf4ff;">
+            <strong>Remark Name:</strong> <?= htmlspecialchars($remarkName) ?>
+        </div>
+    <?php endif; ?>
+    <?php if ($remarkText): ?>
+        <div class="log-box" style="background:#f9f9f9;">
+            <strong>Remark:</strong><br>
+            <?= nl2br(htmlspecialchars($remarkText)) ?>
+        </div>
+    <?php endif; ?>
+
+    <?php if (!empty($logsToShow)): ?>
         <?php
-        foreach ($logsToRender as $log) {
-            echo render_log_entry($log);
-        }
+        // Group backend-error logs before rendering
+        $logsToRender = group_error_logs($logsToShow);
         ?>
+        
+        <?php foreach ($logsToRender as $log): ?>
+            <?= render_log_entry($log) ?>
+        <?php endforeach; ?>
+    <?php endif; ?>
+<?php endif; ?>
+
+<?php if (!empty($selectedIteration) && !empty($logsToShow)): ?>
+<div class="log-box" style="background:#f1f8ff;">
+    <form method="POST">
+
+        <h3 style="margin-top:0;">
+            QA Remark – Iteration <?= htmlspecialchars($selectedIteration) ?>
+        </h3>
+
+        <input type="hidden" name="program" value="<?= htmlspecialchars($selectedProgram) ?>">
+        <input type="hidden" name="session" value="<?= htmlspecialchars($selectedSession) ?>">
+        <input type="hidden" name="iteration" value="<?= htmlspecialchars($selectedIteration) ?>">
 
         <input
-            type="hidden"
-            name="iteration_id"
-            value="<?= htmlspecialchars($currentIteration) ?>"
+            type="text"
+            name="remark_name"
+            placeholder="Remark name (optional)"
+            maxlength="20"
+            style="
+                padding:6px 8px;
+                border:1px solid #ccc;
+                border-radius:4px;
+                width:100%;
+                margin-bottom:8px;
+            "
+            value="<?= htmlspecialchars($remarkName ?? '') ?>"
         >
 
-        <label>Remarks:</label>
         <textarea
             name="remark"
             placeholder="Enter QA remarks here..."
             required
-        ></textarea>
+            style="
+                width:100%;
+                min-height:80px;
+                padding:8px;
+                border-radius:4px;
+                border:1px solid #ccc;
+            "
+        ><?= htmlspecialchars($remarkText ?? '') ?></textarea>
 
-        <br>
-        <button type="submit">Save Remark</button>
-
+        <br><br>
+        <button class="btn-black" type="submit">
+            Save Remark
+        </button>
     </form>
 </div>
+<?php endif; ?>
+
+<?php
+$latestLog = ['session_id' => '', 'iteration' => 0];
 
 
+if ($selectedProgram) {
+    $stmt = $db->prepare("
+        SELECT session_id, iteration
+        FROM qa_logs
+        WHERE program_name = ?
+        ORDER BY created_at DESC
+        LIMIT 1
+    ");
+    $stmt->bind_param('s', $selectedProgram);
+    $stmt->execute();
+    $res = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    if ($res) {
+        $latestLog = [
+            'session_id' => $res['session_id'],
+            'iteration' => (int)$res['iteration']
+        ];
+    }
+}
+?>
 
 <script>
-const CURRENT_ITERATION = <?= (int)$status['iteration'] ?>;
-const LOGGING_ACTIVE = <?= $status['active'] ? 'true' : 'false' ?>;
-</script>
+const selectedProgram = "<?= htmlspecialchars($selectedProgram) ?>";
+const latestSessionOnLoad = "<?= htmlspecialchars($latestLog['session_id']) ?>";
+const latestIterationOnLoad = <?= $latestLog['iteration'] ?>;
 
-<script>
-let lastIteration = CURRENT_ITERATION;
-
-// Poll every 2 seconds
-if (LOGGING_ACTIVE) {
+if (selectedProgram) {
     setInterval(async () => {
         try {
-            const res = await fetch('iteration_logic/logger_iteration_status.php', {
-                cache: 'no-store'
-            });
+            const res = await fetch('iteration_logic/logger_iteration_status.php?program=' 
+                + encodeURIComponent(selectedProgram), 
+                { cache: 'no-store' });
             const data = await res.json();
 
-            if (data.iteration > lastIteration) {
-                window.location.href =
-                    '<?= $_SERVER['PHP_SELF'] ?>?iteration=' + data.iteration;
+            // Only redirect if a new iteration or session has been added after page load
+            const hasNewIteration =
+                data.latestIteration > latestIterationOnLoad
+                || data.latestSession !== latestSessionOnLoad;
+
+            if (data.active && hasNewIteration) {
+                window.location.href = '<?= $_SERVER['PHP_SELF'] ?>'
+                    + '?user=' + encodeURIComponent(selectedProgram)
+                    + '&session=' + encodeURIComponent(data.latestSession)
+                    + '&iteration=' + data.latestIteration
+                    + '&from_date=<?= htmlspecialchars($fromDate) ?>'
+                    + '&to_date=<?= htmlspecialchars($toDate) ?>';
             }
+
         } catch (e) {
-            // silently ignore
+            console.error('Polling error', e);
         }
     }, 2000);
 }
 </script>
+
 </body>
 </html>

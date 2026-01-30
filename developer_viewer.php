@@ -93,194 +93,76 @@ function group_error_logs(array $errorLogs): array
 function render_log_entry(array $log): string
 {
     $type = $log['type'] ?? '';
-    // 🔁 Normalize endpoints (ALWAYS)
-    $endpoints = [];
+    $endpoints = !empty($log['_endpoints']) && is_array($log['_endpoints'])
+        ? $log['_endpoints']
+        : (!empty($log['endpoint']) ? [$log['endpoint']] : []);
 
-    if (!empty($log['_endpoints']) && is_array($log['_endpoints'])) {
-        $endpoints = $log['_endpoints'];
-    } elseif (!empty($log['endpoint'])) {
-        $endpoints = [$log['endpoint']];
-    }
-    $html = '<div style="
-        border:1px solid #ddd;
-        border-radius:4px;
-        padding:10px;
-        margin-bottom:10px;
-        background:#fafafa;
-    ">';
+    // Determine card style based on type
+    $cardClass = 'bg-light border';
+    if ($type === 'backend-error') {
+        $cardClass = 'bg-danger-subtle border-danger';
+    } 
 
-    // Always show type
-    $html .= '<strong>Type:</strong> ' . htmlspecialchars($type) . '<br>';
+    $html = '<div class="card mb-3 ' . $cardClass . '">';
+    $html .= '<div class="card-body p-3">';
 
-    // 📍 Endpoints (always shown)
+    $html .= '<h6 class="card-title mb-2">' . ($type === 'backend-error' ? '<span class="text-danger">Backend Error</span>' : htmlspecialchars($type)) . '</h6>';
+
+    // Endpoints
     if (!empty($endpoints)) {
-        $html .= '<strong>Endpoints:</strong><br>';
+        $html .= '<p class="mb-2"><strong>Endpoints:</strong><br>';
         foreach ($endpoints as $ep) {
-            $parts = explode(':', $ep, 2);
-            $file = $parts[0];
-            $line = $parts[1] ?? '';
-
+            [$file, $line] = array_pad(explode(':', $ep, 2), 2, '');
             $html .= '• <code>' . htmlspecialchars($file) . '</code>';
-            if ($line !== '') {
-                $html .= ' : <code>' . htmlspecialchars($line) . '</code>';
-            }
+            if ($line !== '') $html .= ' : <code>' . htmlspecialchars($line) . '</code>';
             $html .= '<br>';
         }
+        $html .= '</p>';
     }
 
-    // --- Backend Error Styling ---
-    if ($type === 'backend-error') {
-
-
-        // 🔴 Error container styling override
-        $html = '<div style="
-            border:1px solid #f1aeb5;
-            border-left:6px solid #dc3545;
-            border-radius:6px;
-            padding:12px;
-            margin-bottom:12px;
-            background:#f8d7da;
-        ">';
-
-        $html .= '<strong style="color:#842029;">Backend Error</strong><br>';
-
-        // 📍 Endpoints (always shown — preserved)
-        if (!empty($endpoints)) {
-            $html .= '<strong>Endpoints:</strong><br>';
-            foreach ($endpoints as $ep) {
-                $parts = explode(':', $ep, 2);
-                $file = $parts[0];
-                $line = $parts[1] ?? '';
-
-                $html .= '• <code>' . htmlspecialchars($file) . '</code>';
-                if ($line !== '') {
-                    $html .= ' : <code>' . htmlspecialchars($line) . '</code>';
-                }
-                $html .= '<br>';
-            }
-        }
-
-
-        // 📦 Response (single)
-        if (!empty($log['response_body'])) {
-            $json = json_decode($log['response_body'], true);
-            $pretty = $json !== null
-                ? json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
-                : $log['response_body'];
-
-            $html .= '<div style="margin-top:10px;">
-                <strong>Response:</strong>
-                <pre style="
-                    background:#f1f3f5;
-                    color:#212529;
-                    padding:12px;
-                    border-radius:6px;
-                    border:1px solid #ced4da;
-                    font-family:Consolas,monospace;
-                    font-size:13px;
-                    line-height:1.5;
-                    overflow-x:auto;
-                    white-space:pre-wrap;
-                    word-break:break-word;
-                ">' . htmlspecialchars($pretty) . '</pre>
-            </div>';
-        }
-
-        // 🟡 Occurrences (old UX preserved)
-        if (!empty($log['_count']) && $log['_count'] > 1) {
-            $extra = (int)$log['_count'] - 1;
-
-            $html .= '<div style="
-                margin-top:8px;
-                padding:8px 12px;
-                background:#fff3cd;
-                border:1px solid #ffe69c;
-                border-radius:6px;
-                color:#664d03;
-                font-size:13px;
-            ">
-                <strong>Occurrences:</strong> ' . (int)$log['_count'] . '<br>
-                + ' . $extra . ' more occurrence' . ($extra > 1 ? 's' : '') . ' of the same error
-            </div>';
-        }
-
-        // 🕒 Created at
-        if (!empty($log['created_at'])) {
-            $html .= '<div style="margin-top:6px;font-size:12px;color:#6c757d;">
-                Created at: ' . htmlspecialchars($log['created_at']) . '
-            </div>';
-        }
-
-        $html .= '</div>';
-        return $html;
-    }
-
-    // --- Fields for non-special types ---
-    if (!in_array($type, ['frontend-io', 'backend-response'], true)) {
-        if (!empty($log['iteration'])) {
-            $html .= '<strong>Iteration:</strong> ' . htmlspecialchars($log['iteration']) . '<br>';
-        }
-        if (!empty($log['method'])) {
-            $html .= '<strong>Method:</strong> ' . htmlspecialchars($log['method']) . '<br>';
-        }
-        if (isset($log['status_code'])) {
-            $html .= '<strong>Status:</strong> ' . (int)$log['status_code'] . '<br>';
-        }
-    }
-
-    // Request body (all types)
+    // Request Body
     if (!empty($log['request_body'])) {
         $json = json_decode($log['request_body'], true);
-        $pretty = $json !== null ? json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : $log['request_body'];
-        $html .= '<strong>Request:</strong>
-        <pre style="
-            background:#f8f9fa;
-            color:#212529;
-            padding:12px 14px;
-            margin:8px 0 12px 0;
-            border-radius:6px;
-            border:1px solid #dee2e6;
-            font-family:Consolas,Monaco,\'Courier New\',monospace;
-            font-size:13px;
-            line-height:1.5;
-            overflow-x:auto;
-            white-space:pre-wrap;
-            word-break:break-word;
-        ">' . htmlspecialchars($pretty) . '</pre>';
+        $pretty = $json !== null
+            ? json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
+            : $log['request_body'];
+
+        $html .= '<p class="mb-2"><strong>Request:</strong><pre class="p-2 bg-white border rounded" style="overflow-x:auto;">' . htmlspecialchars($pretty) . '</pre></p>';
     }
 
-    // Response body (all types)
+    // Response Body
     if (!empty($log['response_body'])) {
         $json = json_decode($log['response_body'], true);
-        $pretty = $json !== null ? json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : $log['response_body'];
-        $html .= '<strong>Response:</strong>
-        <pre style="
-            background:#f8f9fa;
-            color:#212529;
-            padding:12px 14px;
-            margin:8px 0 12px 0;
-            border-radius:6px;
-            border:1px solid #dee2e6;
-            font-family:Consolas,Monaco,\'Courier New\',monospace;
-            font-size:13px;
-            line-height:1.5;
-            overflow-x:auto;
-            white-space:pre-wrap;
-            word-break:break-word;
-        ">' . htmlspecialchars($pretty) . '</pre>';
+        $pretty = $json !== null
+            ? json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
+            : $log['response_body'];
+
+        $html .= '<p class="mb-2"><strong>Response:</strong><pre class="p-2 bg-white border rounded" style="overflow-x:auto;">' . htmlspecialchars($pretty) . '</pre></p>';
     }
 
-    // Occurrences for grouped errors
+    // Iteration, Method, Status
+    if (!in_array($type, ['frontend-io', 'backend-response'], true)) {
+        if (!empty($log['iteration'])) $html .= '<p class="mb-1"><strong>Iteration:</strong> ' . htmlspecialchars($log['iteration']) . '</p>';
+        if (!empty($log['method'])) $html .= '<p class="mb-1"><strong>Method:</strong> ' . htmlspecialchars($log['method']) . '</p>';
+        if (isset($log['status_code'])) $html .= '<p class="mb-1"><strong>Status:</strong> ' . (int)$log['status_code'] . '</p>';
+    }
+
+    // Occurrences
     if (!empty($log['_count']) && $log['_count'] > 1) {
-        $html .= '<strong>Occurrences:</strong> ' . (int)$log['_count'] . '<br>';
+        $extra = (int)$log['_count'] - 1;
+        $html .= '<div class="alert alert-warning p-2 mt-2 mb-2" role="alert">
+            <strong>Occurrences:</strong> ' . (int)$log['_count'] . '<br>
+            + ' . $extra . ' more occurrence' . ($extra > 1 ? 's' : '') . '
+        </div>';
     }
 
-    // Created at (skip for frontend-io)
-    if ($type !== 'frontend-io' && !empty($log['created_at'])) {
-        $html .= '<strong>Created At:</strong> ' . htmlspecialchars($log['created_at']) . '<br>';
+    // Created At
+    if (!empty($log['created_at'])) {
+        $html .= '<p class="text-muted small mb-0">Created at: ' . htmlspecialchars($log['created_at']) . '</p>';
     }
 
-    $html .= '</div>';
+    $html .= '</div></div>';
+
     return $html;
 }
 
@@ -431,246 +313,175 @@ sort($iterations);
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Developer QA Viewer</title>
-    <link rel="stylesheet" href="css/design.css">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="bootstrap-icons/font/bootstrap-icons.min.css">
+
     <style>
-        body { font-family:sans-serif; padding:20px; max-width:900px; margin:auto; background:#f4f6f8; }
-        .log-box { background:#fff; border:1px solid #ccc; border-radius:6px; padding:15px; margin-bottom:15px; }
-        select, input[type=date] { padding:5px; margin-top:5px; }
         .header-buttons { display:flex; gap:10px; justify-content:flex-end; margin-bottom:15px; }
+        .log-card { margin-bottom:15px; }
+        .dropdown-menu-scroll { max-height: 200px; overflow-y: auto; }
     </style>
 </head>
-<body>
+<body class="bg-light">
 
-<h1>Developer QA Viewer</h1>
-<hr>
+<div class="container py-4">
 
-<!-- HEADER BUTTONS -->
-<div class="header-buttons">
-    <button class="btn-white" type="button" onclick="window.location.href='auth/logger_logout.php'">Logout</button>
-    <button class="btn-black" type="button" onclick="window.location.href='profile.php'">Profile</button>
-</div>
+    <h1 class="text-center mb-3">Developer QA Viewer</h1>
+    <hr>
 
-<!-- USER SELECT -->
-<?php if (!empty($programs)): ?>
-<form method="GET" style="margin-bottom:15px;">
-    <input type="hidden" name="from_date" value="<?= htmlspecialchars($fromDate) ?>">
-    <input type="hidden" name="to_date" value="<?= htmlspecialchars($toDate) ?>">
-    <label><strong>Select Program:</strong></label>
-    <select name="user" onchange="this.form.submit()">
-        <option value="">-- Select Program --</option>
-        <?php foreach ($programs as $programId => $programName): ?>
-            <option value="<?= htmlspecialchars($programId) ?>" <?= $programId == $selectedProgram ? 'selected' : '' ?>>
-                <?= htmlspecialchars($programName) ?>
-            </option>
-        <?php endforeach; ?>
-    </select>
-</form>
-<?php endif; ?>
+    <!-- Header Buttons -->
+    <div class="header-buttons mb-3">
+        <button class="btn btn-outline-dark" type="button" onclick="window.location.href='auth/logger_logout.php'">Logout</button>
+        <button class="btn btn-dark" type="button" onclick="window.location.href='profile.php'">Profile</button>
+    </div>
 
-
-<!-- DATE FILTER -->
-<form method="GET" style="margin-bottom:15px;">
-    <input type="hidden" name="user" value="<?= htmlspecialchars($selectedProgram) ?>">
-    <input type="hidden" name="session" value="">
-    <input type="hidden" name="iteration" value="">
-
-    <label>
-        From:
-        <input type="date"
-               name="from_date"
-               value="<?= htmlspecialchars($fromDate) ?>"
-               onchange="this.form.submit()">
-    </label>
-
-    <label>
-        To:
-        <input type="date"
-               name="to_date"
-               value="<?= htmlspecialchars($toDate) ?>"
-               onchange="this.form.submit()">
-    </label>
-</form>
-
-<!-- SESSION SELECT -->
-<?php if ($selectedProgram): ?>
-<?php
-// Get sessions from logs (DATE FILTER APPLIED HERE)
-$sessions = [];
-
-if ($fromDate && $toDate) {
-    $stmt = $db->prepare("
-        SELECT DISTINCT session_id
-        FROM qa_logs
-        WHERE program_name = ?
-          AND DATE(created_at) BETWEEN ? AND ?
-        ORDER BY session_id ASC
-    ");
-    $stmt->bind_param(
-        'sss',
-        $selectedProgram,
-        $fromDate,
-        $toDate
-    );
-} else {
-    $stmt = $db->prepare("
-        SELECT DISTINCT session_id
-        FROM qa_logs
-        WHERE program_name = ?
-        ORDER BY session_id ASC
-    ");
-    $stmt->bind_param('s', $selectedProgram);
-}
-
-$stmt->execute();
-$res = $stmt->get_result();
-
-while ($row = $res->fetch_assoc()) {
-    $sessions[] = $row['session_id'];
-}
-
-$stmt->close();
-?>
-
-<form method="GET" style="margin-bottom:15px;">
-    <input type="hidden" name="user" value="<?= htmlspecialchars($selectedProgram) ?>">
-    <input type="hidden" name="from_date" value="<?= htmlspecialchars($fromDate) ?>">
-    <input type="hidden" name="to_date" value="<?= htmlspecialchars($toDate) ?>">
-    <label><strong>Select Session:</strong></label>
-    <select name="session" onchange="this.form.submit()">
-        <option value="">-- Select Session --</option>
-        <?php foreach ($sessions as $sid): ?>
-            <?php
-            $label = $sessionNames[$sid]
-                ?? str_replace('_',' ', $sid);
-            ?>
-            <option value="<?= htmlspecialchars($sid) ?>" <?= $sid === $selectedSession ? 'selected' : '' ?>>
-                <?= htmlspecialchars($label) ?>
-            </option>
-        <?php endforeach; ?>
-    </select>
-</form>
-<?php endif; ?>
-
-
-<!-- ITERATION SELECT -->
-<?php if ($selectedSession && $iterations): ?>
-<form method="GET" style="margin-bottom:15px;">
-    <input type="hidden" name="user" value="<?= htmlspecialchars($selectedProgram) ?>">
-    <input type="hidden" name="session" value="<?= htmlspecialchars($selectedSession) ?>">
-    <input type="hidden" name="from_date" value="<?= htmlspecialchars($fromDate) ?>">
-    <input type="hidden" name="to_date" value="<?= htmlspecialchars($toDate) ?>">
-    <label><strong>Select Iteration:</strong></label>
-    <select name="iteration" onchange="this.form.submit()">
-        <option value="">-- Select Iteration --</option>
-        <?php foreach ($iterations as $iter): ?>
-            <?php
-            $remarkName = $filteredRemarked[$selectedSession][$iter]['name'] ?? '';
-            $label = $iter . ($remarkName ? ' - ' . $remarkName : '');
-            ?>
-            <option value="<?= $iter ?>" <?= $iter == $selectedIteration ? 'selected' : '' ?>>
-                <?= htmlspecialchars($label) ?>
-            </option>
-        <?php endforeach; ?>
-    </select>
-</form>
-<?php endif; ?>
-
-
-<hr>
-
-<?php if (!empty($logsToShow)): ?>
-    <?php
-    $remarkName = $logsToShow[0]['_remark_name'] ?? '';
-    $remarkText = $logsToShow[0]['_remark_text'] ?? '';
-    $remarkUser = $filteredRemarked[$selectedSession][$selectedIteration]['username'] ?? 'Unknown';
-    ?>
-    <?php if ($remarkName || $remarkText): ?>
-        <div class="log-box" style="background:#eaf4ff;">
-            <strong>Remark Name:</strong> <?= htmlspecialchars($remarkName) ?><br>
-            <small>By: <?= htmlspecialchars($remarkUser) ?></small>
+    <!-- Program & Date Row -->
+    <div class="row g-2 mb-3">
+        <?php if (!empty($programs)): ?>
+        <div class="col-md-4">
+            <label class="form-label"><strong>Program:</strong></label>
+            <div class="dropdown">
+                <button class="btn btn-outline-dark dropdown-toggle w-100" type="button" id="programDropdown" data-bs-toggle="dropdown" aria-expanded="false" data-bs-display="static">
+                    <?= $selectedProgram ? htmlspecialchars($selectedProgram) : '-- Select Program --' ?>
+                </button>
+                <ul class="dropdown-menu w-100" aria-labelledby="programDropdown">
+                    <?php foreach ($programs as $programId => $programName): ?>
+                        <li>
+                            <a class="dropdown-item" href="?user=<?= htmlspecialchars($programId) ?>&from_date=<?= htmlspecialchars($fromDate) ?>&to_date=<?= htmlspecialchars($toDate) ?>">
+                                <?= htmlspecialchars($programName) ?>
+                            </a>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
         </div>
-    <?php endif; ?>
-    <?php if ($remarkText): ?>
-        <div class="log-box" style="background:#f9f9f9;">
-            <strong>Remark:</strong><br>
-            <?= nl2br(htmlspecialchars($remarkText)) ?>
+        <?php endif; ?>
+
+        <div class="col-md-4">
+            <label class="form-label">From:</label>
+            <input type="date" class="form-control" value="<?= htmlspecialchars($fromDate) ?>" onchange="updateDate('from', this.value)">
         </div>
+        <div class="col-md-4">
+            <label class="form-label">To:</label>
+            <input type="date" class="form-control" value="<?= htmlspecialchars($toDate) ?>" onchange="updateDate('to', this.value)">
+        </div>
+    </div>
+
+    <!-- Session & Iteration Row (only if program selected) -->
+    <?php if ($selectedProgram): ?>
+    <div class="row g-2 mb-3">
+        <?php
+        // Fetch sessions
+        $sessions = [];
+        if ($fromDate && $toDate) {
+            $stmt = $db->prepare("SELECT DISTINCT session_id FROM qa_logs WHERE program_name=? AND DATE(created_at) BETWEEN ? AND ? ORDER BY session_id ASC");
+            $stmt->bind_param('sss', $selectedProgram, $fromDate, $toDate);
+        } else {
+            $stmt = $db->prepare("SELECT DISTINCT session_id FROM qa_logs WHERE program_name=? ORDER BY session_id ASC");
+            $stmt->bind_param('s', $selectedProgram);
+        }
+        $stmt->execute();
+        $res = $stmt->get_result();
+        while ($row = $res->fetch_assoc()) { $sessions[] = $row['session_id']; }
+        $stmt->close();
+        ?>
+
+        <div class="col-md-6">
+            <label class="form-label"><strong>Session:</strong></label>
+            <div class="dropdown">
+                <button class="btn btn-outline-dark dropdown-toggle w-100" type="button" id="sessionDropdown" data-bs-toggle="dropdown" aria-expanded="false" data-bs-display="static">
+                    <?= $selectedSession ? htmlspecialchars($selectedSession) : '-- Select Session --' ?>
+                </button>
+                <ul class="dropdown-menu w-100" aria-labelledby="sessionDropdown">
+                    <?php foreach ($sessions as $sid):
+                        $label = $sessionNames[$sid] ?? str_replace('_',' ',$sid);
+                    ?>
+                    <li>
+                        <a class="dropdown-item" href="?user=<?= htmlspecialchars($selectedProgram) ?>&session=<?= htmlspecialchars($sid) ?>&from_date=<?= htmlspecialchars($fromDate) ?>&to_date=<?= htmlspecialchars($toDate) ?>">
+                            <?= htmlspecialchars($label) ?>
+                        </a>
+                    </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+        </div>
+
+        <?php if ($selectedSession && $iterations): ?>
+        <div class="col-md-6">
+            <label class="form-label"><strong>Iteration:</strong></label>
+            <div class="dropdown">
+                <button class="btn btn-outline-dark dropdown-toggle w-100" type="button" id="iterationDropdown" data-bs-toggle="dropdown" aria-expanded="false" data-bs-display="static">
+                    <?= $selectedIteration ? htmlspecialchars($selectedIteration) : '-- Select Iteration --' ?>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-scroll w-100" aria-labelledby="iterationDropdown">
+                    <?php foreach ($iterations as $iter):
+                        $remarkName = $filteredRemarked[$selectedSession][$iter]['name'] ?? '';
+                        $label = $iter . ($remarkName ? ' - ' . $remarkName : '');
+                    ?>
+                    <li>
+                        <a class="dropdown-item" href="?user=<?= htmlspecialchars($selectedProgram) ?>&session=<?= htmlspecialchars($selectedSession) ?>&iteration=<?= $iter ?>&from_date=<?= htmlspecialchars($fromDate) ?>&to_date=<?= htmlspecialchars($toDate) ?>">
+                            <?= htmlspecialchars($label) ?>
+                        </a>
+                    </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+        </div>
+        <?php endif; ?>
+    </div>
     <?php endif; ?>
 
+    <hr>
+
+    <!-- Logs -->
     <?php if (!empty($logsToShow)): ?>
         <?php
-        // Group backend-error logs before rendering
-        $logsToRender = group_error_logs($logsToShow);
+        $remarkName = $logsToShow[0]['_remark_name'] ?? '';
+        $remarkText = $logsToShow[0]['_remark_text'] ?? '';
+        $remarkUser = $filteredRemarked[$selectedSession][$selectedIteration]['username'] ?? 'Unknown';
         ?>
-        
-        <?php foreach ($logsToRender as $log): ?>
-            <?= render_log_entry($log) ?>
-        <?php endforeach; ?>
+        <?php if ($remarkName || $remarkText): ?>
+            <div class="card log-card bg-primary-subtle border-primary p-3 mb-2">
+                <strong>Remark Name:</strong> <?= htmlspecialchars($remarkName) ?><br>
+                <small>By: <?= htmlspecialchars($remarkUser) ?></small>
+            </div>
+        <?php endif; ?>
+        <?php if ($remarkText): ?>
+            <div class="card log-card bg-light p-3 mb-2">
+                <strong>Remark:</strong><br>
+                <?= nl2br(htmlspecialchars($remarkText)) ?>
+            </div>
+        <?php endif; ?>
+
+        <?php
+        $logsToRender = group_error_logs($logsToShow);
+        foreach ($logsToRender as $log):
+            echo render_log_entry($log);
+        endforeach;
+        ?>
     <?php endif; ?>
-<?php endif; ?>
 
-<?php
-$latestLog = ['session_id' => '', 'iteration' => 0];
+</div>
 
-
-if ($selectedProgram) {
-    $stmt = $db->prepare("
-        SELECT session_id, iteration
-        FROM qa_logs
-        WHERE program_name = ?
-        ORDER BY created_at DESC
-        LIMIT 1
-    ");
-    $stmt->bind_param('s', $selectedProgram);
-    $stmt->execute();
-    $res = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
-
-    if ($res) {
-        $latestLog = [
-            'session_id' => $res['session_id'],
-            'iteration' => (int)$res['iteration']
-        ];
-    }
-}
-?>
+<!-- Bootstrap JS Bundle -->
+<script src="scripts/bootstrap.bundle.min.js"></script>
 
 <script>
-const selectedProgram = "<?= htmlspecialchars($selectedProgram) ?>";
-const latestSessionOnLoad = "<?= htmlspecialchars($latestLog['session_id']) ?>";
-const latestIterationOnLoad = <?= $latestLog['iteration'] ?>;
-
-if (selectedProgram) {
-    setInterval(async () => {
-        try {
-            const res = await fetch('iteration_logic/logger_iteration_status.php?program=' 
-                + encodeURIComponent(selectedProgram), 
-                { cache: 'no-store' });
-            const data = await res.json();
-
-            // Only redirect if a new iteration or session has been added after page load
-            const hasNewIteration =
-                data.latestIteration > latestIterationOnLoad
-                || data.latestSession !== latestSessionOnLoad;
-
-            if (data.active && hasNewIteration) {
-                window.location.href = '<?= $_SERVER['PHP_SELF'] ?>'
-                    + '?user=' + encodeURIComponent(selectedProgram)
-                    + '&session=' + encodeURIComponent(data.latestSession)
-                    + '&iteration=' + data.latestIteration
-                    + '&from_date=<?= htmlspecialchars($fromDate) ?>'
-                    + '&to_date=<?= htmlspecialchars($toDate) ?>';
-            }
-
-        } catch (e) {
-            console.error('Polling error', e);
-        }
-    }, 2000);
+function updateDate(type, value) {
+    const params = new URLSearchParams(window.location.search);
+    params.set(type + '_date', value);
+    window.location.search = params.toString();
 }
 </script>
 
 </body>
 </html>
+
+

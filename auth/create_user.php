@@ -111,6 +111,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .password-input-group .input-group-text {
             cursor: pointer;
         }
+        .dropdown-role .dropdown-menu button {
+            width: 100%;
+            text-align: left;
+        }
     </style>
 </head>
 
@@ -182,12 +186,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </span>
             </div>
 
-            <!-- Role -->
-            <div class="mb-4">
-                <select name="role" class="form-select" required>
-                    <option value="qa" <?= $roleValue === 'qa' ? 'selected' : '' ?>>QA</option>
-                    <option value="developer" <?= $roleValue === 'developer' ? 'selected' : '' ?>>Developer</option>
-                </select>
+            <!-- Role (Dropdown) -->
+            <div class="mb-4 dropdown-role">
+                <input type="hidden" name="role" id="roleInput" value="<?= $roleValue ?>">
+                <button class="btn btn-outline-dark w-100 dropdown-toggle" type="button" id="roleDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <?= $roleValue ? ucfirst($roleValue) : 'Select Role' ?>
+                </button>
+                <ul class="dropdown-menu w-100" aria-labelledby="roleDropdown">
+                    <li><button class="dropdown-item" type="button" data-role="qa">QA</button></li>
+                    <li><button class="dropdown-item" type="button" data-role="developer">Developer</button></li>
+                </ul>
             </div>
 
             <!-- Submit -->
@@ -207,17 +215,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </div>
 
+<!-- Bootstrap JS (for dropdowns) -->
+<script src="../scripts/bootstrap.bundle.min.js"></script>
+
 <!-- Password Toggle Script -->
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    // Toggle password visibility
     document.querySelectorAll('.toggle-password').forEach(toggle => {
         toggle.addEventListener('click', () => {
             const input = document.getElementById(toggle.dataset.target);
             const icon = toggle.querySelector('i');
-
             input.type = input.type === 'password' ? 'text' : 'password';
             icon.classList.toggle('bi-eye');
             icon.classList.toggle('bi-eye-slash');
+        });
+    });
+
+    // Role dropdown
+    document.querySelectorAll('.dropdown-role .dropdown-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const role = item.dataset.role;
+            document.getElementById('roleInput').value = role;
+            document.getElementById('roleDropdown').textContent = role.charAt(0).toUpperCase() + role.slice(1);
         });
     });
 });

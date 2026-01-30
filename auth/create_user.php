@@ -83,42 +83,145 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 <!doctype html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Create User</title>
-    <link rel="stylesheet" href="../css/design.css">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="../css/bootstrap.min.css">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .page-container {
+            padding-top: 100px;
+        }
+        .signup-card {
+            max-width: 500px;
+            margin: auto;
+        }
+        .password-input-group input {
+            padding-right: 2.5rem;
+        }
+        .password-input-group .input-group-text {
+            cursor: pointer;
+        }
+    </style>
 </head>
-<body class = "signup-body">
-    <div class = "page-container">
-        <h1>Create User</h1>
-        <div class="signup-card">
-            <h2> New User Details</h2>
-            <?php if ($error): ?>
-                <p style="color:red"><?= htmlspecialchars($error) ?></p>
-            <?php endif; ?>
 
-            <?php if ($success): ?>
-                <p style="color:green"><?= htmlspecialchars($success) ?></p>
-            <?php endif; ?>
+<body>
 
-            <form class = "signup-form" method="post">
-                <input class = "signup-input" name="username" placeholder="Username" value="<?= $usernameValue ?>" required>
-                <input class = "signup-input" name="password" type="password" placeholder="Password" value="<?= $passwordValue ?>" required>
-                <input class = "signup-input" name="confirm_password" type="password" placeholder="Confirm Password" value="<?= $confirmPasswordValue ?>" required>
-                <select class = "signup-form"name="role">
+<div class="container page-container">
+
+    <h2 class="text-center mb-4">Create User</h2>
+
+    <div class="card shadow-sm signup-card p-4">
+
+        <h4 class="text-center mb-4">New User Details</h4>
+
+        <?php if ($error): ?>
+            <div class="alert alert-danger">
+                <?= htmlspecialchars($error) ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if ($success): ?>
+            <div class="alert alert-success">
+                <?= htmlspecialchars($success) ?>
+            </div>
+        <?php endif; ?>
+
+        <form method="post">
+
+            <!-- Username -->
+            <div class="mb-3">
+                <input
+                    type="text"
+                    name="username"
+                    class="form-control"
+                    placeholder="Username"
+                    value="<?= $usernameValue ?>"
+                    required
+                >
+            </div>
+
+            <!-- Password -->
+            <div class="input-group mb-3 password-input-group">
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    class="form-control"
+                    placeholder="Password"
+                    value="<?= $passwordValue ?>"
+                    required
+                >
+                <span class="input-group-text toggle-password" data-target="password">
+                    <i class="bi bi-eye"></i>
+                </span>
+            </div>
+
+            <!-- Confirm Password -->
+            <div class="input-group mb-3 password-input-group">
+                <input
+                    type="password"
+                    id="confirm_password"
+                    name="confirm_password"
+                    class="form-control"
+                    placeholder="Confirm Password"
+                    value="<?= $confirmPasswordValue ?>"
+                    required
+                >
+                <span class="input-group-text toggle-password" data-target="confirm_password">
+                    <i class="bi bi-eye"></i>
+                </span>
+            </div>
+
+            <!-- Role -->
+            <div class="mb-4">
+                <select name="role" class="form-select" required>
                     <option value="qa" <?= $roleValue === 'qa' ? 'selected' : '' ?>>QA</option>
                     <option value="developer" <?= $roleValue === 'developer' ? 'selected' : '' ?>>Developer</option>
                 </select>
-                <button class = "btn-white" type="submit">Create User</button>
-            </form>
-            <button class="signup-return-button"
-                            type="button" 
-                            onclick="window.location.href='login.php'">
-                            Back to login
+            </div>
+
+            <!-- Submit -->
+            <button type="submit" class="btn btn-danger w-100 mb-3">
+                Create User
             </button>
-        </div>
-        
+        </form>
+
+        <!-- Back -->
+        <button
+            type="button"
+            class="btn btn-outline-dark w-100"
+            onclick="window.location.href='login.php'">
+            Back to Login
+        </button>
+
     </div>
+</div>
+
+<!-- Password Toggle Script -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.toggle-password').forEach(toggle => {
+        toggle.addEventListener('click', () => {
+            const input = document.getElementById(toggle.dataset.target);
+            const icon = toggle.querySelector('i');
+
+            input.type = input.type === 'password' ? 'text' : 'password';
+            icon.classList.toggle('bi-eye');
+            icon.classList.toggle('bi-eye-slash');
+        });
+    });
+});
+</script>
 
 </body>
 </html>

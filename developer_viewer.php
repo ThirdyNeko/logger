@@ -612,6 +612,65 @@ $stmt->close();
     <?php endif; ?>
 <?php endif; ?>
 
+<?php
+$latestLog = ['session_id' => '', 'iteration' => 0];
+
+
+if ($selectedProgram) {
+    $stmt = $db->prepare("
+        SELECT session_id, iteration
+        FROM qa_logs
+        WHERE program_name = ?
+        ORDER BY created_at DESC
+        LIMIT 1
+    ");
+    $stmt->bind_param('s', $selectedProgram);
+    $stmt->execute();
+    $res = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    if ($res) {
+        $latestLog = [
+            'session_id' => $res['session_id'],
+            'iteration' => (int)$res['iteration']
+        ];
+    }
+}
+?>
+
+<script>
+const selectedProgram = "<?= htmlspecialchars($selectedProgram) ?>";
+const latestSessionOnLoad = "<?= htmlspecialchars($latestLog['session_id']) ?>";
+const latestIterationOnLoad = <?= $latestLog['iteration'] ?>;
+
+if (selectedProgram) {
+    setInterval(async () => {
+        try {
+            const res = await fetch('iteration_logic/logger_iteration_status.php?program=' 
+                + encodeURIComponent(selectedProgram), 
+                { cache: 'no-store' });
+            const data = await res.json();
+
+            // Only redirect if a new iteration or session has been added after page load
+            const hasNewIteration =
+                data.latestIteration > latestIterationOnLoad
+                || data.latestSession !== latestSessionOnLoad;
+
+            if (data.active && hasNewIteration) {
+                window.location.href = '<?= $_SERVER['PHP_SELF'] ?>'
+                    + '?user=' + encodeURIComponent(selectedProgram)
+                    + '&session=' + encodeURIComponent(data.latestSession)
+                    + '&iteration=' + data.latestIteration
+                    + '&from_date=<?= htmlspecialchars($fromDate) ?>'
+                    + '&to_date=<?= htmlspecialchars($toDate) ?>';
+            }
+
+        } catch (e) {
+            console.error('Polling error', e);
+        }
+    }, 2000);
+}
+</script>
 
 </body>
 </html>

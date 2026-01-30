@@ -71,26 +71,74 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Logger Login
 
     </title>
-    <link rel="stylesheet" href="../css/design.css">
+    <link rel="stylesheet" href="../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../bootstrap-icons/font/bootstrap-icons.min.css">
 </head>
-<body class = "login-body">
+<body class="bg-light">
 
-    <div class = "page-container">
-        <h1 class="login-title">QA Logger</h1>  
-        <div class="login-card">
-            <h2>Login</h2>
+<div class="container vh-100 d-flex justify-content-center align-items-center">
+    <div class="card shadow-sm" style="width: 100%; max-width: 400px;">
+        <div class="card-body">
+
+            <h3 class="text-center mb-4">QA Logger</h3>
 
             <?php if ($error): ?>
-            <p style="color:red"><?= htmlspecialchars($error) ?></p>
+                <div class="alert alert-danger">
+                    <?= htmlspecialchars($error) ?>
+                </div>
             <?php endif; ?>
 
-            <form class = "login-form"method="post">
-                <input class = "login-input" name="username" placeholder="Username" required>
-                <input class = "login-input" name="password" type="password" placeholder="Password" required>
-                <button class="btn-white" type="submit">Login</button>
+            <form method="post">
+                <div class="mb-3">
+                    <input
+                        type="text"
+                        name="username"
+                        class="form-control"
+                        placeholder="Username"
+                        required
+                    >
+                </div>
+
+                <div class="input-group mb-3">
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        class="form-control"
+                        placeholder="Password"
+                        required
+                    >
+                    <span class="input-group-text" id="togglePassword" style="cursor: pointer;">
+                        <i class="bi bi-eye"></i>
+                    </span>
+                </div>
+
+                <script>
+                const passwordInput = document.getElementById('password');
+                const togglePassword = document.getElementById('togglePassword');
+                const icon = togglePassword.querySelector('i');
+
+                togglePassword.addEventListener('click', () => {
+                    // Toggle input type
+                    const type = passwordInput.type === 'password' ? 'text' : 'password';
+                    passwordInput.type = type;
+
+                    // Toggle icon
+                    icon.classList.toggle('bi-eye');
+                    icon.classList.toggle('bi-eye-slash');
+                });
+                </script>
+
+                <button type="submit" class="btn btn-outline-dark w-100">
+                    Login
+                </button>
             </form>
 
         </div>
     </div>
+</div>
+
 </body>
+
+
 </html>

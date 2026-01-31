@@ -69,9 +69,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'
     $sessionId = $_POST['session'];
     $name      = trim($_POST['rename_session']);
 
-    // 🔒 Only allow rename if this is the latest session FOR THAT PROGRAM
-    if (
-        $name !== ''
+    // 🔒 Only allow rename if this is the latest session for that program
+    if ($name !== ''
         && isset($latestSessionByProgram[$program])
         && $sessionId === $latestSessionByProgram[$program]
     ) {
@@ -83,8 +82,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'
         $stmt->bind_param('sss', $program, $sessionId, $name);
         $stmt->execute();
         $stmt->close();
+
+        // ✅ Update local array so dropdown shows new name immediately
+        $sessionNames[$sessionId] = $name;
     }
 
+    // Keep the redirect — optional, ensures page reload
     header('Location: ' . $_SERVER['PHP_SELF']
         . '?user=' . urlencode($program)
         . '&session=' . urlencode($sessionId)
@@ -553,262 +556,181 @@ sort($iterations);
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>QA Logger</title>
-    <link rel="stylesheet" href="css/design.css">
+    <meta charset="UTF-8">
+    <title>Developer QA Viewer</title>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="bootstrap-icons/font/bootstrap-icons.min.css">
+
     <style>
-        body { font-family:sans-serif; padding:20px; max-width:900px; margin:auto; background:#f4f6f8; }
-        .log-box { background:#fff; border:1px solid #ccc; border-radius:6px; padding:15px; margin-bottom:15px; }
-        select, input[type=date] { padding:5px; margin-top:5px; }
         .header-buttons { display:flex; gap:10px; justify-content:flex-end; margin-bottom:15px; }
+        .log-card { margin-bottom:15px; }
+        .dropdown-menu-scroll { max-height: 200px; overflow-y: auto; }
     </style>
 </head>
-<body>
+<body class="bg-light">
 
-<h1>QA Logger/Viewer</h1>
-<hr>
+<div class="container py-4">
 
-<!-- HEADER BUTTONS -->
-<div class="header-buttons">
-    <button class="btn-white" type="button" onclick="window.location.href='auth/logger_logout.php'">Logout</button>
-    <button class="btn-black" type="button" onclick="window.location.href='profile.php'">Profile</button>
-</div>
+    <h1 class="text-center mb-3">Developer QA Viewer</h1>
+    <hr>
 
-<!-- USER SELECT -->
-<?php if (!empty($programs)): ?>
-<form method="GET" style="margin-bottom:15px;">
-    <input type="hidden" name="from_date" value="<?= htmlspecialchars($fromDate) ?>">
-    <input type="hidden" name="to_date" value="<?= htmlspecialchars($toDate) ?>">
-    <label><strong>Select Program:</strong></label>
-    <select name="user" onchange="this.form.submit()">
-        <option value="">-- Select Program --</option>
-        <?php foreach ($programs as $programId => $programName): ?>
-            <option value="<?= htmlspecialchars($programId) ?>" <?= $programId == $selectedProgram ? 'selected' : '' ?>>
-                <?= htmlspecialchars($programName) ?>
-            </option>
-        <?php endforeach; ?>
-    </select>
-</form>
-<?php endif; ?>
+    <!-- Header Buttons -->
+    <div class="header-buttons mb-3">
+        <button class="btn btn-outline-dark" type="button" onclick="window.location.href='auth/logger_logout.php'">Logout</button>
+        <button class="btn btn-dark" type="button" onclick="window.location.href='profile.php'">Profile</button>
+    </div>
 
-
-<!-- DATE FILTER -->
-<form method="GET" style="margin-bottom:15px;">
-    <input type="hidden" name="user" value="<?= htmlspecialchars($selectedProgram) ?>">
-    <input type="hidden" name="session" value="">
-    <input type="hidden" name="iteration" value="">
-
-    <label>
-        From:
-        <input type="date"
-               name="from_date"
-               value="<?= htmlspecialchars($fromDate) ?>"
-               onchange="this.form.submit()">
-    </label>
-
-    <label>
-        To:
-        <input type="date"
-               name="to_date"
-               value="<?= htmlspecialchars($toDate) ?>"
-               onchange="this.form.submit()">
-    </label>
-</form>
-
-<!-- SESSION SELECT -->
-<?php if ($selectedProgram): ?>
-<?php
-// Get sessions from logs (DATE FILTER APPLIED HERE)
-$sessions = [];
-
-if ($fromDate && $toDate) {
-    $stmt = $db->prepare("
-        SELECT DISTINCT session_id
-        FROM qa_logs
-        WHERE program_name = ?
-          AND DATE(created_at) BETWEEN ? AND ?
-        ORDER BY session_id ASC
-    ");
-    $stmt->bind_param(
-        'sss',
-        $selectedProgram,
-        $fromDate,
-        $toDate
-    );
-} else {
-    $stmt = $db->prepare("
-        SELECT DISTINCT session_id
-        FROM qa_logs
-        WHERE program_name = ?
-        ORDER BY session_id ASC
-    ");
-    $stmt->bind_param('s', $selectedProgram);
-}
-
-$stmt->execute();
-$res = $stmt->get_result();
-
-while ($row = $res->fetch_assoc()) {
-    $sessions[] = $row['session_id'];
-}
-
-$stmt->close();
-?>
-
-<form method="GET" style="margin-bottom:15px;">
-    <input type="hidden" name="user" value="<?= htmlspecialchars($selectedProgram) ?>">
-    <input type="hidden" name="from_date" value="<?= htmlspecialchars($fromDate) ?>">
-    <input type="hidden" name="to_date" value="<?= htmlspecialchars($toDate) ?>">
-    <label><strong>Select Session:</strong></label>
-    <select name="session" onchange="this.form.submit()">
-        <option value="">-- Select Session --</option>
-        <?php foreach ($sessions as $sid): ?>
-            <?php
-            $label = $sessionNames[$sid]
-                ?? str_replace('_',' ', $sid);
-            ?>
-            <option value="<?= htmlspecialchars($sid) ?>" <?= $sid === $selectedSession ? 'selected' : '' ?>>
-                <?= htmlspecialchars($label) ?>
-            </option>
-        <?php endforeach; ?>
-    </select>
-</form>
-<?php endif; ?>
-
-<?php if ($selectedProgram && $selectedSession): ?>
-<div class="log-box" style="background:#fff7e6; margin-bottom:15px;">
-    <?php if ($isActiveSession): ?>
-        <form method="POST" style="display:flex; gap:8px; align-items:center;">
-            <input type="hidden" name="program" value="<?= htmlspecialchars($selectedProgram) ?>">
-            <input type="hidden" name="session" value="<?= htmlspecialchars($selectedSession) ?>">
-
-            <input
-                type="text"
-                name="rename_session"
-                placeholder="Rename active session"
-                maxlength="50"
-                value="<?= htmlspecialchars($sessionNames[$selectedSession] ?? '') ?>"
-                style="flex:1; padding:6px 8px;"
-            >
-
-            <button class="btn-black" type="submit">
-                Rename
-            </button>
-        </form>
-    <?php else: ?>
-        <strong>Session Name:</strong>
-        <?= htmlspecialchars($sessionNames[$selectedSession] ?? str_replace('_',' ', $selectedSession)) ?>
-        <div style="margin-top:6px;font-size:12px;color:#6c757d;">
-            🔒 Only the currently active session can be renamed
+    <!-- Program & Date Row -->
+    <div class="row g-2 mb-3">
+        <?php if (!empty($programs)): ?>
+        <div class="col-md-4">
+            <label class="form-label"><strong>Program:</strong></label>
+            <div class="dropdown">
+                <button class="btn btn-outline-dark dropdown-toggle w-100" type="button" id="programDropdown" data-bs-toggle="dropdown" aria-expanded="false" data-bs-display="static">
+                    <?= $selectedProgram ? htmlspecialchars($selectedProgram) : '-- Select Program --' ?>
+                </button>
+                <ul class="dropdown-menu w-100" aria-labelledby="programDropdown">
+                    <?php foreach ($programs as $programId => $programName): ?>
+                        <li>
+                            <a class="dropdown-item" href="?user=<?= htmlspecialchars($programId) ?>&from_date=<?= htmlspecialchars($fromDate) ?>&to_date=<?= htmlspecialchars($toDate) ?>">
+                                <?= htmlspecialchars($programName) ?>
+                            </a>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
         </div>
-    <?php endif; ?>
-</div>
-<?php endif; ?>
+        <?php endif; ?>
 
-<!-- ITERATION SELECT -->
-<?php if ($selectedSession && $iterations): ?>
-<form method="GET" style="margin-bottom:15px;">
-    <input type="hidden" name="user" value="<?= htmlspecialchars($selectedProgram) ?>">
-    <input type="hidden" name="session" value="<?= htmlspecialchars($selectedSession) ?>">
-    <input type="hidden" name="from_date" value="<?= htmlspecialchars($fromDate) ?>">
-    <input type="hidden" name="to_date" value="<?= htmlspecialchars($toDate) ?>">
-    <label><strong>Select Iteration:</strong></label>
-    <select name="iteration" onchange="this.form.submit()">
-        <option value="">-- Select Iteration --</option>
-        <?php foreach ($iterations as $iter): ?>
-            <?php
-            $remarkName = $filteredRemarked[$selectedSession][$iter]['name'] ?? '';
-            $label = $iter . ($remarkName ? ' - ' . $remarkName : '');
-            ?>
-            <option value="<?= $iter ?>" <?= $iter == $selectedIteration ? 'selected' : '' ?>>
-                <?= htmlspecialchars($label) ?>
-            </option>
-        <?php endforeach; ?>
-    </select>
-</form>
-<?php endif; ?>
-
-
-<hr>
-
-<?php if (!empty($logsToShow)): ?>
-    <?php
-    // Show remark if exists
-    $remarkName = $logsToShow[0]['_remark_name'] ?? '';
-    $remarkText = $logsToShow[0]['_remark_text'] ?? '';
-    ?>
-    <?php if ($remarkName): ?>
-        <div class="log-box" style="background:#eaf4ff;">
-            <strong>Remark Name:</strong> <?= htmlspecialchars($remarkName) ?>
+        <div class="col-md-4">
+            <label class="form-label">From:</label>
+            <input type="date" class="form-control" value="<?= htmlspecialchars($fromDate) ?>" onchange="updateDate('from', this.value)">
         </div>
-    <?php endif; ?>
-    <?php if ($remarkText): ?>
-        <div class="log-box" style="background:#f9f9f9;">
-            <strong>Remark:</strong><br>
-            <?= nl2br(htmlspecialchars($remarkText)) ?>
+        <div class="col-md-4">
+            <label class="form-label">To:</label>
+            <input type="date" class="form-control" value="<?= htmlspecialchars($toDate) ?>" onchange="updateDate('to', this.value)">
         </div>
-    <?php endif; ?>
+    </div>
 
-    <?php if (!empty($logsToShow)): ?>
+    <!-- Session & Iteration Row -->
+    <?php if ($selectedProgram): ?>
+    <div class="row g-2 mb-3">
         <?php
-        // Group backend-error logs before rendering
-        $logsToRender = group_error_logs($logsToShow);
+        // Fetch sessions
+        $sessions = [];
+        if ($fromDate && $toDate) {
+            $stmt = $db->prepare("SELECT DISTINCT session_id FROM qa_logs WHERE program_name=? AND DATE(created_at) BETWEEN ? AND ? ORDER BY session_id ASC");
+            $stmt->bind_param('sss', $selectedProgram, $fromDate, $toDate);
+        } else {
+            $stmt = $db->prepare("SELECT DISTINCT session_id FROM qa_logs WHERE program_name=? ORDER BY session_id ASC");
+            $stmt->bind_param('s', $selectedProgram);
+        }
+        $stmt->execute();
+        $res = $stmt->get_result();
+        while ($row = $res->fetch_assoc()) { $sessions[] = $row['session_id']; }
+        $stmt->close();
         ?>
-        
-        <?php foreach ($logsToRender as $log): ?>
-            <?= render_log_entry($log) ?>
-        <?php endforeach; ?>
+
+        <!-- Session Dropdown -->
+        <div class="col-md-6">
+            <label class="form-label"><strong>Session:</strong></label>
+            <div class="dropdown">
+                <button class="btn btn-outline-dark dropdown-toggle w-100" type="button" id="sessionDropdown" data-bs-toggle="dropdown" aria-expanded="false" data-bs-display="static">
+                    <?= $selectedSession ? htmlspecialchars($sessionNames[$selectedSession] ?? $selectedSession) : '-- Select Session --' ?>
+                </button>
+                <ul class="dropdown-menu w-100" aria-labelledby="sessionDropdown">
+                    <?php foreach ($sessions as $sid):
+                        $label = $sessionNames[$sid] ?? str_replace('_',' ',$sid);
+                    ?>
+                    <li>
+                        <a class="dropdown-item" href="?user=<?= htmlspecialchars($selectedProgram) ?>&session=<?= htmlspecialchars($sid) ?>&from_date=<?= htmlspecialchars($fromDate) ?>&to_date=<?= htmlspecialchars($toDate) ?>">
+                            <?= htmlspecialchars($label) ?>
+                        </a>
+                    </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+
+            <!-- Session Rename (only if session selected) -->
+            <?php if ($selectedSession): ?>
+                <div class="card p-3 mt-2">
+                    <?php if ($isActiveSession): ?>
+                        <form method="POST" class="d-flex gap-2">
+                            <input type="hidden" name="program" value="<?= htmlspecialchars($selectedProgram) ?>">
+                            <input type="hidden" name="session" value="<?= htmlspecialchars($selectedSession) ?>">
+                            <input type="text" name="rename_session" class="form-control" placeholder="Rename active session" value="<?= htmlspecialchars($sessionNames[$selectedSession] ?? '') ?>">
+                            <button type="submit" class="btn btn-dark">Rename</button>
+                        </form>
+                    <?php else: ?>
+                        <small>🔒 Only the active session can be renamed</small>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <!-- Iteration Dropdown -->
+        <?php if ($selectedSession && $iterations): ?>
+        <div class="col-md-6">
+            <label class="form-label"><strong>Iteration:</strong></label>
+            <div class="dropdown">
+                <button class="btn btn-outline-dark dropdown-toggle w-100" type="button" id="iterationDropdown" data-bs-toggle="dropdown" aria-expanded="false" data-bs-display="static">
+                    <?= $selectedIteration ? htmlspecialchars($selectedIteration) : '-- Select Iteration --' ?>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-scroll w-100" aria-labelledby="iterationDropdown">
+                    <?php foreach ($iterations as $iter):
+                        $remarkName = $filteredRemarked[$selectedSession][$iter]['name'] ?? '';
+                        $label = $iter . ($remarkName ? ' - ' . $remarkName : '');
+                    ?>
+                    <li>
+                        <a class="dropdown-item" href="?user=<?= htmlspecialchars($selectedProgram) ?>&session=<?= htmlspecialchars($selectedSession) ?>&iteration=<?= $iter ?>&from_date=<?= htmlspecialchars($fromDate) ?>&to_date=<?= htmlspecialchars($toDate) ?>">
+                            <?= htmlspecialchars($label) ?>
+                        </a>
+                    </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+
+            <!-- QA Remark Form -->
+            <?php if ($selectedIteration): ?>
+                <div class="card p-3 mt-2">
+                    <form method="POST">
+                        <input type="hidden" name="program" value="<?= htmlspecialchars($selectedProgram) ?>">
+                        <input type="hidden" name="session" value="<?= htmlspecialchars($selectedSession) ?>">
+                        <input type="hidden" name="iteration" value="<?= htmlspecialchars($selectedIteration) ?>">
+
+                        <input type="text" name="remark_name" class="form-control mb-2" placeholder="Remark name (optional)" maxlength="20" value="<?= htmlspecialchars($filteredRemarked[$selectedSession][$selectedIteration]['name'] ?? '') ?>">
+
+                        <textarea name="remark" class="form-control mb-2" placeholder="Enter QA remarks here..." required><?= htmlspecialchars($filteredRemarked[$selectedSession][$selectedIteration]['text'] ?? '') ?></textarea>
+
+                        <button type="submit" class="btn btn-dark w-100">Save Remark</button>
+                    </form>
+                </div>
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
+    </div>
     <?php endif; ?>
-<?php endif; ?>
 
-<?php if (!empty($selectedIteration) && !empty($logsToShow)): ?>
-<div class="log-box" style="background:#f1f8ff;">
-    <form method="POST">
+    <hr>
 
-        <h3 style="margin-top:0;">
-            QA Remark – Iteration <?= htmlspecialchars($selectedIteration) ?>
-        </h3>
+    <!-- Logs -->
+    <div class="log-container">
+        <?php if (!empty($logsToShow)):
+            $logsToRender = group_error_logs($logsToShow);
+            foreach ($logsToRender as $log):
+                echo render_log_entry($log);
+            endforeach;
+        endif; ?>
+    </div>
 
-        <input type="hidden" name="program" value="<?= htmlspecialchars($selectedProgram) ?>">
-        <input type="hidden" name="session" value="<?= htmlspecialchars($selectedSession) ?>">
-        <input type="hidden" name="iteration" value="<?= htmlspecialchars($selectedIteration) ?>">
-
-        <input
-            type="text"
-            name="remark_name"
-            placeholder="Remark name (optional)"
-            maxlength="20"
-            style="
-                padding:6px 8px;
-                border:1px solid #ccc;
-                border-radius:4px;
-                width:100%;
-                margin-bottom:8px;
-            "
-            value="<?= htmlspecialchars($remarkName ?? '') ?>"
-        >
-
-        <textarea
-            name="remark"
-            placeholder="Enter QA remarks here..."
-            required
-            style="
-                width:100%;
-                min-height:80px;
-                padding:8px;
-                border-radius:4px;
-                border:1px solid #ccc;
-            "
-        ><?= htmlspecialchars($remarkText ?? '') ?></textarea>
-
-        <br><br>
-        <button class="btn-black" type="submit">
-            Save Remark
-        </button>
-    </form>
 </div>
-<?php endif; ?>
+
+<!-- Bootstrap JS -->
+<script src="scripts/bootstrap.bundle.min.js"></script>
 
 <?php
 $latestLog = ['session_id' => '', 'iteration' => 0];

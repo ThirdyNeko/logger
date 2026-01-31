@@ -93,20 +93,27 @@ function group_error_logs(array $errorLogs): array
 function render_log_entry(array $log): string
 {
     $type = $log['type'] ?? '';
+
+    // Normalize endpoints
     $endpoints = !empty($log['_endpoints']) && is_array($log['_endpoints'])
         ? $log['_endpoints']
         : (!empty($log['endpoint']) ? [$log['endpoint']] : []);
 
-    // Determine card style based on type
+    // Determine card style
     $cardClass = 'bg-light border';
     if ($type === 'backend-error') {
         $cardClass = 'bg-danger-subtle border-danger';
-    } 
+    }
 
     $html = '<div class="card mb-3 ' . $cardClass . '">';
     $html .= '<div class="card-body p-3">';
 
-    $html .= '<h6 class="card-title mb-2">' . ($type === 'backend-error' ? '<span class="text-danger">Backend Error</span>' : htmlspecialchars($type)) . '</h6>';
+    // Card title
+    $html .= '<h6 class="card-title mb-2">' . 
+             ($type === 'backend-error' 
+                 ? '<span class="text-danger">Backend Error</span>' 
+                 : htmlspecialchars($type)) . 
+             '</h6>';
 
     // Endpoints
     if (!empty($endpoints)) {
@@ -120,27 +127,27 @@ function render_log_entry(array $log): string
         $html .= '</p>';
     }
 
-    // Request Body
+    // Request body
     if (!empty($log['request_body'])) {
         $json = json_decode($log['request_body'], true);
         $pretty = $json !== null
             ? json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
             : $log['request_body'];
-
-        $html .= '<p class="mb-2"><strong>Request:</strong><pre class="p-2 bg-white border rounded" style="overflow-x:auto;">' . htmlspecialchars($pretty) . '</pre></p>';
+        $html .= '<p class="mb-2"><strong>Request:</strong><pre class="p-2 bg-white border rounded" style="overflow-x:auto;">' 
+                 . htmlspecialchars($pretty) . '</pre></p>';
     }
 
-    // Response Body
+    // Response body
     if (!empty($log['response_body'])) {
         $json = json_decode($log['response_body'], true);
         $pretty = $json !== null
             ? json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
             : $log['response_body'];
-
-        $html .= '<p class="mb-2"><strong>Response:</strong><pre class="p-2 bg-white border rounded" style="overflow-x:auto;">' . htmlspecialchars($pretty) . '</pre></p>';
+        $html .= '<p class="mb-2"><strong>Response:</strong><pre class="p-2 bg-white border rounded" style="overflow-x:auto;">' 
+                 . htmlspecialchars($pretty) . '</pre></p>';
     }
 
-    // Iteration, Method, Status
+    // Iteration / Method / Status
     if (!in_array($type, ['frontend-io', 'backend-response'], true)) {
         if (!empty($log['iteration'])) $html .= '<p class="mb-1"><strong>Iteration:</strong> ' . htmlspecialchars($log['iteration']) . '</p>';
         if (!empty($log['method'])) $html .= '<p class="mb-1"><strong>Method:</strong> ' . htmlspecialchars($log['method']) . '</p>';
@@ -151,9 +158,9 @@ function render_log_entry(array $log): string
     if (!empty($log['_count']) && $log['_count'] > 1) {
         $extra = (int)$log['_count'] - 1;
         $html .= '<div class="alert alert-warning p-2 mt-2 mb-2" role="alert">
-            <strong>Occurrences:</strong> ' . (int)$log['_count'] . '<br>
-            + ' . $extra . ' more occurrence' . ($extra > 1 ? 's' : '') . '
-        </div>';
+                    <strong>Occurrences:</strong> ' . (int)$log['_count'] . '<br>
+                    + ' . $extra . ' more occurrence' . ($extra > 1 ? 's' : '') . '
+                  </div>';
     }
 
     // Created At
@@ -397,7 +404,7 @@ sort($iterations);
             <label class="form-label"><strong>Session:</strong></label>
             <div class="dropdown">
                 <button class="btn btn-outline-dark dropdown-toggle w-100" type="button" id="sessionDropdown" data-bs-toggle="dropdown" aria-expanded="false" data-bs-display="static">
-                    <?= $selectedSession ? htmlspecialchars($selectedSession) : '-- Select Session --' ?>
+                    <?= $selectedSession ? htmlspecialchars($sessionNames[$selectedSession] ?? $selectedSession) : '-- Select Session --' ?>
                 </button>
                 <ul class="dropdown-menu w-100" aria-labelledby="sessionDropdown">
                     <?php foreach ($sessions as $sid):
@@ -473,11 +480,63 @@ sort($iterations);
 <!-- Bootstrap JS Bundle -->
 <script src="scripts/bootstrap.bundle.min.js"></script>
 
+<?php
+$latestLog = ['session_id' => '', 'iteration' => 0];
+
+
+if ($selectedProgram) {
+    $stmt = $db->prepare("
+        SELECT session_id, iteration
+        FROM qa_logs
+        WHERE program_name = ?
+        ORDER BY created_at DESC
+        LIMIT 1
+    ");
+    $stmt->bind_param('s', $selectedProgram);
+    $stmt->execute();
+    $res = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    if ($res) {
+        $latestLog = [
+            'session_id' => $res['session_id'],
+            'iteration' => (int)$res['iteration']
+        ];
+    }
+}
+?>
+
 <script>
-function updateDate(type, value) {
-    const params = new URLSearchParams(window.location.search);
-    params.set(type + '_date', value);
-    window.location.search = params.toString();
+const selectedProgram = "<?= htmlspecialchars($selectedProgram) ?>";
+const latestSessionOnLoad = "<?= htmlspecialchars($latestLog['session_id']) ?>";
+const latestIterationOnLoad = <?= $latestLog['iteration'] ?>;
+
+if (selectedProgram) {
+    setInterval(async () => {
+        try {
+            const res = await fetch('iteration_logic/logger_iteration_status.php?program=' 
+                + encodeURIComponent(selectedProgram), 
+                { cache: 'no-store' });
+            const data = await res.json();
+
+            // Only redirect if a new iteration or session has been added after page load
+            const hasNewIteration =
+                data.latestIteration > latestIterationOnLoad
+                || data.latestSession !== latestSessionOnLoad;
+
+            if (data.active && hasNewIteration) {
+                window.location.href = '<?= $_SERVER['PHP_SELF'] ?>'
+                    + '?user=' + encodeURIComponent(selectedProgram)
+                    + '&session=' + encodeURIComponent(data.latestSession)
+                    + '&iteration=' + data.latestIteration
+                    + '&from_date=<?= htmlspecialchars($fromDate) ?>'
+                    + '&to_date=<?= htmlspecialchars($toDate) ?>';
+            }
+
+        } catch (e) {
+            console.error('Polling error', e);
+        }
+    }, 2000);
 }
 </script>
 

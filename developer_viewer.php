@@ -507,6 +507,23 @@ sort($iterations);
 <!-- Bootstrap JS Bundle -->
 <script src="scripts/bootstrap.bundle.min.js"></script>
 
+<script>
+function updateDate(type, value) {
+    const params = new URLSearchParams(window.location.search);
+
+    if (type === 'from') params.set('from_date', value);
+    if (type === 'to') params.set('to_date', value);
+
+    // Keep the current program/session/iteration in URL
+    if ('<?= $selectedProgram ?>') params.set('user', '<?= htmlspecialchars($selectedProgram) ?>');
+    if ('<?= $selectedSession ?>') params.set('session', '<?= htmlspecialchars($selectedSession) ?>');
+    if ('<?= $selectedIteration ?>') params.set('iteration', '<?= htmlspecialchars($selectedIteration) ?>');
+
+    // Redirect to same page with new date params
+    window.location.href = '<?= $_SERVER['PHP_SELF'] ?>?' + params.toString();
+}
+</script>
+
 <?php
 $latestLog = ['session_id' => '', 'iteration' => 0];
 

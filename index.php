@@ -582,7 +582,7 @@ sort($iterations);
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Developer QA Viewer</title>
+    <title>QA Viewer</title>
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="css/bootstrap.min.css">
@@ -598,7 +598,7 @@ sort($iterations);
 
 <div class="container py-4">
 
-    <h1 class="text-center mb-3">Developer QA Viewer</h1>
+    <h1 class="text-center mb-3">QA Viewer</h1>
     <hr>
 
     <!-- Header Buttons -->
@@ -759,6 +759,24 @@ sort($iterations);
 <!-- Bootstrap JS -->
 <script src="scripts/bootstrap.bundle.min.js"></script>
 
+<script>
+function updateDate(type, value) {
+    const params = new URLSearchParams(window.location.search);
+
+    if (type === 'from') params.set('from_date', value);
+    if (type === 'to') params.set('to_date', value);
+
+    // Keep the current program/session/iteration in URL
+    if ('<?= $selectedProgram ?>') params.set('user', '<?= htmlspecialchars($selectedProgram) ?>');
+    if ('<?= $selectedSession ?>') params.set('session', '<?= htmlspecialchars($selectedSession) ?>');
+    if ('<?= $selectedIteration ?>') params.set('iteration', '<?= htmlspecialchars($selectedIteration) ?>');
+
+    // Redirect to same page with new date params
+    window.location.href = '<?= $_SERVER['PHP_SELF'] ?>?' + params.toString();
+}
+</script>
+
+
 <?php
 $latestLog = ['session_id' => '', 'iteration' => 0];
 
@@ -784,6 +802,7 @@ if ($selectedProgram) {
     }
 }
 ?>
+
 
 <script>
 const selectedProgram = "<?= htmlspecialchars($selectedProgram) ?>";

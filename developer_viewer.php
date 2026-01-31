@@ -283,6 +283,29 @@ if ($selectedSession && isset($filteredRemarked[$selectedSession])) {
     $iterations = array_keys($filteredRemarked[$selectedSession]);
 }
 
+/* ==========================
+   ITERATIONS WITH ERRORS
+========================== */
+$errorIterations = [];
+
+if ($selectedProgram && $selectedSession) {
+    $stmt = $db->prepare("
+        SELECT DISTINCT iteration
+        FROM qa_logs
+        WHERE program_name = ?
+          AND session_id = ?
+          AND type IN ('backend-error', 'backend-fatal')
+    ");
+    $stmt->bind_param('ss', $selectedProgram, $selectedSession);
+    $stmt->execute();
+    $res = $stmt->get_result();
+
+    while ($row = $res->fetch_assoc()) {
+        $errorIterations[(int)$row['iteration']] = true;
+    }
+    $stmt->close();
+}
+
 // Also include iterations without remarks
 $stmt = $db->prepare("
     SELECT DISTINCT iteration
@@ -430,10 +453,14 @@ sort($iterations);
                 <ul class="dropdown-menu dropdown-menu-scroll w-100" aria-labelledby="iterationDropdown">
                     <?php foreach ($iterations as $iter):
                         $remarkName = $filteredRemarked[$selectedSession][$iter]['name'] ?? '';
-                        $label = $iter . ($remarkName ? ' - ' . $remarkName : '');
+                        $hasError   = isset($errorIterations[$iter]);
+
+                        $label = $iter;
+                        if ($remarkName) $label .= ' - ' . $remarkName;
+                        if ($hasError)   $label .= ' - ⚠ Error';
                     ?>
                     <li>
-                        <a class="dropdown-item" href="?user=<?= htmlspecialchars($selectedProgram) ?>&session=<?= htmlspecialchars($selectedSession) ?>&iteration=<?= $iter ?>&from_date=<?= htmlspecialchars($fromDate) ?>&to_date=<?= htmlspecialchars($toDate) ?>">
+                        <a class="dropdown-item <?= $hasError ? 'text-danger fw-semibold' : '' ?>" href="?user=<?= htmlspecialchars($selectedProgram) ?>&session=<?= htmlspecialchars($selectedSession) ?>&iteration=<?= $iter ?>&from_date=<?= htmlspecialchars($fromDate) ?>&to_date=<?= htmlspecialchars($toDate) ?> ">
                             <?= htmlspecialchars($label) ?>
                         </a>
                     </li>

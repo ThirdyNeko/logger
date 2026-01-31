@@ -251,27 +251,41 @@ krsort($filteredRemarked);
 ========================== */
 $logsToShow = [];
 
-if ($selectedProgram && $selectedSession && $selectedIteration !== '') {
-    $stmt = $db->prepare("
-        SELECT *
-        FROM qa_logs
-        WHERE program_name = ? AND session_id = ? AND iteration = ?
-        ORDER BY created_at ASC
-    ");
-    $stmt->bind_param('ssi', $selectedProgram, $selectedSession, $selectedIteration);
+if ($selectedProgram && $selectedSession) {
+    if ($selectedIteration === 'summary') {
+        // ✅ Load all iterations for this session
+        $stmt = $db->prepare("
+            SELECT *
+            FROM qa_logs
+            WHERE program_name = ? AND session_id = ?
+            ORDER BY iteration ASC, created_at ASC
+        ");
+        $stmt->bind_param('ss', $selectedProgram, $selectedSession);
+    } else {
+        // Single iteration
+        $stmt = $db->prepare("
+            SELECT *
+            FROM qa_logs
+            WHERE program_name = ? AND session_id = ? AND iteration = ?
+            ORDER BY created_at ASC
+        ");
+        $stmt->bind_param('ssi', $selectedProgram, $selectedSession, $selectedIteration);
+    }
+
     $stmt->execute();
     $logsToShow = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
 
-    // Add remark info if exists
-    $remarkEntry = $filteredRemarked[$selectedSession][$selectedIteration] ?? null;
-    if ($remarkEntry) {
-        foreach ($logsToShow as &$log) {
+    // Add remark info
+    foreach ($logsToShow as &$log) {
+        $iter = (int)$log['iteration'];
+        $remarkEntry = $filteredRemarked[$selectedSession][$iter] ?? null;
+        if ($remarkEntry) {
             $log['_remark_name'] = $remarkEntry['name'];
             $log['_remark_text'] = $remarkEntry['remark'];
         }
-        unset($log);
     }
+    unset($log);
 }
 
 /* ==========================
@@ -451,6 +465,14 @@ sort($iterations);
                     <?= $selectedIteration ? htmlspecialchars($selectedIteration) : '-- Select Iteration --' ?>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-scroll w-100" aria-labelledby="iterationDropdown">
+                    <!-- Session Summary Option -->
+                    <li>
+                        <a class="dropdown-item <?= $selectedIteration === 'summary' ? 'text-primary fw-semibold' : '' ?>"
+                        href="?user=<?= htmlspecialchars($selectedProgram) ?>&session=<?= htmlspecialchars($selectedSession) ?>&iteration=summary&from_date=<?= htmlspecialchars($fromDate) ?>&to_date=<?= htmlspecialchars($toDate) ?>">
+                            Session Summary
+                        </a>
+                    </li>
+                    
                     <?php foreach ($iterations as $iter):
                         $remarkName = $filteredRemarked[$selectedSession][$iter]['name'] ?? '';
                         $hasError   = isset($errorIterations[$iter]);
@@ -460,7 +482,8 @@ sort($iterations);
                         if ($hasError)   $label .= ' - ⚠ Error';
                     ?>
                     <li>
-                        <a class="dropdown-item <?= $hasError ? 'text-danger fw-semibold' : '' ?>" href="?user=<?= htmlspecialchars($selectedProgram) ?>&session=<?= htmlspecialchars($selectedSession) ?>&iteration=<?= $iter ?>&from_date=<?= htmlspecialchars($fromDate) ?>&to_date=<?= htmlspecialchars($toDate) ?> ">
+                        <a class="dropdown-item <?= $hasError ? 'text-danger fw-semibold' : '' ?>" 
+                        href="?user=<?= htmlspecialchars($selectedProgram) ?>&session=<?= htmlspecialchars($selectedSession) ?>&iteration=<?= $iter ?>&from_date=<?= htmlspecialchars($fromDate) ?>&to_date=<?= htmlspecialchars($toDate) ?>">
                             <?= htmlspecialchars($label) ?>
                         </a>
                     </li>
@@ -495,10 +518,60 @@ sort($iterations);
         <?php endif; ?>
 
         <?php
-        $logsToRender = group_error_logs($logsToShow);
-        foreach ($logsToRender as $log):
-            echo render_log_entry($log);
-        endforeach;
+        if ($selectedIteration === 'summary') {
+            // Group logs by iteration
+            $logsByIteration = [];
+
+            foreach ($logsToShow as $log) {
+                $iter = $log['iteration'] ?? 0;
+
+                // Only include if it's an error
+                if (!is_error_log($log)) continue;
+
+                if (!isset($logsByIteration[$iter])) $logsByIteration[$iter] = [];
+                $logsByIteration[$iter][] = $log;
+            }
+
+            // Add iterations that have remarks but no errors
+            foreach ($filteredRemarked[$selectedSession] ?? [] as $iter => $remark) {
+                if (!isset($logsByIteration[$iter])) {
+                    $logsByIteration[$iter] = [];
+                }
+            }
+
+            // Render each iteration
+            foreach ($logsByIteration as $iter => $logs) {
+                echo '<h5 class="mt-3">Iteration ' . htmlspecialchars($iter) . '</h5>';
+
+                // Show remark if exists
+                $remarkEntry = $filteredRemarked[$selectedSession][$iter] ?? null;
+                if ($remarkEntry) {
+                    echo '<div class="card log-card bg-primary-subtle border-primary p-3 mb-2">';
+                    echo '<strong>Remark Name:</strong> ' . htmlspecialchars($remarkEntry['name']) . '<br>';
+                    echo '<small>By: ' . htmlspecialchars($remarkEntry['username'] ?? 'Unknown') . '</small>';
+                    echo '</div>';
+
+                    if (!empty($remarkEntry['remark'])) {
+                        echo '<div class="card log-card bg-light p-3 mb-2">';
+                        echo '<strong>Remark:</strong><br>' . nl2br(htmlspecialchars($remarkEntry['remark']));
+                        echo '</div>';
+                    }
+                }
+
+                // Show errors
+                $logsToRender = group_error_logs($logs);
+                foreach ($logsToRender as $log) {
+                    echo render_log_entry($log);
+                }
+            }
+
+        } else {
+            // Single iteration view
+            $logsToRender = group_error_logs($logsToShow);
+            foreach ($logsToRender as $log) {
+                echo render_log_entry($log);
+            }
+        }
         ?>
     <?php endif; ?>
 

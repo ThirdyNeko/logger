@@ -57,7 +57,7 @@ function qa_get_session_state(): array
         SELECT session_id, iteration, remarks_iteration, last_second, program_name
         FROM qa_session_state
         WHERE user_id = ? AND program_name = ?
-        ORDER BY session_id DESC
+        ORDER BY CAST(SUBSTRING_INDEX(session_id, '_', -1) AS UNSIGNED) DESC
         LIMIT 1
     ");
     $stmt->bind_param('ss', $userId, $program);
@@ -131,7 +131,7 @@ function qa_assign_iteration_id(string $timestamp): ?int
     if (($state['last_second'] ?? null) !== $normalizedKey) {
 
         // 🚨 Hit iteration limit → create new session
-        if ($state['iteration'] >= 50) {
+        if ($state['iteration'] >= 5) {
             // Always generate a **new session ID per user**
             $state = qa_create_new_session($program, $userId);
             return 1; // iteration resets

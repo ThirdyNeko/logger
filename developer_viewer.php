@@ -463,7 +463,7 @@ sort($iterations);
                     <?php foreach ($sessions as $sid):
                         $sessionName = $sessionNames[$sid] ?? str_replace('_',' ',$sid);
                         $ownerName = $sessionOwners[$sid] ?? 'Unknown';
-                        $label = $sessionName . ' - ' . $ownerName;
+                        $label = $ownerName . ' - ' . $sessionName;
                     ?>
                     <li>
                         <a class="dropdown-item" href="?user=<?= htmlspecialchars($selectedProgram) ?>&session=<?= htmlspecialchars($sid) ?>&from_date=<?= htmlspecialchars($fromDate) ?>&to_date=<?= htmlspecialchars($toDate) ?>">

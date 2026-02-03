@@ -424,16 +424,32 @@ sort($iterations);
         <?php
         // Fetch sessions
         $sessions = [];
+        $sessionOwners = []; // session_id => username
+
         if ($fromDate && $toDate) {
-            $stmt = $db->prepare("SELECT DISTINCT session_id FROM qa_logs WHERE program_name=? AND DATE(created_at) BETWEEN ? AND ? ORDER BY session_id ASC");
+            $stmt = $db->prepare("
+                SELECT DISTINCT session_id, user_id
+                FROM qa_logs
+                WHERE program_name=? AND DATE(created_at) BETWEEN ? AND ?
+                ORDER BY session_id ASC
+            ");
             $stmt->bind_param('sss', $selectedProgram, $fromDate, $toDate);
         } else {
-            $stmt = $db->prepare("SELECT DISTINCT session_id FROM qa_logs WHERE program_name=? ORDER BY session_id ASC");
+            $stmt = $db->prepare("
+                SELECT DISTINCT session_id, user_id
+                FROM qa_logs
+                WHERE program_name=?
+                ORDER BY session_id ASC
+            ");
             $stmt->bind_param('s', $selectedProgram);
         }
+
         $stmt->execute();
         $res = $stmt->get_result();
-        while ($row = $res->fetch_assoc()) { $sessions[] = $row['session_id']; }
+        while ($row = $res->fetch_assoc()) {
+            $sessions[] = $row['session_id'];
+            $sessionOwners[$row['session_id']] = $row['user_id'] ?? 'Unknown';
+        }
         $stmt->close();
         ?>
 
@@ -445,7 +461,9 @@ sort($iterations);
                 </button>
                 <ul class="dropdown-menu w-100" aria-labelledby="sessionDropdown">
                     <?php foreach ($sessions as $sid):
-                        $label = $sessionNames[$sid] ?? str_replace('_',' ',$sid);
+                        $sessionName = $sessionNames[$sid] ?? str_replace('_',' ',$sid);
+                        $ownerName = $sessionOwners[$sid] ?? 'Unknown';
+                        $label = $sessionName . ' - ' . $ownerName;
                     ?>
                     <li>
                         <a class="dropdown-item" href="?user=<?= htmlspecialchars($selectedProgram) ?>&session=<?= htmlspecialchars($sid) ?>&from_date=<?= htmlspecialchars($fromDate) ?>&to_date=<?= htmlspecialchars($toDate) ?>">

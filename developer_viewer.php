@@ -155,12 +155,12 @@ function render_log_entry(array $log): string
     }
 
     // Occurrences
-    if (!empty($log['_count']) && $log['_count'] > 1) {
+    if ($type === 'backend-error' && !empty($log['_count']) && $log['_count'] > 1) {
         $extra = (int)$log['_count'] - 1;
         $html .= '<div class="alert alert-warning p-2 mt-2 mb-2" role="alert">
                     <strong>Occurrences:</strong> ' . (int)$log['_count'] . '<br>
                     + ' . $extra . ' more occurrence' . ($extra > 1 ? 's' : '') . '
-                  </div>';
+                </div>';
     }
 
     // Created At
@@ -567,8 +567,26 @@ sort($iterations);
 
         } else {
             // Single iteration view
-            $logsToRender = group_error_logs($logsToShow);
-            foreach ($logsToRender as $log) {
+
+            $errorLogs = [];
+            $normalLogs = [];
+
+            foreach ($logsToShow as $log) {
+                if (is_error_log($log)) {
+                    $errorLogs[] = $log;
+                } else {
+                    $normalLogs[] = $log;
+                }
+            }
+
+            // 1️⃣ Render normal logs AS-IS (no grouping)
+            foreach ($normalLogs as $log) {
+                echo render_log_entry($log);
+            }
+
+            // 2️⃣ Render grouped backend errors ONLY
+            $groupedErrors = group_error_logs($errorLogs);
+            foreach ($groupedErrors as $log) {
                 echo render_log_entry($log);
             }
         }

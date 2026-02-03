@@ -220,197 +220,85 @@ function group_error_logs(array $errorLogs): array
 function render_log_entry(array $log): string
 {
     $type = $log['type'] ?? '';
-    // 🔁 Normalize endpoints (ALWAYS)
-    $endpoints = [];
 
-    if (!empty($log['_endpoints']) && is_array($log['_endpoints'])) {
-        $endpoints = $log['_endpoints'];
-    } elseif (!empty($log['endpoint'])) {
-        $endpoints = [$log['endpoint']];
+    // Normalize endpoints
+    $endpoints = !empty($log['_endpoints']) && is_array($log['_endpoints'])
+        ? $log['_endpoints']
+        : (!empty($log['endpoint']) ? [$log['endpoint']] : []);
+
+    // Determine card style
+    $cardClass = 'bg-light border';
+    if ($type === 'backend-error') {
+        $cardClass = 'bg-danger-subtle border-danger';
     }
-    $html = '<div style="
-        border:1px solid #ddd;
-        border-radius:4px;
-        padding:10px;
-        margin-bottom:10px;
-        background:#fafafa;
-    ">';
 
-    // Always show type
-    $html .= '<strong>Type:</strong> ' . htmlspecialchars($type) . '<br>';
+    $html = '<div class="card mb-3 ' . $cardClass . '">';
+    $html .= '<div class="card-body p-3">';
 
-    // 📍 Endpoints (always shown)
+    // Card title
+    $html .= '<h6 class="card-title mb-2">' . 
+             ($type === 'backend-error' 
+                 ? '<span class="text-danger">Backend Error</span>' 
+                 : htmlspecialchars($type)) . 
+             '</h6>';
+
+    // Endpoints
     if (!empty($endpoints)) {
-        $html .= '<strong>Endpoints:</strong><br>';
+        $html .= '<p class="mb-2"><strong>Endpoints:</strong><br>';
         foreach ($endpoints as $ep) {
-            $parts = explode(':', $ep, 2);
-            $file = $parts[0];
-            $line = $parts[1] ?? '';
-
+            [$file, $line] = array_pad(explode(':', $ep, 2), 2, '');
             $html .= '• <code>' . htmlspecialchars($file) . '</code>';
-            if ($line !== '') {
-                $html .= ' : <code>' . htmlspecialchars($line) . '</code>';
-            }
+            if ($line !== '') $html .= ' : <code>' . htmlspecialchars($line) . '</code>';
             $html .= '<br>';
         }
+        $html .= '</p>';
     }
 
-    // --- Backend Error Styling ---
-    if ($type === 'backend-error') {
-
-
-        // 🔴 Error container styling override
-        $html = '<div style="
-            border:1px solid #f1aeb5;
-            border-left:6px solid #dc3545;
-            border-radius:6px;
-            padding:12px;
-            margin-bottom:12px;
-            background:#f8d7da;
-        ">';
-
-        $html .= '<strong style="color:#842029;">Backend Error</strong><br>';
-
-        // 📍 Endpoints (always shown — preserved)
-        if (!empty($endpoints)) {
-            $html .= '<strong>Endpoints:</strong><br>';
-            foreach ($endpoints as $ep) {
-                $parts = explode(':', $ep, 2);
-                $file = $parts[0];
-                $line = $parts[1] ?? '';
-
-                $html .= '• <code>' . htmlspecialchars($file) . '</code>';
-                if ($line !== '') {
-                    $html .= ' : <code>' . htmlspecialchars($line) . '</code>';
-                }
-                $html .= '<br>';
-            }
-        }
-
-
-        // 📦 Response (single)
-        if (!empty($log['response_body'])) {
-            $json = json_decode($log['response_body'], true);
-            $pretty = $json !== null
-                ? json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
-                : $log['response_body'];
-
-            $html .= '<div style="margin-top:10px;">
-                <strong>Response:</strong>
-                <pre style="
-                    background:#f1f3f5;
-                    color:#212529;
-                    padding:12px;
-                    border-radius:6px;
-                    border:1px solid #ced4da;
-                    font-family:Consolas,monospace;
-                    font-size:13px;
-                    line-height:1.5;
-                    overflow-x:auto;
-                    white-space:pre-wrap;
-                    word-break:break-word;
-                ">' . htmlspecialchars($pretty) . '</pre>
-            </div>';
-        }
-
-        // 🟡 Occurrences (old UX preserved)
-        if (!empty($log['_count']) && $log['_count'] > 1) {
-            $extra = (int)$log['_count'] - 1;
-
-            $html .= '<div style="
-                margin-top:8px;
-                padding:8px 12px;
-                background:#fff3cd;
-                border:1px solid #ffe69c;
-                border-radius:6px;
-                color:#664d03;
-                font-size:13px;
-            ">
-                <strong>Occurrences:</strong> ' . (int)$log['_count'] . '<br>
-                + ' . $extra . ' more occurrence' . ($extra > 1 ? 's' : '') . ' of the same error
-            </div>';
-        }
-
-        // 🕒 Created at
-        if (!empty($log['created_at'])) {
-            $html .= '<div style="margin-top:6px;font-size:12px;color:#6c757d;">
-                Created at: ' . htmlspecialchars($log['created_at']) . '
-            </div>';
-        }
-
-        $html .= '</div>';
-        return $html;
-    }
-
-    // --- Fields for non-special types ---
-    if (!in_array($type, ['frontend-io', 'backend-response'], true)) {
-        if (!empty($log['iteration'])) {
-            $html .= '<strong>Iteration:</strong> ' . htmlspecialchars($log['iteration']) . '<br>';
-        }
-        if (!empty($log['method'])) {
-            $html .= '<strong>Method:</strong> ' . htmlspecialchars($log['method']) . '<br>';
-        }
-        if (isset($log['status_code'])) {
-            $html .= '<strong>Status:</strong> ' . (int)$log['status_code'] . '<br>';
-        }
-    }
-
-    // Request body (all types)
+    // Request body
     if (!empty($log['request_body'])) {
         $json = json_decode($log['request_body'], true);
-        $pretty = $json !== null ? json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : $log['request_body'];
-        $html .= '<strong>Request:</strong>
-        <pre style="
-            background:#f8f9fa;
-            color:#212529;
-            padding:12px 14px;
-            margin:8px 0 12px 0;
-            border-radius:6px;
-            border:1px solid #dee2e6;
-            font-family:Consolas,Monaco,\'Courier New\',monospace;
-            font-size:13px;
-            line-height:1.5;
-            overflow-x:auto;
-            white-space:pre-wrap;
-            word-break:break-word;
-        ">' . htmlspecialchars($pretty) . '</pre>';
+        $pretty = $json !== null
+            ? json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
+            : $log['request_body'];
+        $html .= '<p class="mb-2"><strong>Request:</strong><pre class="p-2 bg-white border rounded" style="overflow-x:auto;">' 
+                 . htmlspecialchars($pretty) . '</pre></p>';
     }
 
-    // Response body (all types)
+    // Response body
     if (!empty($log['response_body'])) {
         $json = json_decode($log['response_body'], true);
-        $pretty = $json !== null ? json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : $log['response_body'];
-        $html .= '<strong>Response:</strong>
-        <pre style="
-            background:#f8f9fa;
-            color:#212529;
-            padding:12px 14px;
-            margin:8px 0 12px 0;
-            border-radius:6px;
-            border:1px solid #dee2e6;
-            font-family:Consolas,Monaco,\'Courier New\',monospace;
-            font-size:13px;
-            line-height:1.5;
-            overflow-x:auto;
-            white-space:pre-wrap;
-            word-break:break-word;
-        ">' . htmlspecialchars($pretty) . '</pre>';
+        $pretty = $json !== null
+            ? json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
+            : $log['response_body'];
+        $html .= '<p class="mb-2"><strong>Response:</strong><pre class="p-2 bg-white border rounded" style="overflow-x:auto;">' 
+                 . htmlspecialchars($pretty) . '</pre></p>';
     }
 
-    // Occurrences for grouped errors
-    if (!empty($log['_count']) && $log['_count'] > 1) {
-        $html .= '<strong>Occurrences:</strong> ' . (int)$log['_count'] . '<br>';
+    // Iteration / Method / Status
+    if (!in_array($type, ['frontend-io', 'backend-response'], true)) {
+        if (!empty($log['iteration'])) $html .= '<p class="mb-1"><strong>Iteration:</strong> ' . htmlspecialchars($log['iteration']) . '</p>';
+        if (!empty($log['method'])) $html .= '<p class="mb-1"><strong>Method:</strong> ' . htmlspecialchars($log['method']) . '</p>';
+        if (isset($log['status_code'])) $html .= '<p class="mb-1"><strong>Status:</strong> ' . (int)$log['status_code'] . '</p>';
     }
 
-    // Created at (skip for frontend-io)
-    if ($type !== 'frontend-io' && !empty($log['created_at'])) {
-        $html .= '<strong>Created At:</strong> ' . htmlspecialchars($log['created_at']) . '<br>';
+    // Occurrences
+    if ($type === 'backend-error' && !empty($log['_count']) && $log['_count'] > 1) {
+        $extra = (int)$log['_count'] - 1;
+        $html .= '<div class="alert alert-warning p-2 mt-2 mb-2" role="alert">
+                    <strong>Occurrences:</strong> ' . (int)$log['_count'] . '<br>
+                    + ' . $extra . ' more occurrence' . ($extra > 1 ? 's' : '') . '
+                </div>';
     }
 
-    $html .= '</div>';
+    // Created At
+    if (!empty($log['created_at'])) {
+        $html .= '<p class="text-muted small mb-0">Created at: ' . htmlspecialchars($log['created_at']) . '</p>';
+    }
+
+    $html .= '</div></div>';
+
     return $html;
 }
-
 
 /* ==========================
    PROGRAM LIST (FROM LOGS)
@@ -744,14 +632,32 @@ sort($iterations);
 
     <hr>
 
-    <!-- Logs -->
     <div class="log-container">
-        <?php if (!empty($logsToShow)):
-            $logsToRender = group_error_logs($logsToShow);
-            foreach ($logsToRender as $log):
-                echo render_log_entry($log);
-            endforeach;
-        endif; ?>
+    <?php if (!empty($logsToShow)):
+
+        $errorLogs  = [];
+        $normalLogs = [];
+
+        foreach ($logsToShow as $log) {
+            if (is_error_log($log)) {
+                $errorLogs[] = $log;
+            } else {
+                $normalLogs[] = $log;
+            }
+        }
+
+        // 1️⃣ Render normal logs AS-IS
+        foreach ($normalLogs as $log) {
+            echo render_log_entry($log);
+        }
+
+        // 2️⃣ Render grouped backend errors ONLY
+        $groupedErrors = group_error_logs($errorLogs);
+        foreach ($groupedErrors as $log) {
+            echo render_log_entry($log);
+        }
+
+    endif; ?>
     </div>
 
 </div>

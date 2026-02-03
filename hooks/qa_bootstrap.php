@@ -36,6 +36,20 @@ function qa_get_device_name(): string
     return 'device_' . substr(md5($ip . '|' . $ua), 0, 12);
 }
 
+function qa_get_client_ip(): string
+{
+    if (!empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
+        return $_SERVER['HTTP_CF_CONNECTING_IP'];
+    }
+
+    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        return trim(explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0]);
+    }
+
+    return $_SERVER['REMOTE_ADDR'] ?? 'unknown_ip';
+}
+
+
 
 
 // Rest of logging logic...
@@ -78,6 +92,7 @@ $BACKEND_RECEIVER = 'http://localhost/logger/hooks/receiver_backend.php';
 // --------------------------------------------------
 $GLOBALS['__QA_LOGGED__'] = false;
 $GLOBALS['__QA_RESPONSE_HASH__'] = null;
+$real_client_ip = qa_get_client_ip(); // compute from original HTTP request
 
 /**
  * Send log to backend receiver
@@ -91,7 +106,7 @@ function qa_backend_log(array $data)
     // Use the device_id from the payload if set
     $data['user_id'] = $data['device_id'] ?? $_SESSION['user']['id'] ?? 'guest';
     $data['program'] = $data['program'] ?? qa_get_app_root_name();
-
+    
     $url = 'http://127.0.0.1/logger/hooks/receiver_backend.php';
 
     $ch = curl_init($url);
@@ -163,7 +178,7 @@ function qa_response_hash($endpoint, $request, $response)
    OUTPUT CAPTURE
 -------------------------------------------------- */
 ob_start(function ($output) {
-
+    global $real_client_ip;
     if ($GLOBALS['__QA_LOGGED__']) {
         return $output;
     }
@@ -199,7 +214,7 @@ ob_start(function ($output) {
     qa_backend_log([
         'type'      => 'backend-response',
         'program_name' => QA_APP_PROGRAM,
-        'device_name' => QA_DEVICE_NAME,
+        'device_name' => $real_client_ip,
         'endpoint'  => $endpoint,
         'status'    => http_response_code(),
         'request'   => $request,
@@ -214,7 +229,7 @@ ob_start(function ($output) {
    PHP ERRORS (always log, deduplicated)
 -------------------------------------------------- */
 set_error_handler(function ($severity, $message, $file, $line) {
-
+    global $real_client_ip;
     // 🚫 ABSOLUTE HARD STOP: ignore all deprecations
     if ($severity === E_DEPRECATED || $severity === E_USER_DEPRECATED) {
         return true; // fully handled, stop propagation
@@ -250,7 +265,7 @@ set_error_handler(function ($severity, $message, $file, $line) {
     qa_backend_log([
         'type'        => 'backend-error',
         'program_name'=> QA_APP_PROGRAM,
-        'device_name' => QA_DEVICE_NAME,
+        'device_name' => $real_client_ip,
         'response'    => [
             'severity' => $severity,
             'message'  => $message,

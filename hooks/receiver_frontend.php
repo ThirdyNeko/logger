@@ -18,6 +18,7 @@ error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
 
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../iteration_logic/qa_iteration_helper.php';
+require_once __DIR__ . '/get_ip.php';
 
 session_start();
 
@@ -30,13 +31,28 @@ if (!$data || empty($data['timestamp'])) {
     exit;
 }
 
-try {
-    $userId = qa_get_user_id();
-} catch (Exception $e) {
-    http_response_code(403);
-    exit;
-}
-$GLOBALS['__QA_USER_ID__']    = $data['device_name'];
+
+$device_name  = qa_get_client_ip();
+
+// Karl 239
+// Third 14
+// Reil 21
+// April 13
+
+/* ==========================
+   Dev Team IP (OVERRIDE)
+========================== */
+
+$devMap = [
+    "192.168.40.14"  => "Third",
+    "192.168.40.239" => "Karl",
+    "192.168.40.21"  => "Reil",
+    "192.168.40.13"  => "April",
+];
+
+$user_id = $devMap[$device_name] ?? "Guest";
+
+$GLOBALS['__QA_USER_ID__']    = $user_id;
 $GLOBALS['__QA_PROGRAM__']   = $data['program_name'];
 
 /* ==========================
@@ -68,13 +84,15 @@ if (($data['type'] ?? '') === 'frontend-ui' || isset($data['ui_type'])) {
 ========================== */
 $type         = $data['type'] ?? 'frontend-io';
 $program_name = $data['program_name'] ?? 'UNKNOWN_APP';
-$device_name  = $data['device_name'] ?? 'guest';
 $endpoint     = $data['url'] ?? null;
 $method       = $data['method'] ?? null;
 $requestBody  = isset($data['request']) ? json_encode($data['request']) : null;
 $responseBody = isset($data['response']) ? json_encode($data['response']) : null;
 $statusCode   = $data['status'] ?? 200;
-$user_id    = $device_name;
+
+
+
+
 
 /* ==========================
    Insert frontend log

@@ -15,15 +15,26 @@ if (!$data || empty($data['timestamp'])) {
 }
 
 
-try {
-    $userId = qa_get_user_id();
-} catch (Exception $e) {
-    http_response_code(403);
-    exit;
-}
-$GLOBALS['__QA_USER_ID__']    = $data['device_name'];
-$GLOBALS['__QA_PROGRAM__']   = $data['program_name'];
+// Third 14
+// Reil 21
+// April 13
 
+/* ==========================
+   Dev Team IP (OVERRIDE)
+========================== */
+
+$devMap = [
+    "192.168.40.14"  => "Third",
+    "192.168.40.239" => "Karl",
+    "192.168.40.21"  => "Reil",
+    "192.168.40.13"  => "April",
+];
+
+$device_name  = $data['device_name'] ?? 'guest';
+$user_id = $devMap[$device_name] ?? "Guest";
+
+$GLOBALS['__QA_PROGRAM__']   = $data['program_name'];
+$GLOBALS['__QA_USER_ID__']    = $user_id;
 /* ==========================
    Assign iteration & session
 ========================== */
@@ -46,13 +57,15 @@ $session_id = $state['session_id'];
 ========================== */
 $type         = $data['type'] ?? 'backend-response';
 $program_name = $data['program_name'] ?? 'UNKNOWN_APP';
-$device_name  = $data['device_name'] ?? 'guest';
 $endpoint     = $data['endpoint'] ?? null;
 $method       = $data['method'] ?? null;
 $requestBody  = isset($data['request']) ? json_encode($data['request']) : null;
 $responseBody = isset($data['response']) ? json_encode($data['response']) : null;
 $statusCode   = $data['status'] ?? 200;
-$user_id    = $device_name;
+
+
+
+
 
 
 /* ==========================

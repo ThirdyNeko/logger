@@ -20,20 +20,19 @@ $toDate            = $_GET['to_date'] ?? '';
 $latestSessionByProgram = [];
 
 if (!empty($selectedProgram)) {
-    $stmt = $db->prepare("
-        SELECT session_id
+    $sql = "
+        SELECT TOP 1 session_id
         FROM qa_logs
-        WHERE program_name = ?
+        WHERE program_name = :program_name
         ORDER BY created_at DESC
-        LIMIT 1
-    ");
-    $stmt->bind_param('s', $selectedProgram);
-    $stmt->execute();
-    $res = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
+    ";
 
-    if ($res) {
-        $latestSessionByProgram[$selectedProgram] = $res['session_id'];
+    $stmt = $db->prepare($sql);
+    $stmt->execute([':program_name' => $selectedProgram]);
+
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($row) {
+        $latestSessionByProgram[$selectedProgram] = $row['session_id'];
     }
 }
 
@@ -48,18 +47,20 @@ $username = $_SESSION['user']['username'] ?? '';
 $userId = null;
 
 if ($username) {
-    $stmtUser = $db->prepare("SELECT id FROM users WHERE username = ? LIMIT 1");
-    $stmtUser->bind_param('s', $username);
-    $stmtUser->execute();
-    $res = $stmtUser->get_result();
-    $userRow = $res->fetch_assoc();
-    $stmtUser->close();
+    $sql = "SELECT TOP 1 id FROM users WHERE username = :username";
+    $stmt = $db->prepare($sql);
+    $stmt->execute([':username' => $username]);
 
-    $userId = $userRow['id'] ?? null;
+    $userRow = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($userRow) {
+        $userId = $userRow['id'];
+    }
 }
+
+
 /* ==========================
    RENAME SESSION
-========================== */
+========================= */
 if ($_SERVER['REQUEST_METHOD'] === 'POST'
     && isset($_POST['rename_session'], $_POST['program'], $_POST['session'])
 ) {
@@ -74,14 +75,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'
         && isset($latestSessionByProgram[$program])
         && $sessionId === $latestSessionByProgram[$program]
     ) {
-        $stmt = $db->prepare("
-            INSERT INTO qa_session_names (program_name, session_id, session_name)
-            VALUES (?, ?, ?)
-            ON DUPLICATE KEY UPDATE session_name = VALUES(session_name)
-        ");
-        $stmt->bind_param('sss', $program, $sessionId, $name);
-        $stmt->execute();
-        $stmt->close();
+        // MSSQL equivalent of "INSERT ... ON DUPLICATE KEY UPDATE"
+        $tsql = "
+            MERGE qa_session_names AS target
+            USING (SELECT ? AS program_name, ? AS session_id, ? AS session_name) AS source
+            ON target.program_name = source.program_name AND target.session_id = source.session_id
+            WHEN MATCHED THEN
+                UPDATE SET session_name = source.session_name
+            WHEN NOT MATCHED THEN
+                INSERT (program_name, session_id, session_name)
+                VALUES (source.program_name, source.session_id, source.session_name);
+        ";
+
+        $params = [$program, $sessionId, $name];
+        $stmt = sqlsrv_query($db, $tsql, $params);
+
+        if ($stmt === false) {
+            die(print_r(sqlsrv_errors(), true));
+        }
+
+        sqlsrv_free_stmt($stmt);
 
         // ✅ Update local array so dropdown shows new name immediately
         $sessionNames[$sessionId] = $name;
@@ -95,6 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'
     exit;
 }
 
+
 /* ==========================
    STORE QA REMARK (VIEWER)
 ========================= */
@@ -102,38 +116,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'
     && isset($_POST['remark'], $_POST['iteration'])
 ) {
     define('QA_SKIP_LOGGING', true);
-    
+
     $program   = $_POST['program'] ?? '';
     $sessionId = $_POST['session'] ?? '';
-    $iteration = (int) $_POST['iteration'];
+    $iteration = (int) ($_POST['iteration'] ?? 0);
 
     $remark     = trim($_POST['remark']);
     $remarkName = trim($_POST['remark_name'] ?? '');
 
     if ($userId && $username && $program && $sessionId && $remark !== '') {
-        $stmt = $db->prepare("
-            INSERT INTO qa_remarks
-                (user_id, username, program_name, session_id, iteration, remark_name, remark)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            ON DUPLICATE KEY UPDATE
-                remark_name = VALUES(remark_name),
-                remark = VALUES(remark),
-                username = VALUES(username)
-        ");
+        $sql = "
+            MERGE qa_remarks AS target
+            USING (
+                SELECT
+                    :user_id AS user_id,
+                    :username AS username,
+                    :program_name AS program_name,
+                    :session_id AS session_id,
+                    :iteration AS iteration,
+                    :remark_name AS remark_name,
+                    :remark AS remark
+            ) AS source
+            ON target.user_id = source.user_id
+               AND target.program_name = source.program_name
+               AND target.session_id = source.session_id
+               AND target.iteration = source.iteration
+            WHEN MATCHED THEN
+                UPDATE SET
+                    remark_name = source.remark_name,
+                    remark = source.remark,
+                    username = source.username
+            WHEN NOT MATCHED THEN
+                INSERT (user_id, username, program_name, session_id, iteration, remark_name, remark)
+                VALUES (source.user_id, source.username, source.program_name, source.session_id, source.iteration, source.remark_name, source.remark);
+        ";
 
-        $stmt->bind_param(
-            'isssiss',
-            $userId,
-            $username,
-            $program,
-            $sessionId,
-            $iteration,
-            $remarkName,
-            $remark
-        );
-
-        $stmt->execute();
-        $stmt->close();
+        $stmt = $db->prepare($sql);
+        $stmt->execute([
+            ':user_id'      => $userId,
+            ':username'     => $username,
+            ':program_name' => $program,
+            ':session_id'   => $sessionId,
+            ':iteration'    => $iteration,
+            ':remark_name'  => $remarkName,
+            ':remark'       => $remark
+        ]);
     }
 
     header('Location: ' . $_SERVER['PHP_SELF']
@@ -146,23 +173,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'
 
 /* ==========================
    LOAD SESSION NAMES
-========================== */
+========================= */
 $sessionNames = [];
 
 if ($selectedProgram) {
-    $stmt = $db->prepare("
+    $sql = "
         SELECT session_id, session_name
         FROM qa_session_names
-        WHERE program_name = ?
-    ");
-    $stmt->bind_param('s', $selectedProgram);
-    $stmt->execute();
-    $res = $stmt->get_result();
+        WHERE program_name = :program_name
+    ";
 
-    while ($row = $res->fetch_assoc()) {
+    $stmt = $db->prepare($sql);
+    $stmt->execute([':program_name' => $selectedProgram]);
+
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         $sessionNames[$row['session_id']] = $row['session_name'];
     }
-    $stmt->close();
 }
 
 /* ==========================
@@ -302,46 +328,44 @@ function render_log_entry(array $log): string
 
 /* ==========================
    PROGRAM LIST (FROM LOGS)
-========================== */
+========================= */
 
 $programs = [];
 
-$stmt = $db->prepare("
+$sql = "
     SELECT DISTINCT program_name
     FROM qa_logs
     WHERE program_name IS NOT NULL
     ORDER BY program_name ASC
-");
-$stmt->execute();
-$res = $stmt->get_result();
+";
 
-while ($row = $res->fetch_assoc()) {
+$stmt = $db->prepare($sql);
+$stmt->execute();
+
+while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     $programs[$row['program_name']] =
         $row['program_name'] ?: 'Unknown Program (' . $row['program_name'] . ')';
 }
 
-$stmt->close();
-
-
 /* ==========================
    LOAD REMARKS (FILTERED BY USER)
-========================== */
+========================= */
 $remarked = [];
 
 if ($selectedProgram) {
-    $stmt = $db->prepare("
+    $sql = "
         SELECT session_id, iteration, remark_name, remark, created_at
         FROM qa_remarks
-        WHERE program_name = ?
+        WHERE program_name = :program_name
         ORDER BY created_at DESC
-    ");
-    $stmt->bind_param('s', $selectedProgram);
-    $stmt->execute();
-    $res = $stmt->get_result();
+    ";
 
-    while ($row = $res->fetch_assoc()) {
+    $stmt = $db->prepare($sql);
+    $stmt->execute([':program_name' => $selectedProgram]);
+
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         $sid  = $row['session_id'];
-        $iter = (int)$row['iteration'];
+        $iter = (int) $row['iteration'];
 
         $remarked[$sid][$iter] = [
             'name'   => $row['remark_name'],
@@ -349,7 +373,6 @@ if ($selectedProgram) {
             'ctime'  => strtotime($row['created_at'])
         ];
     }
-    $stmt->close();
 }
 
 /* ==========================
@@ -372,20 +395,27 @@ krsort($filteredRemarked);
 
 /* ==========================
    LOAD LOGS FOR SELECTED ITERATION ONLY
-========================== */
+========================= */
 $logsToShow = [];
 
 if ($selectedProgram && $selectedSession && $selectedIteration !== '') {
-    $stmt = $db->prepare("
+    $sql = "
         SELECT *
         FROM qa_logs
-        WHERE program_name = ? AND session_id = ? AND iteration = ?
+        WHERE program_name = :program_name
+          AND session_id = :session_id
+          AND iteration = :iteration
         ORDER BY created_at ASC
-    ");
-    $stmt->bind_param('ssi', $selectedProgram, $selectedSession, $selectedIteration);
-    $stmt->execute();
-    $logsToShow = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-    $stmt->close();
+    ";
+
+    $stmt = $db->prepare($sql);
+    $stmt->execute([
+        ':program_name' => $selectedProgram,
+        ':session_id'   => $selectedSession,
+        ':iteration'    => (int) $selectedIteration
+    ]);
+
+    $logsToShow = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Add remark info if exists
     $remarkEntry = $filteredRemarked[$selectedSession][$selectedIteration] ?? null;
@@ -398,6 +428,7 @@ if ($selectedProgram && $selectedSession && $selectedIteration !== '') {
     }
 }
 
+
 /* ==========================
    ITERATION LIST FOR SELECTED SESSION
 ========================== */
@@ -409,60 +440,60 @@ if ($selectedSession && isset($filteredRemarked[$selectedSession])) {
 
 /* ==========================
    ITERATIONS WITH ERRORS
-========================== */
+========================= */
 $errorIterations = [];
 
 if ($selectedProgram && $selectedSession) {
-    $stmt = $db->prepare("
+    $sql = "
         SELECT DISTINCT iteration
         FROM qa_logs
-        WHERE program_name = ?
-          AND session_id = ?
+        WHERE program_name = :program_name
+          AND session_id = :session_id
           AND type IN ('backend-error', 'backend-fatal')
-    ");
-    $stmt->bind_param('ss', $selectedProgram, $selectedSession);
-    $stmt->execute();
-    $res = $stmt->get_result();
+    ";
 
-    while ($row = $res->fetch_assoc()) {
-        $errorIterations[(int)$row['iteration']] = true;
+    $stmt = $db->prepare($sql);
+    $stmt->execute([
+        ':program_name' => $selectedProgram,
+        ':session_id'   => $selectedSession
+    ]);
+
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $errorIterations[(int) $row['iteration']] = true;
     }
-    $stmt->close();
 }
 
 // Also include iterations without remarks
-$stmt = $db->prepare("
+$sql = "
     SELECT DISTINCT iteration
     FROM qa_logs
-    WHERE program_name = ?
-    AND session_id = ?
-    AND (
-            (? = '' OR ? = '')
-            OR DATE(created_at) BETWEEN ? AND ?
-        )
+    WHERE program_name = :program_name
+      AND session_id = :session_id
+      AND (
+            (:from_date_empty = '' OR :to_date_empty = '')
+            OR CONVERT(DATE, created_at) BETWEEN :from_date_val AND :to_date_val
+          )
     ORDER BY iteration ASC
-");
-$stmt->bind_param(
-    'ssssss',
-    $selectedProgram,
-    $selectedSession,
-    $fromDate,
-    $toDate,
-    $fromDate,
-    $toDate
-);
-$stmt->execute();
-$res = $stmt->get_result();
-while ($row = $res->fetch_assoc()) {
-    $iter = (int)$row['iteration'];
+";
+
+$stmt = $db->prepare($sql);
+$stmt->execute([
+    ':program_name'   => $selectedProgram,
+    ':session_id'     => $selectedSession,
+    ':from_date_empty'=> $fromDate,
+    ':to_date_empty'  => $toDate,
+    ':from_date_val'  => $fromDate,
+    ':to_date_val'    => $toDate
+]);
+
+while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    $iter = (int) $row['iteration'];
     if (!in_array($iter, $iterations, true)) {
         $iterations[] = $iter;
     }
 }
-$stmt->close();
+
 sort($iterations);
-
-
 
 ?>
 
@@ -536,30 +567,37 @@ sort($iterations);
         $sessionOwners = []; // session_id => username
 
         if ($fromDate && $toDate) {
-            $stmt = $db->prepare("
+            $sql = "
                 SELECT DISTINCT session_id, user_id
                 FROM qa_logs
-                WHERE program_name=? AND DATE(created_at) BETWEEN ? AND ?
+                WHERE program_name = :program_name
+                AND CONVERT(DATE, created_at) BETWEEN :from_date AND :to_date
                 ORDER BY user_id ASC
-            ");
-            $stmt->bind_param('sss', $selectedProgram, $fromDate, $toDate);
+            ";
+            $params = [
+                ':program_name' => $selectedProgram,
+                ':from_date'    => $fromDate,
+                ':to_date'      => $toDate
+            ];
         } else {
-            $stmt = $db->prepare("
+            $sql = "
                 SELECT DISTINCT session_id, user_id
                 FROM qa_logs
-                WHERE program_name=?
+                WHERE program_name = :program_name
                 ORDER BY user_id ASC
-            ");
-            $stmt->bind_param('s', $selectedProgram);
+            ";
+            $params = [
+                ':program_name' => $selectedProgram
+            ];
         }
 
-        $stmt->execute();
-        $res = $stmt->get_result();
-        while ($row = $res->fetch_assoc()) {
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $sessions[] = $row['session_id'];
             $sessionOwners[$row['session_id']] = $row['user_id'] ?? 'Unknown';
         }
-        $stmt->close();
         ?>
 
         <!-- Session Dropdown -->
@@ -700,33 +738,30 @@ function updateDate(type, value) {
 }
 </script>
 
-
 <?php
 $latestLog = ['session_id' => '', 'iteration' => 0];
 
-
 if ($selectedProgram) {
-    $stmt = $db->prepare("
-        SELECT session_id, iteration
+    $sql = "
+        SELECT TOP 1 session_id, iteration
         FROM qa_logs
-        WHERE program_name = ?
+        WHERE program_name = :program_name
         ORDER BY created_at DESC
-        LIMIT 1
-    ");
-    $stmt->bind_param('s', $selectedProgram);
-    $stmt->execute();
-    $res = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
+    ";
+
+    $stmt = $db->prepare($sql);
+    $stmt->execute([':program_name' => $selectedProgram]);
+
+    $res = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($res) {
         $latestLog = [
             'session_id' => $res['session_id'],
-            'iteration' => (int)$res['iteration']
+            'iteration'  => (int)$res['iteration']
         ];
     }
 }
 ?>
-
 
 <script>
 const selectedProgram = "<?= htmlspecialchars($selectedProgram) ?>";

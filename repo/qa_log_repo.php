@@ -56,13 +56,15 @@ class QaLogRepository
         return $stmt->fetchAll(PDO::FETCH_COLUMN);
     }
 
-    public function getSessions(string $program, ?string $from, ?string $to): array {
+    public function getSessions(string $program, ?string $from, ?string $to): array
+    {
         if ($from && $to) {
             $stmt = $this->db->prepare("
                 SELECT DISTINCT session_id, user_id
                 FROM qa_logs
                 WHERE program_name = ?
-                  AND CAST(created_at AS DATE) BETWEEN ? AND ?
+                AND created_at >= ?
+                AND created_at < DATEADD(day, 1, ?)
                 ORDER BY user_id
             ");
             $stmt->execute([$program, $from, $to]);

@@ -540,7 +540,7 @@ sort($iterations);
                 SELECT DISTINCT session_id, user_id
                 FROM qa_logs
                 WHERE program_name=? AND DATE(created_at) BETWEEN ? AND ?
-                ORDER BY session_id ASC
+                ORDER BY user_id ASC
             ");
             $stmt->bind_param('sss', $selectedProgram, $fromDate, $toDate);
         } else {
@@ -548,7 +548,7 @@ sort($iterations);
                 SELECT DISTINCT session_id, user_id
                 FROM qa_logs
                 WHERE program_name=?
-                ORDER BY session_id ASC
+                ORDER BY user_id ASC
             ");
             $stmt->bind_param('s', $selectedProgram);
         }

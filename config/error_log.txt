@@ -1,0 +1,40 @@
+[2026-02-04 11:45:15] Error: [8] session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 24
+[2026-02-04 11:45:15] Error: [8] session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 24
+[2026-02-04 11:47:24] Error: [8] session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 24
+[2026-02-04 11:47:24] Error: [8] session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 24
+[2026-02-04 11:49:20] Error: [8] session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 24
+[2026-02-04 11:49:20] Error: [8] session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 24
+[2026-02-04 13:02:45] Error: [8] session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 24
+[2026-02-04 13:02:46] Error: [8] session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 24
+[2026-02-04 13:06:31] Error: [8] session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 24
+[2026-02-04 13:06:31] Error: [8] session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 24
+[2026-02-04 13:06:39] Error: [8] session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 24
+[2026-02-04 13:06:39] Error: [8] session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 24
+[2026-02-04 13:07:56] Error: [8] session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 24
+[2026-02-04 13:07:56] Error: [2] Undefined variable $normalizedkey in C:\xampp\htdocs\logger\iteration_logic\qa_iteration_helper.php on line 98
+[2026-02-04 13:07:56] Error: [2] Undefined variable $normalizedkey in C:\xampp\htdocs\logger\iteration_logic\qa_iteration_helper.php on line 98
+[2026-02-04 13:07:56] Error: [2] Undefined variable $normalizedkey in C:\xampp\htdocs\logger\iteration_logic\qa_iteration_helper.php on line 98
+[2026-02-04 13:07:56] Error: [2] Undefined variable $normalizedkey in C:\xampp\htdocs\logger\iteration_logic\qa_iteration_helper.php on line 98
+[2026-02-04 13:07:56] Error: [2] Undefined variable $normalizedkey in C:\xampp\htdocs\logger\iteration_logic\qa_iteration_helper.php on line 98
+[2026-02-04 13:07:56] Error: [2] Undefined variable $normalizedkey in C:\xampp\htdocs\logger\iteration_logic\qa_iteration_helper.php on line 98
+[2026-02-04 13:07:56] Error: [2] Undefined variable $normalizedkey in C:\xampp\htdocs\logger\iteration_logic\qa_iteration_helper.php on line 98
+[2026-02-04 13:07:56] Error: [8] session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 24
+[2026-02-04 13:07:56] Error: [2] Undefined variable $normalizedkey in C:\xampp\htdocs\logger\iteration_logic\qa_iteration_helper.php on line 98
+[2026-02-04 13:08:47] Error: [8] session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 24
+[2026-02-04 13:08:47] Error: [2] Undefined variable $normalizedkey in C:\xampp\htdocs\logger\iteration_logic\qa_iteration_helper.php on line 98
+[2026-02-04 13:08:47] Error: [2] Undefined variable $normalizedkey in C:\xampp\htdocs\logger\iteration_logic\qa_iteration_helper.php on line 98
+[2026-02-04 13:08:47] Error: [2] Undefined variable $normalizedkey in C:\xampp\htdocs\logger\iteration_logic\qa_iteration_helper.php on line 98
+[2026-02-04 13:08:47] Error: [2] Undefined variable $normalizedkey in C:\xampp\htdocs\logger\iteration_logic\qa_iteration_helper.php on line 98
+[2026-02-04 13:08:47] Error: [2] Undefined variable $normalizedkey in C:\xampp\htdocs\logger\iteration_logic\qa_iteration_helper.php on line 98
+[2026-02-04 13:08:47] Error: [2] Undefined variable $normalizedkey in C:\xampp\htdocs\logger\iteration_logic\qa_iteration_helper.php on line 98
+[2026-02-04 13:08:47] Error: [2] Undefined variable $normalizedkey in C:\xampp\htdocs\logger\iteration_logic\qa_iteration_helper.php on line 98
+[2026-02-04 13:08:47] Error: [8] session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 24
+[2026-02-04 13:08:47] Error: [2] Undefined variable $normalizedkey in C:\xampp\htdocs\logger\iteration_logic\qa_iteration_helper.php on line 98
+[2026-02-04 13:13:45] Error: [8] session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 24
+[2026-02-04 13:13:45] Error: [8] session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 24
+[2026-02-04 13:17:08] Error: [8] session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 24
+[2026-02-04 13:17:08] Error: [8] session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 24
+[2026-02-04 13:18:30] Error: [8] session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 24
+[2026-02-04 13:18:30] Error: [8] session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 24
+[2026-02-04 13:18:43] Error: [8] session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 24
+[2026-02-04 13:18:43] Error: [8] session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 24

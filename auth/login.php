@@ -2,27 +2,20 @@
 session_name('QA_LOGGER_SESSION');
 session_start();
 
-require __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../repo/user_repo.php';
 
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    $username = $_POST['username'] ?? '';
-    $password = $_POST['password'] ?? '';
+    $username = trim($_POST['username'] ?? '');
+    $password = (string)($_POST['password'] ?? '');
+
+    $userRepo = new UserRepository(qa_db());
 
     // 🔐 Fetch user
-    $stmt = $conn->prepare("
-        SELECT id, username, password_hash, role, first_login
-        FROM users
-        WHERE username = ?
-        LIMIT 1
-    ");
-    $stmt->bind_param("s", $username);
-    $stmt->execute();
-
-    $result = $stmt->get_result();
-    $user   = $result->fetch_assoc();
+    $user = $userRepo->findByUsername($username);
 
     // ✅ Verify credentials
     if ($user && password_verify($password, $user['password_hash'])) {
@@ -35,7 +28,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // ✅ FIRST LOGIN CHECK
         if ((int)$user['first_login'] === 1) {
-
             header('Location: ../profile.php');
             exit;
         }

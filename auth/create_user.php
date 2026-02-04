@@ -1,6 +1,7 @@
 <?php
 session_start();
 require __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../repo/user_repo.php';  // UserRepository class
 
 $error   = '';
 $success = '';
@@ -24,6 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $confirmPassword = $_POST['confirm_password'] ?? '';
     $role            = $_POST['role'] ?? 'user';
 
+
     // --------------------------
     // Password match check
     // --------------------------
@@ -44,41 +46,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // --------------------------
     // Check duplicate username
     // --------------------------
-    if (!$error) {
-        $check = $conn->prepare("
-            SELECT id FROM users WHERE username = ? LIMIT 1
-        ");
-        $check->bind_param("s", $username);
-        $check->execute();
-        $check->store_result();
+    $userRepo = new UserRepository(qa_db());
 
-        if ($check->num_rows > 0) {
-            $error = 'Username already exists';
-        }
-        $check->close();
+    // Check duplicate
+    if (!$error && $userRepo->usernameExists($username)) {
+        $error = 'Username already exists';
     }
 
-    // --------------------------
     // Create user
-    // --------------------------
     if (!$error) {
         $hash = password_hash($password, PASSWORD_DEFAULT);
-
-        $stmt = $conn->prepare("
-            INSERT INTO users (username, password_hash, role, first_login)
-            VALUES (?, ?, ?, 1)
-        ");
-        $stmt->bind_param("sss", $username, $hash, $role);
-
-        if ($stmt->execute()) {
+        if ($userRepo->createUser($username, $hash, $role)) {
             $success = 'User created successfully';
             $usernameValue = $passwordValue = $confirmPasswordValue = '';
             $roleValue = 'user';
         } else {
             $error = 'Failed to create user';
         }
-
-        $stmt->close();
     }
 }
 ?>

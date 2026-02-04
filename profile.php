@@ -2,26 +2,19 @@
 session_name('QA_LOGGER_SESSION');
 session_start();
 require __DIR__ . '/config/db.php';
+require_once __DIR__ . '/repo/user_repo.php';
 
 if (!isset($_SESSION['user'])) {
     header('Location: login.php');
     exit;
 }
 
+$userRepo = new UserRepository($pdo); // $pdo = PDO connection from config
+
 /* --------------------------------------------------
    Fetch latest user state from DB
 -------------------------------------------------- */
-$stmt = $conn->prepare("
-    SELECT password_hash, first_login
-    FROM users
-    WHERE id = ?
-    LIMIT 1
-");
-$stmt->bind_param("i", $_SESSION['user']['id']);
-$stmt->execute();
-$result = $stmt->get_result();
-$userRow = $result->fetch_assoc();
-$stmt->close();
+$userRow = $userRepo->findByUsername($_SESSION['user']['username']);
 
 if (!$userRow) {
     session_destroy();
@@ -64,35 +57,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     } else {
         $newHash = password_hash($newPassword, PASSWORD_DEFAULT);
-
-        $update = $conn->prepare("
-            UPDATE users
-            SET password_hash = ?, first_login = 0
-            WHERE id = ?
-        ");
-        $update->bind_param("si", $newHash, $_SESSION['user']['id']);
-        $update->execute();
-        $update->close();
-
-        $_SESSION['user']['first_login'] = false;
-        $success = 'Password updated successfully';
+        
+        if ($userRepo->updatePasswordByUsername($_SESSION['user']['username'], $newHash)) {
+            $_SESSION['user']['first_login'] = false;
+            $success = 'Password updated successfully';
+        } else {
+            $error = 'Failed to update password';
+        }
     }
 }
 
 /* --------------------------------------------------
    Role-based redirect
 -------------------------------------------------- */
-$redirectUrl = 'login.php';
-
-switch ($_SESSION['user']['role'] ?? '') {
-    case 'developer':
-        $redirectUrl = 'developer_viewer.php';
-        break;
-
-    case 'qa':
-        $redirectUrl = 'index.php';
-        break;
-}
+$redirectUrl = match($_SESSION['user']['role'] ?? '') {
+    'developer' => 'developer_viewer.php',
+    'qa'        => 'index.php',
+    default     => 'login.php'
+};
 ?>
 
 <!doctype html>

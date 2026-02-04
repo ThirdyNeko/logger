@@ -21,7 +21,6 @@ require_once __DIR__ . '/../iteration_logic/qa_iteration_helper.php';
 require_once __DIR__ . '/get_ip.php';
 require_once __DIR__ . '/../repo/qa_log_repo.php'; // Repository
 
-session_start();
 
 /* ==========================
    Read frontend payload

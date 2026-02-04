@@ -9,7 +9,7 @@ if (!isset($_SESSION['user'])) {
     exit;
 }
 
-$userRepo = new UserRepository($pdo); // $pdo = PDO connection from config
+$userRepo = new UserRepository(qa_db()); // $pdo = PDO connection from config
 
 /* --------------------------------------------------
    Fetch latest user state from DB
@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $newHash = password_hash($newPassword, PASSWORD_DEFAULT);
         
-        if ($userRepo->updatePasswordByUsername($_SESSION['user']['username'], $newHash)) {
+        if ($userRepo->updatePassword($_SESSION['user']['username'], $newHash)) {
             $_SESSION['user']['first_login'] = false;
             $success = 'Password updated successfully';
         } else {

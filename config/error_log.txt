@@ -38,3 +38,4 @@
 [2026-02-04 13:18:30] Error: [8] session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 24
 [2026-02-04 13:18:43] Error: [8] session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 24
 [2026-02-04 13:18:43] Error: [8] session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 24
+[2026-02-04 14:41:46] Error: [2] Undefined variable $pdo in C:\xampp\htdocs\logger\profile.php on line 12

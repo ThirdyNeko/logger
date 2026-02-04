@@ -33,14 +33,14 @@ class UserRepository {
     }
 
     // Update user password and first_login flag
-    public function updatePassword(int $id, string $newHash): bool
+    public function updatePassword(string $username, string $newHash): bool
     {
         $stmt = $this->db->prepare("
             UPDATE users
             SET password_hash = ?, first_login = 0
-            WHERE id = ?
+            WHERE username = ?
         ");
-        return $stmt->execute([$newHash, $id]);
+        return $stmt->execute([$newHash, $username]);
     }
 }
 

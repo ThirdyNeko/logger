@@ -78,7 +78,7 @@ function saveQaRemark(
 function loadRemarksByProgram(PDO $db, string $program): array
 {
     $sql = "
-        SELECT session_id, iteration, remark_name, remark, created_at
+        SELECT session_id, iteration, remark_name, remark, username, created_at
         FROM qa_remarks
         WHERE program_name = :program_name
         ORDER BY created_at DESC
@@ -94,11 +94,13 @@ function loadRemarksByProgram(PDO $db, string $program): array
         $iter = (int) $row['iteration'];
 
         $remarked[$sid][$iter] = [
-            'name'   => $row['remark_name'],
-            'remark' => $row['remark'],
-            'ctime'  => strtotime($row['created_at'])
+            'name'     => $row['remark_name'],
+            'remark'   => $row['remark'],
+            'username' => $row['username'] ?? 'Unknown', // ✅ add username
+            'ctime'    => strtotime($row['created_at'])
         ];
     }
 
     return $remarked;
 }
+

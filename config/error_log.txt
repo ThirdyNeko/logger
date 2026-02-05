@@ -48,3 +48,15 @@
 [2026-02-05 10:06:55] Error: [2] Undefined array key "session_id" in C:\xampp\htdocs\logger\developer_viewer.php on line 507
 [2026-02-05 10:06:55] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\developer_viewer.php on line 507
 [2026-02-05 10:06:55] Error: [2] Undefined array key "iteration" in C:\xampp\htdocs\logger\developer_viewer.php on line 508
+[2026-02-05 10:29:24] Error: [2] Undefined array key "session_id" in C:\xampp\htdocs\logger\index.php on line 550
+[2026-02-05 10:29:24] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\index.php on line 550
+[2026-02-05 10:29:24] Error: [2] Undefined array key "iteration" in C:\xampp\htdocs\logger\index.php on line 551
+[2026-02-05 10:30:12] Error: [2] Undefined array key "session_id" in C:\xampp\htdocs\logger\developer_viewer.php on line 507
+[2026-02-05 10:30:12] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\developer_viewer.php on line 507
+[2026-02-05 10:30:12] Error: [2] Undefined array key "iteration" in C:\xampp\htdocs\logger\developer_viewer.php on line 508
+[2026-02-05 10:32:29] Error: [2] Undefined array key "session_id" in C:\xampp\htdocs\logger\developer_viewer.php on line 507
+[2026-02-05 10:32:29] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\developer_viewer.php on line 507
+[2026-02-05 10:32:29] Error: [2] Undefined array key "iteration" in C:\xampp\htdocs\logger\developer_viewer.php on line 508
+[2026-02-05 11:19:15] Error: [2] Undefined array key "session_id" in C:\xampp\htdocs\logger\index.php on line 550
+[2026-02-05 11:19:15] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\index.php on line 550
+[2026-02-05 11:19:15] Error: [2] Undefined array key "iteration" in C:\xampp\htdocs\logger\index.php on line 551

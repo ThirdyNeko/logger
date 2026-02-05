@@ -4,6 +4,12 @@ session_name('QA_LOGGER_SESSION');
 require_once __DIR__ . '/auth/require_login.php';
 date_default_timezone_set('Asia/Manila');
 require_once __DIR__ . '/iteration_logic/qa_iteration_helper.php';
+require_once __DIR__ . '/viewer_repo/sessions.php';
+require_once __DIR__ . '/viewer_repo/users.php';
+require_once __DIR__ . '/viewer_repo/remarks.php';
+require_once __DIR__ . '/viewer_repo/programs.php';
+require_once __DIR__ . '/viewer_repo/logs.php';
+require_once __DIR__ . '/viewer_repo/iterations.php';
 
 $db = qa_db();
 
@@ -22,19 +28,7 @@ $toDate            = $_GET['to_date'] ?? '';
 $sessionNames = [];
 
 if ($selectedProgram) {
-    $stmt = $db->prepare("
-        SELECT session_id, session_name
-        FROM qa_session_names
-        WHERE program_name = ?
-    ");
-    $stmt->bind_param('s', $selectedProgram);
-    $stmt->execute();
-    $res = $stmt->get_result();
-
-    while ($row = $res->fetch_assoc()) {
-        $sessionNames[$row['session_id']] = $row['session_name'];
-    }
-    $stmt->close();
+    $sessionNames = loadSessionNames($db, $selectedProgram);
 }
 
 /* ==========================
@@ -176,25 +170,7 @@ function render_log_entry(array $log): string
 /* ==========================
    PROGRAM LIST (FROM LOGS)
 ========================== */
-
-$programs = [];
-
-$stmt = $db->prepare("
-    SELECT DISTINCT program_name
-    FROM qa_logs
-    WHERE program_name IS NOT NULL
-    ORDER BY program_name ASC
-");
-$stmt->execute();
-$res = $stmt->get_result();
-
-while ($row = $res->fetch_assoc()) {
-    $programs[$row['program_name']] =
-        $row['program_name'] ?: 'Unknown Program (' . $row['program_name'] . ')';
-}
-
-$stmt->close();
-
+$programs = loadPrograms($db);
 
 /* ==========================
    LOAD REMARKS (FILTERED BY USER)
@@ -202,31 +178,8 @@ $stmt->close();
 $remarked = [];
 
 if ($selectedProgram) {
-    $stmt = $db->prepare("
-        SELECT session_id, iteration, remark_name, remark, created_at, user_id, username
-        FROM qa_remarks
-        WHERE program_name = ?
-        ORDER BY created_at DESC
-    ");
-    $stmt->bind_param('s', $selectedProgram);
-    $stmt->execute();
-    $res = $stmt->get_result();
-
-    while ($row = $res->fetch_assoc()) {
-        $sid  = $row['session_id'];
-        $iter = (int)$row['iteration'];
-
-        $remarked[$sid][$iter] = [
-            'name'     => $row['remark_name'],
-            'remark'   => $row['remark'],
-            'ctime'    => strtotime($row['created_at']),
-            'user_id'  => $row['user_id'],
-            'username' => $row['username'] ?? 'Unknown'
-        ];
-    }
-    $stmt->close();
+    $remarked = loadRemarksByProgram($db, $selectedProgram);
 }
-
 
 /* ==========================
    DATE FILTER
@@ -247,45 +200,18 @@ foreach ($remarked as $sid => $iters) {
 krsort($filteredRemarked);
 
 /* ==========================
-   LOAD LOGS FOR SELECTED ITERATION ONLY
+   LOAD LOGS FOR SELECTED ITERATION OR SUMMARY
 ========================== */
 $logsToShow = [];
 
 if ($selectedProgram && $selectedSession) {
-    if ($selectedIteration === 'summary') {
-        // ✅ Load all iterations for this session
-        $stmt = $db->prepare("
-            SELECT *
-            FROM qa_logs
-            WHERE program_name = ? AND session_id = ?
-            ORDER BY iteration ASC, created_at ASC
-        ");
-        $stmt->bind_param('ss', $selectedProgram, $selectedSession);
-    } else {
-        // Single iteration
-        $stmt = $db->prepare("
-            SELECT *
-            FROM qa_logs
-            WHERE program_name = ? AND session_id = ? AND iteration = ?
-            ORDER BY created_at ASC
-        ");
-        $stmt->bind_param('ssi', $selectedProgram, $selectedSession, $selectedIteration);
-    }
-
-    $stmt->execute();
-    $logsToShow = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-    $stmt->close();
-
-    // Add remark info
-    foreach ($logsToShow as &$log) {
-        $iter = (int)$log['iteration'];
-        $remarkEntry = $filteredRemarked[$selectedSession][$iter] ?? null;
-        if ($remarkEntry) {
-            $log['_remark_name'] = $remarkEntry['name'];
-            $log['_remark_text'] = $remarkEntry['remark'];
-        }
-    }
-    unset($log);
+    $logsToShow = loadLogs(
+        $db,
+        $selectedProgram,
+        $selectedSession,
+        $selectedIteration,      // integer or 'summary'
+        $filteredRemarked        // optional, can be null
+    );
 }
 
 /* ==========================
@@ -300,60 +226,17 @@ if ($selectedSession && isset($filteredRemarked[$selectedSession])) {
 /* ==========================
    ITERATIONS WITH ERRORS
 ========================== */
-$errorIterations = [];
+$allIterations = getAllIterations($db, $selectedProgram); // <- no session filter
+$errorIterations = getErrorIterations($db, $selectedProgram, $selectedSession);
 
-if ($selectedProgram && $selectedSession) {
-    $stmt = $db->prepare("
-        SELECT DISTINCT iteration
-        FROM qa_logs
-        WHERE program_name = ?
-          AND session_id = ?
-          AND type IN ('backend-error', 'backend-fatal')
-    ");
-    $stmt->bind_param('ss', $selectedProgram, $selectedSession);
-    $stmt->execute();
-    $res = $stmt->get_result();
-
-    while ($row = $res->fetch_assoc()) {
-        $errorIterations[(int)$row['iteration']] = true;
-    }
-    $stmt->close();
-}
-
-// Also include iterations without remarks
-$stmt = $db->prepare("
-    SELECT DISTINCT iteration
-    FROM qa_logs
-    WHERE program_name = ?
-    AND session_id = ?
-    AND (
-            (? = '' OR ? = '')
-            OR DATE(created_at) BETWEEN ? AND ?
-        )
-    ORDER BY iteration ASC
-");
-$stmt->bind_param(
-    'ssssss',
-    $selectedProgram,
-    $selectedSession,
-    $fromDate,
-    $toDate,
-    $fromDate,
-    $toDate
-);
-$stmt->execute();
-$res = $stmt->get_result();
-while ($row = $res->fetch_assoc()) {
-    $iter = (int)$row['iteration'];
-    if (!in_array($iter, $iterations, true)) {
-        $iterations[] = $iter;
+foreach ($errorIterations as $iter => $_) {
+    if (!in_array($iter, $allIterations, true)) {
+        $allIterations[] = $iter;
     }
 }
-$stmt->close();
-sort($iterations);
 
-
-
+sort($allIterations);
+$iterations = $allIterations;
 ?>
 
 <!DOCTYPE html>
@@ -423,34 +306,12 @@ sort($iterations);
     <div class="row g-2 mb-3">
         <?php
         // Fetch sessions
-        $sessions = [];
-        $sessionOwners = []; // session_id => username
+        $summaryMode = ($selectedIteration === 'summary');
 
-        if ($fromDate && $toDate) {
-            $stmt = $db->prepare("
-                SELECT DISTINCT session_id, user_id
-                FROM qa_logs
-                WHERE program_name=? AND DATE(created_at) BETWEEN ? AND ?
-                ORDER BY user_id ASC
-            ");
-            $stmt->bind_param('sss', $selectedProgram, $fromDate, $toDate);
-        } else {
-            $stmt = $db->prepare("
-                SELECT DISTINCT session_id, user_id
-                FROM qa_logs
-                WHERE program_name=?
-                ORDER BY user_id ASC
-            ");
-            $stmt->bind_param('s', $selectedProgram);
-        }
+        $result = loadSessionsSummary($db, $selectedProgram, $fromDate, $toDate, $summaryMode);
 
-        $stmt->execute();
-        $res = $stmt->get_result();
-        while ($row = $res->fetch_assoc()) {
-            $sessions[] = $row['session_id'];
-            $sessionOwners[$row['session_id']] = $row['user_id'] ?? 'Unknown';
-        }
-        $stmt->close();
+        $sessions = $result['sessions'];
+        $sessionOwners = $result['sessionOwners'];
         ?>
 
         <div class="col-md-6">
@@ -634,28 +495,10 @@ function updateDate(type, value) {
 </script>
 
 <?php
-$latestLog = ['session_id' => '', 'iteration' => 0];
-
+$latestLog = [];
 
 if ($selectedProgram) {
-    $stmt = $db->prepare("
-        SELECT session_id, iteration
-        FROM qa_logs
-        WHERE program_name = ?
-        ORDER BY created_at DESC
-        LIMIT 1
-    ");
-    $stmt->bind_param('s', $selectedProgram);
-    $stmt->execute();
-    $res = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
-
-    if ($res) {
-        $latestLog = [
-            'session_id' => $res['session_id'],
-            'iteration' => (int)$res['iteration']
-        ];
-    }
+    $latestLog = getLatestLog($db, $selectedProgram);
 }
 ?>
 

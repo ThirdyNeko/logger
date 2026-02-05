@@ -317,10 +317,9 @@ if ($selectedSession && isset($filteredRemarked[$selectedSession])) {
 /* ==========================
    ITERATIONS WITH ERRORS
 ========================== */
-$allIterations = getAllIterations($db, $selectedProgram, $selectedSession, $fromDate, $toDate);
+$allIterations = getAllIterations($db, $selectedProgram); // <- no session filter
 $errorIterations = getErrorIterations($db, $selectedProgram, $selectedSession);
 
-// Merge them
 foreach ($errorIterations as $iter => $_) {
     if (!in_array($iter, $allIterations, true)) {
         $allIterations[] = $iter;
@@ -329,7 +328,6 @@ foreach ($errorIterations as $iter => $_) {
 
 sort($allIterations);
 $iterations = $allIterations;
-
 ?>
 
 <!DOCTYPE html>

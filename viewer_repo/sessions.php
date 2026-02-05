@@ -149,3 +149,69 @@ function loadSessions(PDO $db, string $program, ?string $fromDate = null, ?strin
         'sessionOwners' => $sessionOwners
     ];
 }
+
+
+/*----------------
+DEVELOPER VIEWER CODE
+HAS SUMMARY FEATURE
+-------------------*/
+
+/**
+ * Fetch sessions for a given program, optionally filtered by date range.
+ * Can also handle "summary" mode by ignoring date filters.
+ *
+ * @param PDO         $db
+ * @param string      $program
+ * @param string|null $fromDate YYYY-MM-DD or null
+ * @param string|null $toDate   YYYY-MM-DD or null
+ * @param bool        $summary  If true, ignore date filtering
+ *
+ * @return array{
+ *   sessions: string[],           // list of session_ids
+ *   sessionOwners: array<string,string> // session_id => user_id
+ * }
+ */
+function loadSessionsSummary(PDO $db, string $program, ?string $fromDate = null, ?string $toDate = null, bool $summary = false): array
+{
+    if (!$summary && $fromDate && $toDate) {
+        $sql = "
+            SELECT DISTINCT session_id, user_id
+            FROM qa_logs
+            WHERE program_name = :program_name
+              AND CONVERT(DATE, created_at) BETWEEN :from_date AND :to_date
+            ORDER BY user_id ASC
+        ";
+        $params = [
+            ':program_name' => $program,
+            ':from_date'    => $fromDate,
+            ':to_date'      => $toDate
+        ];
+    } else {
+        // Summary mode or no date filters
+        $sql = "
+            SELECT DISTINCT session_id, user_id
+            FROM qa_logs
+            WHERE program_name = :program_name
+            ORDER BY user_id ASC
+        ";
+        $params = [
+            ':program_name' => $program
+        ];
+    }
+
+    $stmt = $db->prepare($sql);
+    $stmt->execute($params);
+
+    $sessions = [];
+    $sessionOwners = [];
+
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $sessions[] = $row['session_id'];
+        $sessionOwners[$row['session_id']] = $row['user_id'] ?? 'Unknown';
+    }
+
+    return [
+        'sessions'      => $sessions,
+        'sessionOwners' => $sessionOwners
+    ];
+}

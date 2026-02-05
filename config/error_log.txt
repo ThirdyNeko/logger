@@ -39,3 +39,12 @@
 [2026-02-04 13:18:43] Error: [8] session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 24
 [2026-02-04 13:18:43] Error: [8] session_start(): Ignoring session_start() because a session is already active in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 24
 [2026-02-04 14:41:46] Error: [2] Undefined variable $pdo in C:\xampp\htdocs\logger\profile.php on line 12
+[2026-02-05 10:02:00] Error: [2] Undefined array key "session_id" in C:\xampp\htdocs\logger\developer_viewer.php on line 509
+[2026-02-05 10:02:00] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\developer_viewer.php on line 509
+[2026-02-05 10:02:00] Error: [2] Undefined array key "iteration" in C:\xampp\htdocs\logger\developer_viewer.php on line 510
+[2026-02-05 10:02:58] Error: [2] Undefined array key "session_id" in C:\xampp\htdocs\logger\index.php on line 552
+[2026-02-05 10:02:58] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\index.php on line 552
+[2026-02-05 10:02:58] Error: [2] Undefined array key "iteration" in C:\xampp\htdocs\logger\index.php on line 553
+[2026-02-05 10:06:55] Error: [2] Undefined array key "session_id" in C:\xampp\htdocs\logger\developer_viewer.php on line 507
+[2026-02-05 10:06:55] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\developer_viewer.php on line 507
+[2026-02-05 10:06:55] Error: [2] Undefined array key "iteration" in C:\xampp\htdocs\logger\developer_viewer.php on line 508

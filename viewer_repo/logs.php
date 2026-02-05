@@ -84,3 +84,74 @@ function getLatestLog(PDO $db, string $program): array
 
     return $latestLog;
 }
+
+/*----------------
+DEVELOPER VIEWER CODE
+HAS SUMMARY FEATURE
+-------------------*/
+
+/**
+ * Load logs for a program/session.
+ * Can load a single iteration or all iterations if $iteration === 'summary'.
+ * Optionally attach remark info.
+ *
+ * @param PDO              $db
+ * @param string           $program
+ * @param string           $session
+ * @param int|string       $iteration Either an integer iteration or 'summary'
+ * @param array|null       $remarked Optional remark array [session_id][iteration]
+ *
+ * @return array<int, array> Log rows, optionally with '_remark_name' and '_remark_text'
+ */
+function loadLogs(PDO $db, string $program, string $session, int|string $iteration, ?array $remarked = null): array
+{
+    if ($iteration === 'summary') {
+        $sql = "
+            SELECT *
+            FROM qa_logs
+            WHERE program_name = :program_name
+              AND session_id = :session_id
+            ORDER BY iteration ASC, created_at ASC
+        ";
+
+        $params = [
+            ':program_name' => $program,
+            ':session_id'   => $session
+        ];
+    } else {
+        $sql = "
+            SELECT *
+            FROM qa_logs
+            WHERE program_name = :program_name
+              AND session_id = :session_id
+              AND iteration = :iteration
+            ORDER BY created_at ASC
+        ";
+
+        $params = [
+            ':program_name' => $program,
+            ':session_id'   => $session,
+            ':iteration'    => $iteration
+        ];
+    }
+
+    $stmt = $db->prepare($sql);
+    $stmt->execute($params);
+
+    $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Attach remark info if available
+    if ($remarked) {
+        foreach ($logs as &$log) {
+            $iter = (int)$log['iteration'];
+            $remarkEntry = $remarked[$session][$iter] ?? null;
+            if ($remarkEntry) {
+                $log['_remark_name'] = $remarkEntry['name'];
+                $log['_remark_text'] = $remarkEntry['remark'];
+            }
+        }
+        unset($log);
+    }
+
+    return $logs;
+}

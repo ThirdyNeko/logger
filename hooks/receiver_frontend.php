@@ -44,14 +44,7 @@ $device_name  = qa_get_client_ip();
    Dev Team IP (OVERRIDE)
 ========================== */
 
-$devMap = [
-    "192.168.40.14"  => "Third",
-    "192.168.40.239" => "Karl",
-    "192.168.40.21"  => "Reil",
-    "192.168.40.13"  => "April",
-];
-
-$user_id = getUserByIp($client_ip, $devMap) ?? "Guest";
+$user_id = getUserByIp($device_name, $devMap) ?? "Guest";
 
 $GLOBALS['__QA_USER_ID__']    = $user_id;
 $GLOBALS['__QA_PROGRAM__']   = $data['program_name'];

@@ -102,3 +102,37 @@
 [2026-02-06 13:25:38] Error: [2] Undefined array key "session_id" in C:\xampp\htdocs\logger\index.php on line 550
 [2026-02-06 13:25:38] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\index.php on line 550
 [2026-02-06 13:25:38] Error: [2] Undefined array key "iteration" in C:\xampp\htdocs\logger\index.php on line 551
+[2026-02-06 13:39:35] Error: [2] Undefined array key "session_id" in C:\xampp\htdocs\logger\developer_viewer.php on line 507
+[2026-02-06 13:39:35] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\developer_viewer.php on line 507
+[2026-02-06 13:39:35] Error: [2] Undefined array key "iteration" in C:\xampp\htdocs\logger\developer_viewer.php on line 508
+[2026-02-06 13:39:59] Error: [2] Undefined variable $client_ip in C:\xampp\htdocs\logger\hooks\receiver_backend.php on line 29
+[2026-02-06 13:40:00] Error: [2] Undefined variable $client_ip in C:\xampp\htdocs\logger\hooks\receiver_backend.php on line 29
+[2026-02-06 13:40:04] Error: [2] Undefined variable $client_ip in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 54
+[2026-02-06 13:40:04] Error: [2] Undefined variable $client_ip in C:\xampp\htdocs\logger\hooks\receiver_backend.php on line 29
+[2026-02-06 13:40:04] Error: [2] Undefined variable $client_ip in C:\xampp\htdocs\logger\hooks\receiver_backend.php on line 29
+[2026-02-06 13:40:04] Error: [2] Undefined variable $client_ip in C:\xampp\htdocs\logger\hooks\receiver_backend.php on line 29
+[2026-02-06 13:40:04] Error: [2] Undefined variable $client_ip in C:\xampp\htdocs\logger\hooks\receiver_backend.php on line 29
+[2026-02-06 13:40:04] Error: [2] Undefined variable $client_ip in C:\xampp\htdocs\logger\hooks\receiver_backend.php on line 29
+[2026-02-06 13:40:04] Error: [2] Undefined variable $client_ip in C:\xampp\htdocs\logger\hooks\receiver_backend.php on line 29
+[2026-02-06 13:40:04] Error: [2] Undefined variable $client_ip in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 54
+[2026-02-06 13:40:14] Error: [2] Undefined variable $client_ip in C:\xampp\htdocs\logger\hooks\receiver_backend.php on line 29
+[2026-02-06 13:40:28] Error: [2] Undefined variable $client_ip in C:\xampp\htdocs\logger\hooks\receiver_backend.php on line 29
+[2026-02-06 13:41:02] Error: [2] Undefined variable $client_ip in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 54
+[2026-02-06 13:41:02] Error: [2] Undefined variable $client_ip in C:\xampp\htdocs\logger\hooks\receiver_backend.php on line 29
+[2026-02-06 13:41:02] Error: [2] Undefined variable $client_ip in C:\xampp\htdocs\logger\hooks\receiver_backend.php on line 29
+[2026-02-06 13:41:02] Error: [2] Undefined variable $client_ip in C:\xampp\htdocs\logger\hooks\receiver_backend.php on line 29
+[2026-02-06 13:41:02] Error: [2] Undefined variable $client_ip in C:\xampp\htdocs\logger\hooks\receiver_backend.php on line 29
+[2026-02-06 13:41:02] Error: [2] Undefined variable $client_ip in C:\xampp\htdocs\logger\hooks\receiver_backend.php on line 29
+[2026-02-06 13:41:02] Error: [2] Undefined variable $client_ip in C:\xampp\htdocs\logger\hooks\receiver_backend.php on line 29
+[2026-02-06 13:41:02] Error: [2] Undefined variable $client_ip in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 54
+[2026-02-06 13:41:14] Error: [2] Undefined variable $client_ip in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 54
+[2026-02-06 13:41:14] Error: [2] Undefined variable $client_ip in C:\xampp\htdocs\logger\hooks\receiver_backend.php on line 29
+[2026-02-06 13:41:14] Error: [2] Undefined variable $client_ip in C:\xampp\htdocs\logger\hooks\receiver_backend.php on line 29
+[2026-02-06 13:41:14] Error: [2] Undefined variable $client_ip in C:\xampp\htdocs\logger\hooks\receiver_backend.php on line 29
+[2026-02-06 13:41:14] Error: [2] Undefined variable $client_ip in C:\xampp\htdocs\logger\hooks\receiver_backend.php on line 29
+[2026-02-06 13:41:14] Error: [2] Undefined variable $client_ip in C:\xampp\htdocs\logger\hooks\receiver_backend.php on line 29
+[2026-02-06 13:41:14] Error: [2] Undefined variable $client_ip in C:\xampp\htdocs\logger\hooks\receiver_backend.php on line 29
+[2026-02-06 13:41:14] Error: [2] Undefined variable $client_ip in C:\xampp\htdocs\logger\hooks\receiver_frontend.php on line 54
+[2026-02-06 13:42:55] Error: [2] Undefined array key "session_id" in C:\xampp\htdocs\logger\developer_viewer.php on line 507
+[2026-02-06 13:42:55] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\developer_viewer.php on line 507
+[2026-02-06 13:42:55] Error: [2] Undefined array key "iteration" in C:\xampp\htdocs\logger\developer_viewer.php on line 508

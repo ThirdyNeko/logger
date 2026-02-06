@@ -26,7 +26,7 @@ if (!$data || empty($data['timestamp'])) {
 ========================== */
 
 $device_name  = $data['device_name'] ?? 'guest';
-$user_id = getUserByIp($client_ip, $devMap) ?? "Guest";
+$user_id = getUserByIp($device_name, $devMap) ?? "Guest";
 
 $GLOBALS['__QA_PROGRAM__']   = $data['program_name'];
 $GLOBALS['__QA_USER_ID__']    = $user_id;

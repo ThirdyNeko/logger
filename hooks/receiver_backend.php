@@ -5,6 +5,7 @@ error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../iteration_logic/qa_iteration_helper.php';
 require_once __DIR__ . '/../repo/qa_log_repo.php';
+require_once __DIR__ . '/user_id.php'; // User ID mapping
 
 /* ==========================
    Read backend payload
@@ -24,15 +25,8 @@ if (!$data || empty($data['timestamp'])) {
    Dev Team IP (OVERRIDE)
 ========================== */
 
-$devMap = [
-    "192.168.40.14"  => "Third",
-    "192.168.40.239" => "Karl",
-    "192.168.40.21"  => "Reil",
-    "192.168.40.13"  => "April",
-];
-
 $device_name  = $data['device_name'] ?? 'guest';
-$user_id = $devMap[$device_name] ?? "Guest";
+$user_id = getUserByIp($client_ip, $devMap) ?? "Guest";
 
 $GLOBALS['__QA_PROGRAM__']   = $data['program_name'];
 $GLOBALS['__QA_USER_ID__']    = $user_id;

@@ -226,7 +226,7 @@ if ($selectedSession && isset($filteredRemarked[$selectedSession])) {
 /* ==========================
    ITERATIONS WITH ERRORS
 ========================== */
-$allIterations = getAllIterations($db, $selectedProgram); // <- no session filter
+$allIterations = getAllIterations($db, $selectedProgram, $selectedSession); // add session filter
 $errorIterations = getErrorIterations($db, $selectedProgram, $selectedSession);
 
 foreach ($errorIterations as $iter => $_) {

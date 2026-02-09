@@ -541,8 +541,11 @@ function updateDate(type, value) {
 $latestLog = [];
 
 if ($selectedProgram) {
-    $latestLog = getLatestLog($db, $selectedProgram);
+    $latestLog = getLatestLog($db, $selectedProgram) ?? [];
 }
+
+$latestSessionOnLoad   = $latestLog['session_id'] ?? '';
+$latestIterationOnLoad = (int)($latestLog['iteration'] ?? 0);
 ?>
 
 <script>

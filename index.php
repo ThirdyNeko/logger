@@ -549,9 +549,9 @@ $latestIterationOnLoad = (int)($latestLog['iteration'] ?? 0);
 ?>
 
 <script>
-const selectedProgram = "<?= htmlspecialchars($selectedProgram) ?>";
-const latestSessionOnLoad = "<?= htmlspecialchars($latestLog['session_id']) ?>";
-const latestIterationOnLoad = <?= $latestLog['iteration'] ?>;
+const selectedProgram = "<?= htmlspecialchars($selectedProgram ?? '') ?>";
+const latestSessionOnLoad = "<?= htmlspecialchars($latestSessionOnLoad) ?>";
+const latestIterationOnLoad = <?= $latestIterationOnLoad ?>;
 
 if (selectedProgram) {
     setInterval(async () => {

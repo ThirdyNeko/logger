@@ -136,3 +136,12 @@
 [2026-02-06 13:42:55] Error: [2] Undefined array key "session_id" in C:\xampp\htdocs\logger\developer_viewer.php on line 507
 [2026-02-06 13:42:55] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\developer_viewer.php on line 507
 [2026-02-06 13:42:55] Error: [2] Undefined array key "iteration" in C:\xampp\htdocs\logger\developer_viewer.php on line 508
+[2026-02-07 09:54:10] Error: [2] Undefined array key "session_id" in C:\xampp\htdocs\logger\developer_viewer.php on line 507
+[2026-02-07 09:54:10] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\developer_viewer.php on line 507
+[2026-02-07 09:54:10] Error: [2] Undefined array key "iteration" in C:\xampp\htdocs\logger\developer_viewer.php on line 508
+[2026-02-09 10:29:42] Error: [2] Undefined array key "session_id" in C:\xampp\htdocs\logger\index.php on line 550
+[2026-02-09 10:29:42] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\index.php on line 550
+[2026-02-09 10:29:42] Error: [2] Undefined array key "iteration" in C:\xampp\htdocs\logger\index.php on line 551
+[2026-02-09 11:36:22] Error: [2] Undefined array key "session_id" in C:\xampp\htdocs\logger\developer_viewer.php on line 507
+[2026-02-09 11:36:22] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\developer_viewer.php on line 507
+[2026-02-09 11:36:22] Error: [2] Undefined array key "iteration" in C:\xampp\htdocs\logger\developer_viewer.php on line 508

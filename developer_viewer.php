@@ -346,7 +346,7 @@ $iterations = $allIterations;
                 <ul class="dropdown-menu dropdown-menu-scroll w-100" aria-labelledby="iterationDropdown">
                     <!-- Session Summary Option -->
                     <li>
-                        <a class="dropdown-item <?= $selectedIteration === 'summary' ? 'text-primary fw-semibold' : '' ?>"
+                        <a class="dropdown-item"
                         href="?user=<?= htmlspecialchars($selectedProgram) ?>&session=<?= htmlspecialchars($selectedSession) ?>&iteration=summary&from_date=<?= htmlspecialchars($fromDate) ?>&to_date=<?= htmlspecialchars($toDate) ?>">
                             Session Summary
                         </a>

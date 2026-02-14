@@ -441,10 +441,10 @@ $iterations = $allIterations;
         <!-- Iteration Dropdown -->
         <?php if ($selectedSession && $iterations): ?>
         <div class="col-md-6">
-            <label class="form-label"><strong>Iteration:</strong></label>
+            <label class="form-label"><strong>Activity Log:</strong></label>
             <div class="dropdown">
                 <button class="btn btn-outline-dark dropdown-toggle w-100" type="button" id="iterationDropdown" data-bs-toggle="dropdown" aria-expanded="false" data-bs-display="static">
-                    <?= $selectedIteration ? htmlspecialchars($selectedIteration) : '-- Select Iteration --' ?>
+                    <?= $selectedIteration ? htmlspecialchars($selectedIteration) : '-- Select Activity Log --' ?>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-scroll w-100" aria-labelledby="iterationDropdown">
                     <?php foreach ($iterations as $iter):

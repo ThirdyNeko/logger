@@ -32,6 +32,35 @@ if ($selectedProgram) {
 }
 
 /* ==========================
+   HANDLE REMARK RESOLUTION
+========================== */
+
+if (isset($_POST['mark_resolved'])) {
+    $program   = $_POST['program'];
+    $session   = $_POST['session'];
+    $iteration = (int)$_POST['iteration'];
+
+    // Update the resolved field
+    $stmt = $db->prepare("
+        UPDATE qa_remarks
+        SET resolved = 1
+        WHERE program_name = :program
+          AND session_id = :session
+          AND iteration = :iteration
+    ");
+    $stmt->execute([
+        ':program'   => $program,
+        ':session'   => $session,
+        ':iteration' => $iteration
+    ]);
+
+    // Reload page to reflect change
+    header("Location: " . $_SERVER['REQUEST_URI']);
+    exit;
+}
+
+
+/* ==========================
    Helpers
 ========================== */
 function is_error_log(array $log): bool
@@ -395,6 +424,31 @@ $iterations = $allIterations;
                 <?= nl2br(htmlspecialchars($remarkText)) ?>
             </div>
         <?php endif; ?>
+
+            <?php
+                $remarkData = $filteredRemarked[$selectedSession][$selectedIteration] ?? null;
+                $hasRemark  = !empty($remarkData['remark']);
+                $isResolved = $remarkData['resolved'] ?? false;
+            ?>
+
+            <?php if ($hasRemark && !$isResolved): ?>
+                <form method="POST" class="mb-2 text-center">
+                    <input type="hidden" name="program" value="<?= htmlspecialchars($selectedProgram) ?>">
+                    <input type="hidden" name="session" value="<?= htmlspecialchars($selectedSession) ?>">
+                    <input type="hidden" name="iteration" value="<?= htmlspecialchars($selectedIteration) ?>">
+                    <input type="hidden" name="mark_resolved" value="1">
+
+                    <button type="submit" class="btn btn-success w-100 py-2">
+                        ✅ Mark Remark as Resolved
+                    </button>
+                </form>
+            <?php elseif ($hasRemark && $isResolved): ?>
+                <div class="card p-2 mb-2 text-center">
+                    <span class="badge bg-success w-100 py-2">
+                        ✅ Remark Resolved
+                    </span>
+                </div>
+            <?php endif; ?>
 
         <?php
         if ($selectedIteration === 'summary') {

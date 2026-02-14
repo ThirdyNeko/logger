@@ -437,6 +437,26 @@ $iterations = $allIterations;
                     <?php endif; ?>
                 </div>
             <?php endif; ?>
+
+            <?php
+                $remarkData = $filteredRemarked[$selectedSession][$selectedIteration] ?? null;
+                $hasRemark  = !empty($remarkData['remark']);
+                $isResolved = $remarkData['resolved'] ?? false;
+            ?>
+
+            <?php if ($hasRemark): ?>
+                <div class="card p-2 mb-2 text-center">
+                    <?php if ($isResolved): ?>
+                        <span class="badge bg-success w-100 py-2">
+                            ✅ Remark Resolved
+                        </span>
+                    <?php else: ?>
+                        <span class="badge bg-warning text-dark w-100 py-2">
+                            ⏳ Remark Pending
+                        </span>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
         </div>
 
         <!-- Iteration Dropdown -->

@@ -495,7 +495,7 @@ $iterations = $allIterations;
 
                         <input type="text" name="remark_name" class="form-control mb-2" placeholder="Remark name (optional)" maxlength="20" value="<?= htmlspecialchars($filteredRemarked[$selectedSession][$selectedIteration]['name'] ?? '') ?>">
 
-                        <textarea name="remark" class="form-control mb-2" placeholder="Enter QA remarks here..." required><?= htmlspecialchars($filteredRemarked[$selectedSession][$selectedIteration]['text'] ?? '') ?></textarea>
+                        <textarea name="remark" class="form-control mb-2" placeholder="Enter QA remarks here..." required><?= htmlspecialchars($filteredRemarked[$selectedSession][$selectedIteration]['remark'] ?? '') ?></textarea>
 
                         <button type="submit" class="btn btn-dark w-100">Save Remark</button>
                     </form>

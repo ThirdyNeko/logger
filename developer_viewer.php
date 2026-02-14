@@ -420,7 +420,7 @@ $iterations = $allIterations;
 
             // Render each iteration
             foreach ($logsByIteration as $iter => $logs) {
-                echo '<h5 class="mt-3">Iteration ' . htmlspecialchars($iter) . '</h5>';
+                echo '<h5 class="mt-3">Activity Log ' . htmlspecialchars($iter) . '</h5>';
 
                 // Show remark if exists
                 $remarkEntry = $filteredRemarked[$selectedSession][$iter] ?? null;

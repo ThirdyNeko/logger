@@ -102,7 +102,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'
             $sessionId,
             $iteration,
             $remarkName,
-            $remark
+            $remark,
+            $resolved = false
         );
     }
 

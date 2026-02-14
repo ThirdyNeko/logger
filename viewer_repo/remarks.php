@@ -11,7 +11,9 @@ function saveQaRemark(
     string $sessionId,
     int $iteration,
     string $remarkName,
-    string $remark
+    string $remark,
+    bool $resolved
+    
 ): void {
     $sql = "
         IF EXISTS (
@@ -27,7 +29,8 @@ function saveQaRemark(
             SET
                 remark_name = ?,
                 remark = ?,
-                username = ?
+                username = ?,
+                resolved = ?
             WHERE user_id = ?
               AND program_name = ?
               AND session_id = ?
@@ -36,8 +39,8 @@ function saveQaRemark(
         ELSE
         BEGIN
             INSERT INTO qa_remarks
-                (user_id, username, program_name, session_id, iteration, remark_name, remark)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+                (user_id, username, program_name, session_id, iteration, remark_name, remark, resolved)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         END
     ";
 
@@ -53,10 +56,12 @@ function saveQaRemark(
         $remarkName,
         $remark,
         $username,
+        $resolved,
         $userId,
         $program,
         $sessionId,
         $iteration,
+        
 
         // INSERT
         $userId,
@@ -65,7 +70,8 @@ function saveQaRemark(
         $sessionId,
         $iteration,
         $remarkName,
-        $remark
+        $remark,
+        $resolved
     ]);
 }
 

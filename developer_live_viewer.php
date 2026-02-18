@@ -299,9 +299,14 @@ $iterations = $allIterations;
     <hr>
 
     <!-- Header Buttons -->
-    <div class="header-buttons mb-3">
-        <button class="btn btn-outline-dark" type="button" onclick="window.location.href='auth/logger_logout.php'">Logout</button>
-        <button class="btn btn-dark" type="button" onclick="window.location.href='profile.php'">Profile</button>
+    <div class="header-buttons mb-3 justify-content-start">
+        <i class="bi bi-arrow-left-circle-fill fs-1 text-dark"
+            role="button"
+            style="cursor:pointer; transition:0.2s;"
+            onmouseover="this.style.opacity=0.7"
+            onmouseout="this.style.opacity=1"
+            onclick="window.location.href='index.php'">
+        </i>
     </div>
 
     <!-- Program & Date Row -->
@@ -393,7 +398,7 @@ $iterations = $allIterations;
 
                         $label = $iter;
                         if ($remarkName) $label .= ' - ' . $remarkName;
-                        if ($hasError)   $label .= ' - ⚠ Error';
+                        if ($hasError)   $label .= ' ⚠';
                     ?>
                     <li>
                         <a class="dropdown-item <?= $hasError ? 'text-danger fw-semibold' : '' ?>" 

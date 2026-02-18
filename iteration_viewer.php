@@ -401,7 +401,7 @@ if ($selectedProgram && $selectedSession) {
 
                                 $label = $iter;
                                 if ($remarkName) $label .= ' - ' . $remarkName;
-                                if ($hasError)   $label .= '⚠';
+                                if ($hasError)   $label .= ' ⚠';
                             ?>
                             <li>
                                 <a class="dropdown-item text-wrap <?= $hasError ? 'text-danger fw-semibold' : '' ?>"

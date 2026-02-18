@@ -5,7 +5,7 @@ require __DIR__ . '/config/db.php';
 require_once __DIR__ . '/repo/user_repo.php';
 
 if (!isset($_SESSION['user'])) {
-    header('Location: login.php');
+    header('Location: auth/login.php');
     exit;
 }
 
@@ -18,7 +18,7 @@ $userRow = $userRepo->findByUsername($_SESSION['user']['username']);
 
 if (!$userRow) {
     session_destroy();
-    header('Location: login.php');
+    header('Location: auth/login.php');
     exit;
 }
 

@@ -148,3 +148,210 @@
 [2026-02-09 13:45:40] Error: [2] Undefined array key "session_id" in C:\xampp\htdocs\logger\developer_viewer.php on line 507
 [2026-02-09 13:45:40] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\developer_viewer.php on line 507
 [2026-02-09 13:45:40] Error: [2] Undefined array key "iteration" in C:\xampp\htdocs\logger\developer_viewer.php on line 508
+[2026-02-18 09:41:19] Error: [2] Undefined variable $toDate in C:\xampp\htdocs\logger\admin\admin.php on line 53
+[2026-02-18 09:41:19] Error: [2] Undefined variable $fromDateTime in C:\xampp\htdocs\logger\viewer_repo\dashboard.php on line 50
+[2026-02-18 09:41:19] Error: [2] Undefined variable $toDateTime in C:\xampp\htdocs\logger\viewer_repo\dashboard.php on line 51
+[2026-02-18 09:41:19] Error: [2] Undefined variable $fromTime in C:\xampp\htdocs\logger\admin\admin.php on line 152
+[2026-02-18 09:41:19] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 152
+[2026-02-18 09:41:19] Error: [2] Undefined variable $toDate in C:\xampp\htdocs\logger\admin\admin.php on line 153
+[2026-02-18 09:41:19] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 153
+[2026-02-18 09:41:19] Error: [2] Undefined variable $toTime in C:\xampp\htdocs\logger\admin\admin.php on line 154
+[2026-02-18 09:41:19] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 154
+[2026-02-18 09:41:19] Error: [2] Undefined variable $branch in C:\xampp\htdocs\logger\admin\admin.php on line 155
+[2026-02-18 09:41:19] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 155
+[2026-02-18 09:41:19] Error: [2] Undefined variable $clientIP in C:\xampp\htdocs\logger\admin\admin.php on line 157
+[2026-02-18 09:41:19] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 157
+[2026-02-18 09:41:19] Error: [2] Undefined variable $fromTime in C:\xampp\htdocs\logger\admin\admin.php on line 292
+[2026-02-18 09:41:19] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 292
+[2026-02-18 09:41:19] Error: [2] Undefined variable $toDate in C:\xampp\htdocs\logger\admin\admin.php on line 298
+[2026-02-18 09:41:19] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 298
+[2026-02-18 09:41:19] Error: [2] Undefined variable $toTime in C:\xampp\htdocs\logger\admin\admin.php on line 304
+[2026-02-18 09:41:19] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 304
+[2026-02-18 09:41:19] Error: [2] Undefined variable $branch in C:\xampp\htdocs\logger\admin\admin.php on line 310
+[2026-02-18 09:41:19] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 310
+[2026-02-18 09:41:19] Error: [2] Undefined variable $clientIP in C:\xampp\htdocs\logger\admin\admin.php on line 322
+[2026-02-18 09:41:19] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 322
+[2026-02-18 09:41:22] Error: [2] Undefined variable $toDate in C:\xampp\htdocs\logger\admin\admin.php on line 53
+[2026-02-18 09:41:22] Error: [2] Undefined variable $fromDateTime in C:\xampp\htdocs\logger\viewer_repo\dashboard.php on line 50
+[2026-02-18 09:41:22] Error: [2] Undefined variable $toDateTime in C:\xampp\htdocs\logger\viewer_repo\dashboard.php on line 51
+[2026-02-18 09:41:22] Error: [2] Undefined variable $fromTime in C:\xampp\htdocs\logger\admin\admin.php on line 152
+[2026-02-18 09:41:22] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 152
+[2026-02-18 09:41:22] Error: [2] Undefined variable $toDate in C:\xampp\htdocs\logger\admin\admin.php on line 153
+[2026-02-18 09:41:22] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 153
+[2026-02-18 09:41:22] Error: [2] Undefined variable $toTime in C:\xampp\htdocs\logger\admin\admin.php on line 154
+[2026-02-18 09:41:22] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 154
+[2026-02-18 09:41:22] Error: [2] Undefined variable $branch in C:\xampp\htdocs\logger\admin\admin.php on line 155
+[2026-02-18 09:41:22] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 155
+[2026-02-18 09:41:22] Error: [2] Undefined variable $clientIP in C:\xampp\htdocs\logger\admin\admin.php on line 157
+[2026-02-18 09:41:22] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 157
+[2026-02-18 09:41:22] Error: [2] Undefined variable $fromTime in C:\xampp\htdocs\logger\admin\admin.php on line 292
+[2026-02-18 09:41:22] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 292
+[2026-02-18 09:41:22] Error: [2] Undefined variable $toDate in C:\xampp\htdocs\logger\admin\admin.php on line 298
+[2026-02-18 09:41:22] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 298
+[2026-02-18 09:41:22] Error: [2] Undefined variable $toTime in C:\xampp\htdocs\logger\admin\admin.php on line 304
+[2026-02-18 09:41:22] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 304
+[2026-02-18 09:41:22] Error: [2] Undefined variable $branch in C:\xampp\htdocs\logger\admin\admin.php on line 310
+[2026-02-18 09:41:22] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 310
+[2026-02-18 09:41:22] Error: [2] Undefined variable $clientIP in C:\xampp\htdocs\logger\admin\admin.php on line 322
+[2026-02-18 09:41:22] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 322
+[2026-02-18 09:41:25] Error: [2] Undefined variable $toDate in C:\xampp\htdocs\logger\admin\admin.php on line 53
+[2026-02-18 09:41:25] Error: [2] Undefined variable $fromDateTime in C:\xampp\htdocs\logger\viewer_repo\dashboard.php on line 50
+[2026-02-18 09:41:25] Error: [2] Undefined variable $toDateTime in C:\xampp\htdocs\logger\viewer_repo\dashboard.php on line 51
+[2026-02-18 09:41:25] Error: [2] Undefined variable $fromTime in C:\xampp\htdocs\logger\admin\admin.php on line 152
+[2026-02-18 09:41:25] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 152
+[2026-02-18 09:41:25] Error: [2] Undefined variable $toDate in C:\xampp\htdocs\logger\admin\admin.php on line 153
+[2026-02-18 09:41:25] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 153
+[2026-02-18 09:41:25] Error: [2] Undefined variable $toTime in C:\xampp\htdocs\logger\admin\admin.php on line 154
+[2026-02-18 09:41:25] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 154
+[2026-02-18 09:41:25] Error: [2] Undefined variable $branch in C:\xampp\htdocs\logger\admin\admin.php on line 155
+[2026-02-18 09:41:25] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 155
+[2026-02-18 09:41:25] Error: [2] Undefined variable $clientIP in C:\xampp\htdocs\logger\admin\admin.php on line 157
+[2026-02-18 09:41:25] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 157
+[2026-02-18 09:41:25] Error: [2] Undefined variable $fromTime in C:\xampp\htdocs\logger\admin\admin.php on line 292
+[2026-02-18 09:41:25] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 292
+[2026-02-18 09:41:25] Error: [2] Undefined variable $toDate in C:\xampp\htdocs\logger\admin\admin.php on line 298
+[2026-02-18 09:41:25] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 298
+[2026-02-18 09:41:25] Error: [2] Undefined variable $toTime in C:\xampp\htdocs\logger\admin\admin.php on line 304
+[2026-02-18 09:41:25] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 304
+[2026-02-18 09:41:25] Error: [2] Undefined variable $branch in C:\xampp\htdocs\logger\admin\admin.php on line 310
+[2026-02-18 09:41:25] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 310
+[2026-02-18 09:41:25] Error: [2] Undefined variable $clientIP in C:\xampp\htdocs\logger\admin\admin.php on line 322
+[2026-02-18 09:41:25] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 322
+[2026-02-18 09:41:29] Error: [2] Undefined variable $toDate in C:\xampp\htdocs\logger\admin\admin.php on line 53
+[2026-02-18 09:41:29] Error: [2] Undefined variable $fromDateTime in C:\xampp\htdocs\logger\viewer_repo\dashboard.php on line 50
+[2026-02-18 09:41:29] Error: [2] Undefined variable $toDateTime in C:\xampp\htdocs\logger\viewer_repo\dashboard.php on line 51
+[2026-02-18 09:41:29] Error: [2] Undefined variable $fromTime in C:\xampp\htdocs\logger\admin\admin.php on line 152
+[2026-02-18 09:41:29] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 152
+[2026-02-18 09:41:29] Error: [2] Undefined variable $toDate in C:\xampp\htdocs\logger\admin\admin.php on line 153
+[2026-02-18 09:41:29] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 153
+[2026-02-18 09:41:29] Error: [2] Undefined variable $toTime in C:\xampp\htdocs\logger\admin\admin.php on line 154
+[2026-02-18 09:41:29] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 154
+[2026-02-18 09:41:29] Error: [2] Undefined variable $branch in C:\xampp\htdocs\logger\admin\admin.php on line 155
+[2026-02-18 09:41:29] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 155
+[2026-02-18 09:41:29] Error: [2] Undefined variable $clientIP in C:\xampp\htdocs\logger\admin\admin.php on line 157
+[2026-02-18 09:41:29] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 157
+[2026-02-18 09:41:29] Error: [2] Undefined variable $fromTime in C:\xampp\htdocs\logger\admin\admin.php on line 292
+[2026-02-18 09:41:29] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 292
+[2026-02-18 09:41:29] Error: [2] Undefined variable $toDate in C:\xampp\htdocs\logger\admin\admin.php on line 298
+[2026-02-18 09:41:29] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 298
+[2026-02-18 09:41:29] Error: [2] Undefined variable $toTime in C:\xampp\htdocs\logger\admin\admin.php on line 304
+[2026-02-18 09:41:29] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 304
+[2026-02-18 09:41:29] Error: [2] Undefined variable $branch in C:\xampp\htdocs\logger\admin\admin.php on line 310
+[2026-02-18 09:41:29] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 310
+[2026-02-18 09:41:29] Error: [2] Undefined variable $clientIP in C:\xampp\htdocs\logger\admin\admin.php on line 322
+[2026-02-18 09:41:29] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 322
+[2026-02-18 09:41:38] Error: [2] Undefined variable $toDate in C:\xampp\htdocs\logger\admin\admin.php on line 53
+[2026-02-18 09:41:38] Error: [2] Undefined variable $fromDateTime in C:\xampp\htdocs\logger\viewer_repo\dashboard.php on line 50
+[2026-02-18 09:41:38] Error: [2] Undefined variable $toDateTime in C:\xampp\htdocs\logger\viewer_repo\dashboard.php on line 51
+[2026-02-18 09:41:38] Error: [2] Undefined variable $fromTime in C:\xampp\htdocs\logger\admin\admin.php on line 152
+[2026-02-18 09:41:38] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 152
+[2026-02-18 09:41:38] Error: [2] Undefined variable $toDate in C:\xampp\htdocs\logger\admin\admin.php on line 153
+[2026-02-18 09:41:38] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 153
+[2026-02-18 09:41:38] Error: [2] Undefined variable $toTime in C:\xampp\htdocs\logger\admin\admin.php on line 154
+[2026-02-18 09:41:38] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 154
+[2026-02-18 09:41:38] Error: [2] Undefined variable $branch in C:\xampp\htdocs\logger\admin\admin.php on line 155
+[2026-02-18 09:41:38] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 155
+[2026-02-18 09:41:38] Error: [2] Undefined variable $clientIP in C:\xampp\htdocs\logger\admin\admin.php on line 157
+[2026-02-18 09:41:38] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 157
+[2026-02-18 09:41:38] Error: [2] Undefined variable $fromTime in C:\xampp\htdocs\logger\admin\admin.php on line 292
+[2026-02-18 09:41:38] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 292
+[2026-02-18 09:41:38] Error: [2] Undefined variable $toDate in C:\xampp\htdocs\logger\admin\admin.php on line 298
+[2026-02-18 09:41:38] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 298
+[2026-02-18 09:41:38] Error: [2] Undefined variable $toTime in C:\xampp\htdocs\logger\admin\admin.php on line 304
+[2026-02-18 09:41:38] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 304
+[2026-02-18 09:41:38] Error: [2] Undefined variable $branch in C:\xampp\htdocs\logger\admin\admin.php on line 310
+[2026-02-18 09:41:38] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 310
+[2026-02-18 09:41:38] Error: [2] Undefined variable $clientIP in C:\xampp\htdocs\logger\admin\admin.php on line 322
+[2026-02-18 09:41:38] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 322
+[2026-02-18 09:41:44] Error: [2] Undefined variable $userRepo in C:\xampp\htdocs\logger\index.php on line 22
+[2026-02-18 09:41:49] Error: [2] Undefined variable $userRepo in C:\xampp\htdocs\logger\index.php on line 22
+[2026-02-18 09:45:15] Error: [2] Undefined variable $toDate in C:\xampp\htdocs\logger\admin\admin.php on line 53
+[2026-02-18 09:45:15] Error: [2] Undefined variable $fromDateTime in C:\xampp\htdocs\logger\viewer_repo\dashboard.php on line 48
+[2026-02-18 09:45:15] Error: [2] Undefined variable $toDateTime in C:\xampp\htdocs\logger\viewer_repo\dashboard.php on line 49
+[2026-02-18 09:45:15] Error: [2] Undefined variable $fromTime in C:\xampp\htdocs\logger\admin\admin.php on line 152
+[2026-02-18 09:45:15] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 152
+[2026-02-18 09:45:15] Error: [2] Undefined variable $toDate in C:\xampp\htdocs\logger\admin\admin.php on line 153
+[2026-02-18 09:45:15] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 153
+[2026-02-18 09:45:15] Error: [2] Undefined variable $toTime in C:\xampp\htdocs\logger\admin\admin.php on line 154
+[2026-02-18 09:45:15] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 154
+[2026-02-18 09:45:15] Error: [2] Undefined variable $branch in C:\xampp\htdocs\logger\admin\admin.php on line 155
+[2026-02-18 09:45:15] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 155
+[2026-02-18 09:45:15] Error: [2] Undefined variable $clientIP in C:\xampp\htdocs\logger\admin\admin.php on line 157
+[2026-02-18 09:45:15] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 157
+[2026-02-18 09:45:15] Error: [2] Undefined variable $toDate in C:\xampp\htdocs\logger\admin\admin.php on line 284
+[2026-02-18 09:45:15] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 284
+[2026-02-18 09:45:22] Error: [2] Undefined variable $toDate in C:\xampp\htdocs\logger\admin\admin.php on line 53
+[2026-02-18 09:45:22] Error: [2] Undefined variable $fromDateTime in C:\xampp\htdocs\logger\viewer_repo\dashboard.php on line 48
+[2026-02-18 09:45:22] Error: [2] Undefined variable $toDateTime in C:\xampp\htdocs\logger\viewer_repo\dashboard.php on line 49
+[2026-02-18 09:45:22] Error: [2] Undefined variable $fromTime in C:\xampp\htdocs\logger\admin\admin.php on line 152
+[2026-02-18 09:45:22] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 152
+[2026-02-18 09:45:22] Error: [2] Undefined variable $toDate in C:\xampp\htdocs\logger\admin\admin.php on line 153
+[2026-02-18 09:45:22] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 153
+[2026-02-18 09:45:22] Error: [2] Undefined variable $toTime in C:\xampp\htdocs\logger\admin\admin.php on line 154
+[2026-02-18 09:45:22] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 154
+[2026-02-18 09:45:22] Error: [2] Undefined variable $branch in C:\xampp\htdocs\logger\admin\admin.php on line 155
+[2026-02-18 09:45:22] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 155
+[2026-02-18 09:45:22] Error: [2] Undefined variable $clientIP in C:\xampp\htdocs\logger\admin\admin.php on line 157
+[2026-02-18 09:45:22] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 157
+[2026-02-18 09:45:22] Error: [2] Undefined variable $toDate in C:\xampp\htdocs\logger\admin\admin.php on line 284
+[2026-02-18 09:45:22] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 284
+[2026-02-18 09:45:32] Error: [2] Undefined variable $toDate in C:\xampp\htdocs\logger\admin\admin.php on line 53
+[2026-02-18 09:45:32] Error: [2] Undefined variable $fromDateTime in C:\xampp\htdocs\logger\viewer_repo\dashboard.php on line 48
+[2026-02-18 09:45:32] Error: [2] Undefined variable $toDateTime in C:\xampp\htdocs\logger\viewer_repo\dashboard.php on line 49
+[2026-02-18 09:45:32] Error: [2] Undefined variable $fromTime in C:\xampp\htdocs\logger\admin\admin.php on line 152
+[2026-02-18 09:45:32] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 152
+[2026-02-18 09:45:32] Error: [2] Undefined variable $toDate in C:\xampp\htdocs\logger\admin\admin.php on line 153
+[2026-02-18 09:45:32] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 153
+[2026-02-18 09:45:32] Error: [2] Undefined variable $toTime in C:\xampp\htdocs\logger\admin\admin.php on line 154
+[2026-02-18 09:45:32] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 154
+[2026-02-18 09:45:32] Error: [2] Undefined variable $branch in C:\xampp\htdocs\logger\admin\admin.php on line 155
+[2026-02-18 09:45:32] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 155
+[2026-02-18 09:45:32] Error: [2] Undefined variable $clientIP in C:\xampp\htdocs\logger\admin\admin.php on line 157
+[2026-02-18 09:45:32] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 157
+[2026-02-18 09:45:32] Error: [2] Undefined variable $toDate in C:\xampp\htdocs\logger\admin\admin.php on line 284
+[2026-02-18 09:45:32] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 284
+[2026-02-18 09:45:39] Error: [2] Undefined variable $toDate in C:\xampp\htdocs\logger\admin\admin.php on line 53
+[2026-02-18 09:45:39] Error: [2] Undefined variable $fromDateTime in C:\xampp\htdocs\logger\viewer_repo\dashboard.php on line 48
+[2026-02-18 09:45:39] Error: [2] Undefined variable $toDateTime in C:\xampp\htdocs\logger\viewer_repo\dashboard.php on line 49
+[2026-02-18 09:45:39] Error: [2] Undefined variable $fromTime in C:\xampp\htdocs\logger\admin\admin.php on line 152
+[2026-02-18 09:45:39] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 152
+[2026-02-18 09:45:39] Error: [2] Undefined variable $toDate in C:\xampp\htdocs\logger\admin\admin.php on line 153
+[2026-02-18 09:45:39] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 153
+[2026-02-18 09:45:39] Error: [2] Undefined variable $toTime in C:\xampp\htdocs\logger\admin\admin.php on line 154
+[2026-02-18 09:45:39] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 154
+[2026-02-18 09:45:39] Error: [2] Undefined variable $branch in C:\xampp\htdocs\logger\admin\admin.php on line 155
+[2026-02-18 09:45:39] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 155
+[2026-02-18 09:45:39] Error: [2] Undefined variable $clientIP in C:\xampp\htdocs\logger\admin\admin.php on line 157
+[2026-02-18 09:45:39] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 157
+[2026-02-18 09:45:39] Error: [2] Undefined variable $toDate in C:\xampp\htdocs\logger\admin\admin.php on line 284
+[2026-02-18 09:45:39] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 284
+[2026-02-18 09:45:41] Error: [2] Undefined variable $toDate in C:\xampp\htdocs\logger\admin\admin.php on line 53
+[2026-02-18 09:45:41] Error: [2] Undefined variable $fromDateTime in C:\xampp\htdocs\logger\viewer_repo\dashboard.php on line 48
+[2026-02-18 09:45:41] Error: [2] Undefined variable $toDateTime in C:\xampp\htdocs\logger\viewer_repo\dashboard.php on line 49
+[2026-02-18 09:45:41] Error: [2] Undefined variable $fromTime in C:\xampp\htdocs\logger\admin\admin.php on line 152
+[2026-02-18 09:45:41] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 152
+[2026-02-18 09:45:41] Error: [2] Undefined variable $toDate in C:\xampp\htdocs\logger\admin\admin.php on line 153
+[2026-02-18 09:45:41] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 153
+[2026-02-18 09:45:41] Error: [2] Undefined variable $toTime in C:\xampp\htdocs\logger\admin\admin.php on line 154
+[2026-02-18 09:45:41] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 154
+[2026-02-18 09:45:41] Error: [2] Undefined variable $branch in C:\xampp\htdocs\logger\admin\admin.php on line 155
+[2026-02-18 09:45:41] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 155
+[2026-02-18 09:45:41] Error: [2] Undefined variable $clientIP in C:\xampp\htdocs\logger\admin\admin.php on line 157
+[2026-02-18 09:45:41] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 157
+[2026-02-18 09:45:41] Error: [2] Undefined variable $toDate in C:\xampp\htdocs\logger\admin\admin.php on line 284
+[2026-02-18 09:45:41] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 284
+[2026-02-18 09:45:43] Error: [2] Undefined variable $toDate in C:\xampp\htdocs\logger\admin\admin.php on line 53
+[2026-02-18 09:45:43] Error: [2] Undefined variable $fromDateTime in C:\xampp\htdocs\logger\viewer_repo\dashboard.php on line 48
+[2026-02-18 09:45:43] Error: [2] Undefined variable $toDateTime in C:\xampp\htdocs\logger\viewer_repo\dashboard.php on line 49
+[2026-02-18 09:45:43] Error: [2] Undefined variable $fromTime in C:\xampp\htdocs\logger\admin\admin.php on line 152
+[2026-02-18 09:45:43] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 152
+[2026-02-18 09:45:43] Error: [2] Undefined variable $toDate in C:\xampp\htdocs\logger\admin\admin.php on line 153
+[2026-02-18 09:45:43] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 153
+[2026-02-18 09:45:43] Error: [2] Undefined variable $toTime in C:\xampp\htdocs\logger\admin\admin.php on line 154
+[2026-02-18 09:45:43] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 154
+[2026-02-18 09:45:43] Error: [2] Undefined variable $branch in C:\xampp\htdocs\logger\admin\admin.php on line 155
+[2026-02-18 09:45:43] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 155
+[2026-02-18 09:45:43] Error: [2] Undefined variable $clientIP in C:\xampp\htdocs\logger\admin\admin.php on line 157
+[2026-02-18 09:45:43] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 157
+[2026-02-18 09:45:43] Error: [2] Undefined variable $toDate in C:\xampp\htdocs\logger\admin\admin.php on line 284
+[2026-02-18 09:45:43] Error: [8192] htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\admin\admin.php on line 284

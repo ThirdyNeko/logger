@@ -7,13 +7,13 @@ $error   = '';
 $success = '';
 
 $usernameValue = '';
-$roleValue     = 'user';
+$roleValue     = 'developer'; // Default role
 $passwordValue = '';
 $confirmPasswordValue = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $usernameValue        = htmlspecialchars($_POST['username'] ?? '');
-    $roleValue            = $_POST['role'] ?? 'user';
+    $roleValue            = $_POST['role'] ?? 'developer';
     $passwordValue        = htmlspecialchars($_POST['password'] ?? '');
     $confirmPasswordValue = htmlspecialchars($_POST['confirm_password'] ?? '');
 }
@@ -23,8 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username        = trim($_POST['username'] ?? '');
     $password        = $_POST['password'] ?? '';
     $confirmPassword = $_POST['confirm_password'] ?? '';
-    $role            = $_POST['role'] ?? 'user';
-
+    $role            = $_POST['role'] ?? 'developer';
 
     // --------------------------
     // Password match check
@@ -59,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($userRepo->createUser($username, $hash, $role)) {
             $success = 'User created successfully';
             $usernameValue = $passwordValue = $confirmPasswordValue = '';
-            $roleValue = 'user';
+            $roleValue = 'developer';
         } else {
             $error = 'Failed to create user';
         }
@@ -192,8 +191,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <button
             type="button"
             class="btn btn-outline-dark w-100"
-            onclick="window.location.href='login.php'">
-            Back to Login
+            onclick="window.location.href='admin.php'">
+            Back to Dashboard
         </button>
 
     </div>

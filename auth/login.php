@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
 
             case 'admin':
-                header('Location: ../auth/create_user.php');
+                header('Location: ../admin/admin.php');
                 break;
 
             default:

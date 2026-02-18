@@ -11,6 +11,12 @@ require_once __DIR__ . '/viewer_repo/programs.php';
 require_once __DIR__ . '/viewer_repo/logs.php';
 require_once __DIR__ . '/viewer_repo/iterations.php';
 
+if (!isset($_SESSION['user'])) {
+    header('Location: auth/login.php');
+    exit;
+}
+
+
 $db = qa_db();
 
 /* ==========================

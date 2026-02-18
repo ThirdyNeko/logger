@@ -45,8 +45,8 @@ function loadSessionNamesForViewer(
     // Base query for pagination links
     $baseQuery = http_build_query([
         'user'      => $program ?? '',
-        'from_date' => $fromDateTime ? substr($fromDateTime, 0, 10) : '',
-        'to_date'   => $toDateTime ? substr($toDateTime, 0, 10) : '',
+        'from_date' => $fromDate,
+        'to_date'   => $toDate,
         'user_id'   => $userId ?? ''
     ]);
 

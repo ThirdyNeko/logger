@@ -36,6 +36,7 @@ $db = qa_db();
 ========================== */
 $selectedProgram     = $_GET['user'] ?? '';
 $fromDate            = $_GET['from_date'] ?? '';
+$toDate              = $_GET['to_date'] ?? '';
 $userId            = $_GET['user_id'] ?? '';
 
 /* ==========================
@@ -50,7 +51,7 @@ $result = loadSessionNamesForViewer(
     $db,
     $selectedProgram ?: null,
     $fromDate ?: null,
-    $toDate   ?: null,
+    $toDate ?: null,
     $userId ?: null,
     $perPage,
     $offset

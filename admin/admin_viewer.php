@@ -5,7 +5,7 @@ require_once __DIR__ . '/../auth/require_login.php';
 date_default_timezone_set('Asia/Manila');
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../repo/user_repo.php';
-require_once __DIR__ . '/../viewer_repo/logs.php';
+require_once __DIR__ . '/../viewer_repo/viewer.php';
 require_once __DIR__ . '/../viewer_repo/iterations.php';
 require_once __DIR__ . '/../viewer_repo/programs.php';
 
@@ -255,7 +255,7 @@ if ($selectedProgram && $selectedSession) {
     <link href="../css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { background-color: #f8f9fa; }
-        .sidebar { width: 260px; min-height: 100vh; background: #fff; }
+        .sidebar { width: 260px; min-height: 100vh; background: #fff; flex-shrink: 0;}
         .sidebar .user-box { border-bottom: 1px solid #e5e5e5; padding-bottom: 1rem; margin-bottom: 1rem; }
         .clickable-row { cursor: pointer; }
 

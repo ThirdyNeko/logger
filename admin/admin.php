@@ -149,13 +149,8 @@ $programs = loadPrograms($db);
                     <!-- Preserve existing filter values as hidden inputs -->
                     <input type="hidden" name="user" value="<?= htmlspecialchars($selectedProgram) ?>">
                     <input type="hidden" name="from_date" value="<?= htmlspecialchars($fromDate) ?>">
-                    <input type="hidden" name="from_time" value="<?= htmlspecialchars($fromTime) ?>">
                     <input type="hidden" name="to_date" value="<?= htmlspecialchars($toDate) ?>">
-                    <input type="hidden" name="to_time" value="<?= htmlspecialchars($toTime) ?>">
-                    <input type="hidden" name="branch" value="<?= htmlspecialchars($branch) ?>">
                     <input type="hidden" name="user_id" value="<?= htmlspecialchars($userId) ?>">
-                    <input type="hidden" name="client_ip" value="<?= htmlspecialchars($clientIP) ?>">
-
                     <button type="submit" class="btn btn-outline-primary">
                         <i class="bi bi-arrow-counterclockwise"></i>
                     </button>

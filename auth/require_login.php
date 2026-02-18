@@ -1,6 +1,7 @@
 <?php
 session_name('QA_LOGGER_SESSION');
 session_start();
+define('BASE_URL', '/logger/');
 
 define('SESSION_TIMEOUT', 3600); // 60 minutes
 

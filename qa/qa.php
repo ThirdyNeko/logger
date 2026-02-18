@@ -1,13 +1,13 @@
 <?php
 session_name('QA_LOGGER_SESSION');
 
-require_once __DIR__ . '/auth/require_login.php';
+require_once __DIR__ . '/../auth/require_login.php';
 date_default_timezone_set('Asia/Manila');
-require_once __DIR__ . '/config/db.php';
-require_once __DIR__ . '/viewer_repo/dashboard.php';
-require_once __DIR__ . '/repo/user_repo.php';
-require_once __DIR__ . '/viewer_repo/users.php';
-require_once __DIR__ . '/viewer_repo/programs.php';
+require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../repo/user_repo.php';
+require_once __DIR__ . '/../viewer_repo/dashboard.php';
+require_once __DIR__ . '/../viewer_repo/users.php';
+require_once __DIR__ . '/../viewer_repo/programs.php';
 
 if (!isset($_SESSION['user'])) {
     header('Location: ' . BASE_URL . 'auth/login.php');
@@ -50,8 +50,8 @@ $offset = ($page - 1) * $perPage;
 $result = loadSessionNamesForViewer(
     $db,
     $selectedProgram ?: null,
-    $fromDate ?: null,
-    $toDate   ?: null,
+    $fromDate ? : null,
+    $toDate   ? : null,
     $userId ?: null,
     $perPage,
     $offset
@@ -78,9 +78,9 @@ $programs = loadPrograms($db);
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="../css/bootstrap.min.css">
     <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="bootstrap-icons/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="../bootstrap-icons/font/bootstrap-icons.min.css">
 
     <style>
         body {
@@ -117,14 +117,14 @@ $programs = loadPrograms($db);
 
         <!-- Top buttons -->
         <div class="d-grid gap-2">
-            <a href="profile.php" class="btn btn-outline-secondary btn-sm">Profile</a>
-            <a href="index.php" class="btn btn-dark btn-sm">Logs</a>
+            <a href="../profile.php" class="btn btn-outline-secondary btn-sm">Profile</a>
+            <a href="qa.php" class="btn btn-dark btn-sm">Logs</a>
             <a href="remarks.php" class="btn btn-outline-secondary btn-sm">Remarks</a>
         </div>
 
         <!-- Spacer pushes logout to the bottom -->
         <div class="mt-auto">
-            <a href="auth/logger_logout.php" class="btn btn-danger btn-sm w-100">Logout</a>
+            <a href="../auth/logger_logout.php" class="btn btn-danger btn-sm w-100">Logout</a>
         </div>
     </aside>
 
@@ -179,7 +179,7 @@ $programs = loadPrograms($db);
                     <?php if (!empty($sessionNames)): ?>
                         <?php foreach ($sessionNames as $session): ?>
                             <tr class="clickable-row"
-                                onclick="window.location='iteration_viewer.php?user=<?= urlencode($session['program_name'] ?? '') ?>&session=<?= urlencode($session['session_id'] ?? '') ?>'">
+                                onclick="window.location='qa_viewer.php?user=<?= urlencode($session['program_name'] ?? '') ?>&session=<?= urlencode($session['session_id'] ?? '') ?>'">
                                 <td><?= htmlspecialchars($session['program_name'] ?? '-') ?></td>
                                 <td><?= htmlspecialchars($session['session_id']) ?></td>
                                 <td><?= htmlspecialchars($session['user_id'] ?? '-') ?></td>
@@ -207,7 +207,7 @@ $programs = loadPrograms($db);
                     <?php endif; ?>
                     </tbody>
                 </table>
-                </div>
+                </div>        
                 <!-- Pagination -->
                 <?php if ($totalPages > 1): ?>
                 <?php
@@ -215,7 +215,7 @@ $programs = loadPrograms($db);
                 $baseFilters = [
                     'user'      => $selectedProgram,
                     'from_date' => $fromDate ?? '',
-                    'from_time' => $fromTime ?? '',
+                    'to_date'   => $toDate ?? '',
                     'user_id'   => $userId ?? '',
                 ];
                 $baseQuery = http_build_query($baseFilters);
@@ -302,10 +302,10 @@ $programs = loadPrograms($db);
 </form>
 
 <!-- Bootstrap JS -->
-<script src="scripts/bootstrap.bundle.min.js"></script>
+<script src="../scripts/bootstrap.bundle.min.js"></script>
 <script>
 function printSession(user, session) {
-    const url = `viewer_repo/print_session.php?user=${user}&session=${session}&iteration=summary`;
+    const url = `../viewer_repo/print_session.php?user=${user}&session=${session}&iteration=summary`;
 
     let iframe = document.getElementById('printFrame');
 

@@ -1,5 +1,6 @@
 <?php
 session_start();
+define('BASE_URL', '/logger/');
 
 // Destroy all session data
 $_SESSION = [];
@@ -13,5 +14,5 @@ if (ini_get("session.use_cookies")) {
 session_destroy();
 
 // ✅ Redirect directly to login page
-header('Location: login.php');
+header('Location: ' . BASE_URL . 'auth/login.php');
 exit;

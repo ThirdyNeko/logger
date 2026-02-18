@@ -1,18 +1,18 @@
 <?php
 session_name('QA_LOGGER_SESSION');
 
-require_once __DIR__ . '/auth/require_login.php';
+require_once __DIR__ . '/../auth/require_login.php';
 date_default_timezone_set('Asia/Manila');
-require_once __DIR__ . '/iteration_logic/qa_iteration_helper.php';
-require_once __DIR__ . '/viewer_repo/sessions.php';
-require_once __DIR__ . '/viewer_repo/users.php';
-require_once __DIR__ . '/viewer_repo/remarks.php';
-require_once __DIR__ . '/viewer_repo/programs.php';
-require_once __DIR__ . '/viewer_repo/logs.php';
-require_once __DIR__ . '/viewer_repo/iterations.php';
+require_once __DIR__ . '/../iteration_logic/qa_iteration_helper.php';
+require_once __DIR__ . '/../viewer_repo/sessions.php';
+require_once __DIR__ . '/../viewer_repo/users.php';
+require_once __DIR__ . '/../viewer_repo/remarks.php';
+require_once __DIR__ . '/../viewer_repo/programs.php';
+require_once __DIR__ . '/../viewer_repo/logs.php';
+require_once __DIR__ . '/../viewer_repo/iterations.php';
 
 if (!isset($_SESSION['user'])) {
-    header('Location: auth/login.php');
+    header('Location: ' . BASE_URL . 'auth/login.php');
     exit;
 }
 
@@ -28,9 +28,6 @@ $selectedIteration = $_GET['iteration'] ?? '';
 $fromDate          = $_GET['from_date'] ?? '';
 $toDate            = $_GET['to_date'] ?? '';
 
-
-require_once __DIR__ . '/viewer_repo/sessions.php';
-require_once __DIR__ . '/viewer_repo/users.php';
 
 /* ==========================
    LATEST SESSION
@@ -344,8 +341,8 @@ $iterations = $allIterations;
     <title>QA Viewer</title>
 
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="css/bootstrap.min.css">
-    <link rel="stylesheet" href="bootstrap-icons/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../bootstrap-icons/font/bootstrap-icons.min.css">
 
     <style>
         .header-buttons { display:flex; gap:10px; justify-content:flex-end; margin-bottom:15px; }
@@ -362,8 +359,8 @@ $iterations = $allIterations;
 
     <!-- Header Buttons -->
     <div class="header-buttons mb-3">
-        <button class="btn btn-outline-dark" type="button" onclick="window.location.href='auth/logger_logout.php'">Logout</button>
-        <button class="btn btn-dark" type="button" onclick="window.location.href='profile.php'">Profile</button>
+        <button class="btn btn-outline-dark" type="button" onclick="window.location.href='../auth/logger_logout.php'">Logout</button>
+        <button class="btn btn-dark" type="button" onclick="window.location.href='../profile.php'">Profile</button>
     </div>
 
     <!-- Program & Date Row -->
@@ -545,7 +542,7 @@ $iterations = $allIterations;
 </div>
 
 <!-- Bootstrap JS -->
-<script src="scripts/bootstrap.bundle.min.js"></script>
+<script src="../scripts/bootstrap.bundle.min.js"></script>
 
 <script>
 function updateDate(type, value) {

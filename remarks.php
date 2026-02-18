@@ -105,6 +105,7 @@ $programs = loadPrograms($db);
 
         <!-- Top buttons -->
         <div class="d-grid gap-2">
+            <a href="developer_live_viewer.php" class="btn btn-outline-secondary btn-sm">Live Viewer</a>
             <a href="profile.php" class="btn btn-outline-secondary btn-sm">Profile</a>
             <a href="index.php" class="btn btn-outline-secondary btn-sm">Logs</a>
             <a href="remarks.php" class="btn btn-dark btn-sm">Remarks</a>

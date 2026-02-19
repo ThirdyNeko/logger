@@ -69,6 +69,8 @@ $programs = loadPrograms($db);
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="bootstrap-icons/font/bootstrap-icons.min.css">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="css/datatables.min.css">
 
     <style>
         body {
@@ -143,7 +145,14 @@ $programs = loadPrograms($db);
 
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0">
+                    <script src="scripts/jquery-4.0.0.min.js"></script>
+                    <script src="scripts/datatables.min.js"></script>
+                    <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        new DataTable('#logs');
+                    });
+                    </script>
+                    <table id="logs" class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
                                 <th>Program</th>

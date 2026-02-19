@@ -1,16 +1,14 @@
 <?php
 function loadSessionNamesForViewer(
     PDO $db,
-    ?string $program      = null,
+    ?string $program  = null,
     ?string $fromDate = null,
-    ?string $toDate  = null,
-    ?string $userId       = null,
-    int $limit = 50,
-    int $offset = 0
+    ?string $toDate   = null,
+    ?string $userId   = null
 ): array {
 
     if ($program === '') {
-        return ['sessions' => [], 'total' => 0, 'baseQuery' => ''];
+        return ['sessions' => [], 'baseQuery' => ''];
     }
 
     $params = [];
@@ -36,13 +34,24 @@ function loadSessionNamesForViewer(
         $params[':userId'] = '%' . $userId . '%';
     }
 
+    $sql = "
+        SELECT
+            program_name,
+            session_id,
+            MAX(user_id)     AS user_id,
+            MIN(created_at)  AS started_at,
+            MAX(created_at)  AS last_updated
+        FROM qa_logs
+        $where
+        GROUP BY session_id, program_name
+        ORDER BY MAX(created_at) DESC
+    ";
 
-    // Total sessions for pagination
-    $countStmt = $db->prepare("SELECT COUNT(DISTINCT session_id) FROM qa_logs $where");
-    $countStmt->execute($params);
-    $totalSessions = (int)$countStmt->fetchColumn();
+    $stmt = $db->prepare($sql);
+    $stmt->execute($params);
 
-    // Base query for pagination links
+    $sessions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
     $baseQuery = http_build_query([
         'user'      => $program ?? '',
         'from_date' => $fromDate,
@@ -50,42 +59,8 @@ function loadSessionNamesForViewer(
         'user_id'   => $userId ?? ''
     ]);
 
-    // Fetch paginated sessions using SQL Server syntax
-    $sql = "
-        SELECT *
-        FROM (
-            SELECT
-                program_name,
-                session_id,
-                MAX(user_id)   AS user_id,
-                MIN(created_at) AS started_at,
-                MAX(created_at) AS last_updated,
-                ROW_NUMBER() OVER (ORDER BY MAX(created_at) DESC) AS row_num
-            FROM qa_logs
-            $where
-            GROUP BY session_id, program_name
-        ) AS sub
-        WHERE row_num BETWEEN :startRow AND :endRow
-        ORDER BY last_updated DESC
-    ";
-
-    $stmt = $db->prepare($sql);
-
-    // Bind filters
-    foreach ($params as $key => $val) {
-        $stmt->bindValue($key, $val);
-    }
-
-    // Bind pagination rows
-    $stmt->bindValue(':startRow', $offset + 1, PDO::PARAM_INT);
-    $stmt->bindValue(':endRow', $offset + $limit, PDO::PARAM_INT);
-
-    $stmt->execute();
-    $sessions = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
     return [
-        'sessions' => $sessions,
-        'total'    => $totalSessions,
-        'baseQuery'=> $baseQuery
+        'sessions'  => $sessions,
+        'baseQuery' => $baseQuery
     ];
 }

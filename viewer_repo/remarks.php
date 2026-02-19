@@ -124,15 +124,13 @@ function loadRemarksByProgram(PDO $db, string $program): array
  *     total: int
  * }
  */
-function loadRemarksPaginated(
+function loadRemarks(
     PDO $db,
     ?string $program,
     ?string $username,
     ?string $status,      // 'resolved' | 'pending' | null
     ?string $fromDate,
-    ?string $toDate,
-    int $perPage,
-    int $offset
+    ?string $toDate
 ): array {
 
     $where = [];
@@ -165,51 +163,19 @@ function loadRemarksPaginated(
 
     $whereSql = $where ? "WHERE " . implode(" AND ", $where) : "";
 
-    /* ==========================
-       TOTAL COUNT
-    ========================== */
-
-    $countSql = "SELECT COUNT(*) FROM qa_remarks $whereSql";
-    $stmt = $db->prepare($countSql);
-    $stmt->execute($params);
-    $total = (int)$stmt->fetchColumn();
-
-    /* ==========================
-       PAGINATED DATA (ROW_NUMBER)
-    ========================== */
-
     $sql = "
         SELECT *
-        FROM (
-            SELECT 
-                *,
-                ROW_NUMBER() OVER (ORDER BY created_at DESC) AS row_num
-            FROM qa_remarks
-            $whereSql
-        ) AS numbered
-        WHERE row_num BETWEEN :start AND :end
+        FROM qa_remarks
+        $whereSql
+        ORDER BY created_at DESC
     ";
 
     $stmt = $db->prepare($sql);
+    $stmt->execute($params);
 
-    foreach ($params as $key => $value) {
-        $stmt->bindValue($key, $value);
-    }
-
-    $start = $offset + 1;
-    $end   = $offset + $perPage;
-
-    $stmt->bindValue(':start', $start, PDO::PARAM_INT);
-    $stmt->bindValue(':end', $end, PDO::PARAM_INT);
-
-    $stmt->execute();
-    $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    return [
-        'data'  => $data,
-        'total' => $total
-    ];
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
+
 
 /**
  * Mark a QA remark as resolved, adding resolved info.

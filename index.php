@@ -43,25 +43,17 @@ $userId            = $_GET['user_id'] ?? '';
    DETERMINE CURRENT PAGE
 ========================== */
 
-$perPage = 50;
-$page = isset($_GET['page']) && is_numeric($_GET['page']) && $_GET['page'] > 0 ? (int)$_GET['page'] : 1;
-$offset = ($page - 1) * $perPage;
-
 $result = loadSessionNamesForViewer(
     $db,
     $selectedProgram ?: null,
     $fromDate ?: null,
     $toDate   ?: null,
-    $userId ?: null,
-    $perPage,
-    $offset
+    $userId ?: null
 );
 
 $sessionNames = $result['sessions'];
 $totalSessions = $result['total'];
 $baseQuery = $result['baseQuery'];
-
-$totalPages = ceil($totalSessions / $perPage);
 
 /* ==========================
    PROGRAM LIST (FROM LOGS)

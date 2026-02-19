@@ -466,7 +466,6 @@ $iterations = $allIterations;
                     class="form-control mb-2" 
                     placeholder="Add a detailed comment for resolving..."
                     rows="4"
-                    maxlength="10000"
                     required></textarea>
 
                 <button type="submit" class="btn btn-success w-100 py-2">

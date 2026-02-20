@@ -52,7 +52,6 @@ $result = loadSessionNamesForViewer(
 );
 
 $sessionNames = $result['sessions'];
-$totalSessions = $result['total'];
 $baseQuery = $result['baseQuery'];
 
 /* ==========================

@@ -7,7 +7,7 @@ define('SESSION_TIMEOUT', 3600); // 60 minutes
 
 // Not logged in
 if (empty($_SESSION['user'])) {
-    header('Location: auth/login.php');
+    header('Location: ' . BASE_URL . 'auth/login.php');
     exit;
 }
 
@@ -18,7 +18,7 @@ if (isset($_SESSION['LAST_ACTIVITY']) &&
     $_SESSION = [];
     session_destroy();
 
-    header('Location: auth/login.php?timeout=1');
+    header('Location: ' . BASE_URL . 'auth/login.php');
     exit;
 }
 

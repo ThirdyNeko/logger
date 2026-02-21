@@ -178,32 +178,6 @@ $redirectUrl = match($_SESSION['user']['role'] ?? '') {
     </div>
 </div>
 
-<!-- First Login Warning Modal -->
-<div class="modal fade" id="firstLoginModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-warning">
-            <div class="modal-header bg-warning text-dark">
-                <h5 class="modal-title">
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                    Action Required
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-
-            <div class="modal-body">
-                You must change your password before accessing the dashboard.
-            </div>
-
-            <div class="modal-footer">
-                <button type="button" class="btn btn-warning" data-bs-dismiss="modal">
-                    OK
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-
 <script src="scripts/bootstrap.bundle.min.js"></script>
 <!-- Toggle Password Script -->
 <script>
@@ -220,6 +194,8 @@ document.querySelectorAll('.toggle-password').forEach(span => {
     });
 });
 </script>
+
+<script src ="sweetalert/dist/sweetalert2.all.min.js"></script>
 <script src="scripts/profile.js"></script>
 
 </body>

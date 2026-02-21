@@ -2,15 +2,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const btn = document.getElementById('returnBtn');
     if (!btn) return;
 
-    const modalEl = document.getElementById('firstLoginModal');
-    const modal = modalEl ? new bootstrap.Modal(modalEl) : null;
-
     btn.addEventListener('click', () => {
         const firstLogin = btn.dataset.firstLogin === '1';
         const redirectUrl = btn.dataset.redirect;
 
         if (firstLogin) {
-            modal?.show();
+            Swal.fire({
+                icon: 'warning',
+                title: 'Action Required',
+                text: 'You must change your password before accessing the dashboard.',
+                confirmButtonColor: '#ffc107',
+                confirmButtonText: 'OK'
+            });
             return;
         }
 

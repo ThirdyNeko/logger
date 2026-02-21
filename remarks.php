@@ -152,32 +152,6 @@ $programs = loadPrograms($db);
                             </tr>
                         </thead>
                         <tbody>
-                        <?php if (!empty($remarks)): ?>
-                            <?php foreach ($remarks as $row): ?>
-                                <tr class="clickable-row"
-                                    onclick="window.location='iteration_viewer.php?user=<?= urlencode($row['program_name']) ?>&session=<?= urlencode($row['session_id']) ?>&iteration=<?= (int)$row['iteration'] ?>'">
-                                    <td><?= htmlspecialchars($row['program_name']) ?></td>
-                                    <td><?= htmlspecialchars($row['session_id']) ?></td>
-                                    <td><?= (int)$row['iteration'] ?></td>
-                                    <td><?= htmlspecialchars($row['remark_name']) ?></td>
-                                    <td>
-                                        <?php if ($row['resolved']): ?>
-                                            <span class="badge bg-success">Resolved</span>
-                                        <?php else: ?>
-                                            <span class="badge bg-warning text-dark">Pending</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td><?= htmlspecialchars($row['username']) ?></td>
-                                    <td><?= date('Y-m-d', strtotime($row['created_at'])) ?></td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <tr>
-                                <td colspan="6" class="text-center p-4 text-muted">
-                                    No remarks found
-                                </td>
-                            </tr>
-                        <?php endif; ?>
                         </tbody>
                     </table>
                 </div>

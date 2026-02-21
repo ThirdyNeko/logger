@@ -16,7 +16,7 @@ if (
     exit;
 }
 
-$db = qa_db(); // your PDO connection
+$db = qa_db();
 
 $date = date('Y');
 $archiveTable = "qa_logs_" . $date;
@@ -26,16 +26,22 @@ try {
     // 1️⃣ Rename current logs table
     $db->exec("EXEC sp_rename 'qa_logs', '$archiveTable'");
 
-    // 2️⃣ Apply compression to the archive table (PAGE compression)
-    //    You can also use ROW compression if you prefer
-    $db->exec("ALTER TABLE $archiveTable REBUILD PARTITION = ALL WITH (DATA_COMPRESSION = PAGE)");
+    // 2️⃣ Apply compression
+    $db->exec("
+        ALTER TABLE $archiveTable 
+        REBUILD PARTITION = ALL 
+        WITH (DATA_COMPRESSION = PAGE)
+    ");
 
-    // 3️⃣ Create new empty table with same structure
+    // 3️⃣ Create new empty logs table
     $db->exec("SELECT TOP 0 * INTO qa_logs FROM $archiveTable");
+
+    // 4️⃣ Truncate remarks table
+    $db->exec("TRUNCATE TABLE qa_remarks");
 
     echo json_encode([
         'success' => true,
-        'message' => "Logs archived to $archiveTable with compression applied"
+        'message' => "Logs archived to $archiveTable. Remarks truncated."
     ]);
 
 } catch (Exception $e) {

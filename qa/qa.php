@@ -75,7 +75,8 @@ $programs = loadPrograms($db);
             padding-bottom: 1rem;
             margin-bottom: 1rem;
         }
-        tr.clickable-row {
+        /* Change cursor for clickable rows */
+        #logs tbody tr.clickable-row {
             cursor: pointer;
         }
     </style>
@@ -177,6 +178,7 @@ $programs = loadPrograms($db);
                                 const session = cells[1].textContent.trim();
 
                                 // Row click
+                                row.classList.add('clickable-row');
                                 row.onclick = function(e) {
                                     if (!e.target.closest('.print-session')) { // ignore clicks on print icon
                                         window.location.href = `qa_viewer.php?user=${encodeURIComponent(program)}&session=${encodeURIComponent(session)}`;

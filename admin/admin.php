@@ -269,131 +269,78 @@ $programs = loadPrograms($db);
 </div>
 </form>
 
-<!------------------
- CONFIRMATION MODAL 
-------------------->
-<div class="modal fade" id="archiveConfirmModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-
-            <div class="modal-header">
-                <h5 class="modal-title text-danger">Confirm Archive</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-
-            <div class="modal-body">
-                Are you sure you want to archive the current logs?
-                <br><br>
-                <small class="text-muted">
-                    This will move the current logs into an archive table.
-                </small>
-            </div>
-
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    Cancel
-                </button>
-                <button type="button" class="btn btn-danger" id="confirmArchiveBtn">
-                    Yes, Archive
-                </button>
-            </div>
-
-        </div>
-    </div>
-</div>
-
-
-<!-- =====================
-     ARCHIVE RESULT MODAL
-====================== -->
-
-<div class="modal fade" id="archiveResultModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-
-            <div class="modal-header">
-                <h5 class="modal-title" id="archiveModalTitle">Archive Status</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-
-            <div class="modal-body" id="archiveModalBody"></div>
-
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    Close
-                </button>
-            </div>
-
-        </div>
-    </div>
-</div>
-
 <!-- Bootstrap JS -->
 <script src="../scripts/bootstrap.bundle.min.js"></script>
 
+<!-- =====================
+     ARCHIVE LOGS SCRIPT 
+====================== --> 
+<script src ="../sweetalert/dist/sweetalert2.all.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
     const archiveBtn = document.getElementById('archiveBtn');
-    const confirmBtn = document.getElementById('confirmArchiveBtn');
 
-    const confirmModal = new bootstrap.Modal(document.getElementById('archiveConfirmModal'));
-    const resultModal = new bootstrap.Modal(document.getElementById('archiveResultModal'));
+    archiveBtn.addEventListener('click', async function () {
 
-    const resultTitle = document.getElementById('archiveModalTitle');
-    const resultBody = document.getElementById('archiveModalBody');
+        const result = await Swal.fire({
+            title: 'Archive Logs?',
+            text: 'This will move the current logs into an archive table.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, Archive',
+            reverseButtons: true
+        });
 
-    // 1️⃣ Open confirmation modal
-    archiveBtn.addEventListener('click', function () {
-        confirmModal.show();
-    });
+        if (!result.isConfirmed) return;
 
-    // 2️⃣ When admin confirms
-    confirmBtn.addEventListener('click', async function () {
-
-        confirmBtn.disabled = true;
-        confirmBtn.textContent = "Archiving...";
+        // Show loading state
+        Swal.fire({
+            title: 'Archiving...',
+            text: 'Please wait while logs are being archived.',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
 
         try {
             const response = await fetch('archive_logs.php', {
                 method: 'POST'
             });
 
-            const result = await response.json();
+            const data = await response.json();
 
-            confirmModal.hide();
-
-            if (result.success) {
-                resultTitle.textContent = "Success";
-                resultBody.innerHTML = `
-                    <div class="text-success">
-                        Logs archived successfully.
-                    </div>
-                `;
+            if (data.success) {
+                Swal.fire({
+                    title: 'Success',
+                    text: 'Logs archived successfully.',
+                    icon: 'success',
+                    confirmButtonColor: '#198754'
+                }).then(() => {
+                    location.reload(); // optional refresh
+                });
             } else {
-                resultTitle.textContent = "Failed";
-                resultBody.innerHTML = `
-                    <div class="text-danger">
-                        Archive failed. Please try again.
-                    </div>
-                `;
+                Swal.fire({
+                    title: 'Failed',
+                    text: 'Archive failed. Please try again.',
+                    icon: 'error',
+                    confirmButtonColor: '#dc3545'
+                });
             }
 
         } catch (error) {
-            confirmModal.hide();
-
-            resultTitle.textContent = "Error";
-            resultBody.innerHTML = `
-                <div class="text-danger">
-                    An unexpected error occurred.
-                </div>
-            `;
+            Swal.fire({
+                title: 'Error',
+                text: 'An unexpected error occurred.',
+                icon: 'error',
+                confirmButtonColor: '#dc3545'
+            });
         }
 
-        confirmBtn.disabled = false;
-        confirmBtn.textContent = "Yes, Archive";
-
-        resultModal.show();
     });
 
 });

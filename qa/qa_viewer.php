@@ -419,7 +419,7 @@ if ($selectedProgram && $selectedSession) {
 
             <?php if (!$hasRemark): ?>
                 <!-- Button to Open Modal -->
-                <button class="btn btn-dark w-100 mt-2"
+                <button class="btn btn-dark mb-2 w-100 mt-2"
                         data-bs-toggle="modal"
                         data-bs-target="#remarkModal">
                     Add QA Remark

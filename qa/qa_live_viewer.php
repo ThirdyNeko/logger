@@ -650,7 +650,6 @@ if (selectedProgram) {
 }
 </script>
 
-<?php if (!$hasRemark): ?>
 <div class="modal fade" id="remarkModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -692,7 +691,6 @@ if (selectedProgram) {
         </div>
     </div>
 </div>
-<?php endif; ?>
 
 
 </body>

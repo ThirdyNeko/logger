@@ -462,7 +462,6 @@ if ($selectedProgram && $selectedSession) {
             <?php endif; ?>
         <?php endif; ?>
 
-        <br>
 
         <!-- Logs -->
         <div id="print-area">

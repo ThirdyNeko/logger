@@ -413,63 +413,53 @@ if ($selectedProgram && $selectedSession) {
         // Get current remark data for this session & iteration
         $remarkData = $filteredRemarked[$selectedSession][$selectedIteration] ?? null;
         $hasRemark  = !empty($remarkData['remark']);
+        $isResolved = $remarkData['resolved'] ?? false;
         ?>
         <?php if (!empty($selectedIteration)): ?>
 
             <?php if (!$hasRemark): ?>
-                <!-- QA Remark Form -->
-                <div class="card p-3 mt-2">
-                    <form method="POST">
-                        <input type="hidden" name="program" value="<?= htmlspecialchars($selectedProgram) ?>">
-                        <input type="hidden" name="session" value="<?= htmlspecialchars($selectedSession) ?>">
-                        <input type="hidden" name="iteration" value="<?= htmlspecialchars($selectedIteration) ?>">
+                <!-- Button to Open Modal -->
+                <button class="btn btn-dark w-100 mt-2"
+                        data-bs-toggle="modal"
+                        data-bs-target="#remarkModal">
+                    Add QA Remark
+                </button>
 
-                        <input type="text" name="remark_name" class="form-control mb-2" placeholder="Remark name (optional)" maxlength="20" value="<?= htmlspecialchars($remarkData['name'] ?? '') ?>">
+            <?php else: ?>
 
-                        <textarea name="remark" class="form-control mb-2" placeholder="Enter QA remarks here..." required><?= htmlspecialchars($remarkData['remark'] ?? '') ?></textarea>
+                <!-- Remark Status Card -->
+                <div class="card p-2 mb-2 text-start">
 
-                        <button type="submit" class="btn btn-dark w-100">Save Remark</button>
-                    </form>
-                </div>
-            <?php endif; ?>
-        <?php endif; ?>
+                    <?php if ($isResolved): ?>
+                        <!-- Resolved Badge -->
+                        <span class="badge bg-success w-100 py-2">
+                            ✅ Remark Resolved
+                        </span>
 
-        <?php
-            $remarkData = $filteredRemarked[$selectedSession][$selectedIteration] ?? null;
-            $hasRemark  = !empty($remarkData['remark']);
-            $isResolved = $remarkData['resolved'] ?? false;
-        ?>
-
-        <?php if ($hasRemark): ?>
-            <div class="card p-2 mb-2 text-start">
-                <?php if ($isResolved): ?>
-                    <!-- Resolved Badge -->
-                    <span class="badge bg-success w-100 py-2">
-                        ✅ Remark Resolved
-                    </span>
-
-                    <!-- Optional resolver comment -->
-                    <?php if (!empty($remarkData['resolve_comment'])): ?>
-                        <div class="mb-2">
-                            <strong>Comment:</strong>
-                            <div class="text-muted">
-                                <?= nl2br(htmlspecialchars($remarkData['resolve_comment'])) ?>
+                        <?php if (!empty($remarkData['resolve_comment'])): ?>
+                            <div class="mb-2">
+                                <strong>Comment:</strong>
+                                <div class="text-muted">
+                                    <?= nl2br(htmlspecialchars($remarkData['resolve_comment'])) ?>
+                                </div>
                             </div>
-                        </div>
+                        <?php endif; ?>
+
+                        <small class="d-block text-muted">
+                            By: <?= htmlspecialchars($remarkData['resolved_by'] ?? '---') ?> <br>
+                            At: <?= htmlspecialchars($remarkData['resolved_at'] ?? '---') ?>
+                        </small>
+
+                    <?php else: ?>
+                        <!-- Pending Badge -->
+                        <span class="badge bg-warning text-dark w-100 py-2">
+                            ⏳ Remark Pending
+                        </span>
                     <?php endif; ?>
 
-                    <!-- Resolved by and at -->
-                    <small class="d-block text-muted">
-                        By: <?= htmlspecialchars($remarkData['resolved_by'] ?? '---') ?> <br>
-                        At: <?= htmlspecialchars($remarkData['resolved_at'] ?? '---') ?>
-                    </small>
-                <?php else: ?>
-                    <!-- Pending Badge -->
-                    <span class="badge bg-warning text-dark w-100 py-2">
-                        ⏳ Remark Pending
-                    </span>
-                <?php endif; ?>
-            </div>
+                </div>
+
+            <?php endif; ?>
         <?php endif; ?>
 
         <br>
@@ -524,6 +514,50 @@ if ($selectedProgram && $selectedSession) {
         </div>
     </main>
 </div>
+
+<?php if (!$hasRemark): ?>
+<div class="modal fade" id="remarkModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Add QA Remark</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <form method="POST">
+
+                    <input type="hidden" name="program" value="<?= htmlspecialchars($selectedProgram) ?>">
+                    <input type="hidden" name="session" value="<?= htmlspecialchars($selectedSession) ?>">
+                    <input type="hidden" name="iteration" value="<?= htmlspecialchars($selectedIteration) ?>">
+
+                    <input type="text"
+                           name="remark_name"
+                           class="form-control mb-2"
+                           placeholder="Remark name"
+                           maxlength="20"
+                           value="<?= htmlspecialchars($remarkData['name'] ?? '') ?>"
+                           required
+                           pattern=".*\S.*"
+                           title="Remark name cannot be empty or spaces only">
+
+                    <textarea name="remark"
+                              class="form-control mb-3"
+                              placeholder="Enter QA remarks here..."
+                              required><?= htmlspecialchars($remarkData['remark'] ?? '') ?></textarea>
+
+                    <button type="submit" class="btn btn-dark w-100">
+                        Save Remark
+                    </button>
+
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+<?php endif; ?>
 
 <!-- Bootstrap JS -->
 <script src="../scripts/bootstrap.bundle.min.js"></script>

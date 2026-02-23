@@ -474,7 +474,7 @@ $iterations = $allIterations;
                     <?php endforeach; ?>
                 </ul>
             </div>
-
+                    
             <!-- QA Remark Form -->
             <?php
         // Get current remark data for this session & iteration
@@ -484,20 +484,12 @@ $iterations = $allIterations;
         <?php if (!empty($selectedIteration)): ?>
 
             <?php if (!$hasRemark): ?>
-                <!-- QA Remark Form -->
-                <div class="card p-3 mt-2">
-                    <form method="POST">
-                        <input type="hidden" name="program" value="<?= htmlspecialchars($selectedProgram) ?>">
-                        <input type="hidden" name="session" value="<?= htmlspecialchars($selectedSession) ?>">
-                        <input type="hidden" name="iteration" value="<?= htmlspecialchars($selectedIteration) ?>">
-
-                        <input type="text" name="remark_name" class="form-control mb-2" placeholder="Remark name (optional)" maxlength="20" value="<?= htmlspecialchars($remarkData['name'] ?? '') ?>">
-
-                        <textarea name="remark" class="form-control mb-2" placeholder="Enter QA remarks here..." required><?= htmlspecialchars($remarkData['remark'] ?? '') ?></textarea>
-
-                        <button type="submit" class="btn btn-dark w-100">Save Remark</button>
-                    </form>
-                </div>
+                <!-- Button to Open Modal -->
+                <button class="btn btn-dark w-100 mt-2"
+                        data-bs-toggle="modal"
+                        data-bs-target="#remarkModal">
+                    Add QA Remark
+                </button>
             <?php endif; ?>
         <?php endif; ?>
 
@@ -508,7 +500,7 @@ $iterations = $allIterations;
             ?>
 
             <?php if ($hasRemark): ?>
-                <div class="card p-2 mb-2 text-start">
+                <div class="card p-2 mt-2 mb-2 text-start">
                     <?php if ($isResolved): ?>
                         <!-- Resolved Badge -->
                         <span class="badge bg-success w-100 py-2">
@@ -660,6 +652,51 @@ if (selectedProgram) {
     }, 2000);
 }
 </script>
+
+<?php if (!$hasRemark): ?>
+<div class="modal fade" id="remarkModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Add QA Remark</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <form method="POST">
+
+                    <input type="hidden" name="program" value="<?= htmlspecialchars($selectedProgram) ?>">
+                    <input type="hidden" name="session" value="<?= htmlspecialchars($selectedSession) ?>">
+                    <input type="hidden" name="iteration" value="<?= htmlspecialchars($selectedIteration) ?>">
+
+                    <input type="text"
+                           name="remark_name"
+                           class="form-control mb-2"
+                           placeholder="Remark name"
+                           maxlength="20"
+                           value="<?= htmlspecialchars($remarkData['name'] ?? '') ?>"
+                           required
+                           pattern=".*\S.*"
+                           title="Remark name cannot be empty or spaces only">
+
+                    <textarea name="remark"
+                              class="form-control mb-3"
+                              placeholder="Enter QA remarks here..."
+                              required><?= htmlspecialchars($remarkData['remark'] ?? '') ?></textarea>
+
+                    <button type="submit" class="btn btn-dark w-100">
+                        Save Remark
+                    </button>
+
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
 
 </body>
 </html>

@@ -1,0 +1,7 @@
+[2026-02-23 10:05:37] Error: [2] Undefined variable $hasRemark in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 656
+[2026-02-23 10:05:38] Error: [2] Undefined variable $hasRemark in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 656
+[2026-02-23 10:05:42] Error: [2] Undefined variable $hasRemark in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 656
+[2026-02-23 10:17:34] Error: [2] Undefined variable $hasRemark in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 656
+[2026-02-23 10:17:36] Error: [2] Undefined variable $hasRemark in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 656
+[2026-02-23 10:18:36] Error: [2] Undefined variable $hasRemark in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 656
+[2026-02-23 10:18:37] Error: [2] Undefined variable $hasRemark in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 656

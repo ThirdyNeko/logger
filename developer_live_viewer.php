@@ -454,24 +454,12 @@ $iterations = $allIterations;
 
         <?php if ($hasRemark && !$isResolved): ?>
             <!-- Form to mark remark as resolved -->
-            <form method="POST" class="mb-2 text-center">
-                <input type="hidden" name="program" value="<?= htmlspecialchars($selectedProgram) ?>">
-                <input type="hidden" name="session" value="<?= htmlspecialchars($selectedSession) ?>">
-                <input type="hidden" name="iteration" value="<?= htmlspecialchars($selectedIteration) ?>">
-                <input type="hidden" name="mark_resolved" value="1">
-
-                <!-- Resolver comment textarea -->
-                <textarea 
-                    name="resolve_comment" 
-                    class="form-control mb-2" 
-                    placeholder="Add a detailed comment for resolving..."
-                    rows="4"
-                    required></textarea>
-
-                <button type="submit" class="btn btn-success w-100 py-2">
-                    ✅ Mark Remark as Resolved
-                </button>
-            </form>
+            <button type="button" 
+                    class="btn mb-2 btn-success w-100 py-2"
+                    data-bs-toggle="modal" 
+                    data-bs-target="#resolveModal">
+                ✅ Mark Remark as Resolved
+            </button>
 
         <?php elseif ($hasRemark && $isResolved): ?>
             <!-- Display resolved info -->
@@ -638,6 +626,51 @@ if (selectedProgram) {
     }, 2000);
 }
 </script>
+
+<!-- Resolve Remark Modal -->
+<div class="modal fade" id="resolveModal" tabindex="-1" aria-labelledby="resolveModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="resolveModalLabel">
+                    Confirm Resolve Remark
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form method="POST">
+                <div class="modal-body">
+
+                    <input type="hidden" name="program" value="<?= htmlspecialchars($selectedProgram) ?>">
+                    <input type="hidden" name="session" value="<?= htmlspecialchars($selectedSession) ?>">
+                    <input type="hidden" name="iteration" value="<?= htmlspecialchars($selectedIteration) ?>">
+                    <input type="hidden" name="mark_resolved" value="1">
+
+                    <label class="form-label fw-bold">Resolution Comment</label>
+                    <textarea 
+                        name="resolve_comment" 
+                        class="form-control" 
+                        placeholder="Add a detailed comment for resolving..."
+                        rows="4"
+                        required></textarea>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        ✅ Confirm Resolve
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
 
 </body>
 </html>

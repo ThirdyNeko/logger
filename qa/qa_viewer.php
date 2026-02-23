@@ -491,13 +491,10 @@ if ($selectedProgram && $selectedSession) {
                 <div class="card log-card bg-primary-subtle border-primary p-3 mb-2">
                     <strong>Remark Name:</strong> <?= htmlspecialchars($remarkName) ?><br>
                     <small>By: <?= htmlspecialchars($remarkUser) ?></small>
-                </div>
-            <?php endif; ?>
-
-            <?php if ($remarkText) : ?>
-                <div class="card log-card bg-light p-3 mb-2">
-                    <strong>Remark:</strong><br>
-                    <?= nl2br(htmlspecialchars($remarkText)) ?>
+                    <div class="card log-card bg-light p-3 mt-2 mb-2">
+                        <strong>Remark:</strong><br>
+                        <?= nl2br(htmlspecialchars($remarkText)) ?>
+                    </div>
                 </div>
             <?php endif; ?>
             <?php

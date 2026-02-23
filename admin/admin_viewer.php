@@ -375,23 +375,6 @@ if ($selectedProgram && $selectedSession) {
         </div>
 
         <?php if (!empty($logsToShow)): ?>
-            <?php
-            $remarkName = $logsToShow[0]['_remark_name'] ?? '';
-            $remarkText = $logsToShow[0]['_remark_text'] ?? '';
-            $remarkUser = $filteredRemarked[$selectedSession][$selectedIteration]['username'] ?? 'Unknown';
-            ?>
-            <?php if ($remarkName || $remarkText): ?>
-                <div class="card log-card bg-primary-subtle border-primary p-3 mb-2">
-                    <strong>Remark Name:</strong> <?= htmlspecialchars($remarkName) ?><br>
-                    <small>By: <?= htmlspecialchars($remarkUser) ?></small>
-                </div>
-            <?php endif; ?>
-            <?php if ($remarkText): ?>
-                <div class="card log-card bg-light p-3 mb-2">
-                    <strong>Remark:</strong><br>
-                    <?= nl2br(htmlspecialchars($remarkText)) ?>
-                </div>
-            <?php endif; ?>
 
             <?php
             if ($selectedIteration === 'summary') {

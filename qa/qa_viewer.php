@@ -236,7 +236,11 @@ function render_log_entry(array $log): string
 
     // Created At
     if (!empty($log['created_at'])) {
-        $html .= '<p class="text-muted small mb-0">Created at: ' . htmlspecialchars($log['created_at']) . '</p>';
+        $html .= '<p class="text-muted small mb-0">Created at: ' . 
+            (!empty($log['created_at']) 
+                ? date('Y-m-d H:i:s', strtotime($log['created_at'])) 
+                : '-') 
+            . '</p>';
     }
 
     $html .= '</div></div>';
@@ -447,7 +451,9 @@ if ($selectedProgram && $selectedSession) {
 
                         <small class="d-block text-muted">
                             By: <?= htmlspecialchars($remarkData['resolved_by'] ?? '---') ?> <br>
-                            At: <?= htmlspecialchars($remarkData['resolved_at'] ?? '---') ?>
+                            At: <?= !empty($remarkData['resolved_at']) 
+                                ? date('Y-m-d H:i:s', strtotime($remarkData['resolved_at'])) 
+                                : '-' ?>
                         </small>
 
                     <?php else: ?>

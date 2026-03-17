@@ -84,19 +84,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'
 /* ==========================
    STORE QA REMARK (VIEWER)
 ========================== */
-if ($_SERVER['REQUEST_METHOD'] === 'POST'
-    && isset($_POST['remark'], $_POST['iteration'])
-) {
-    define('QA_SKIP_LOGGING', true);
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remark'], $_POST['log_id'])) {
 
-    $program   = $_POST['program'] ?? '';
-    $sessionId = $_POST['session'] ?? '';
-    $iteration = (int) ($_POST['iteration'] ?? 0);
+    $program   = $_POST['program'] ?? null;
+    $sessionId = $_POST['session'] ?? null;
+    $iteration = isset($_POST['iteration'])
+        ? (int)$_POST['iteration']
+        : (int)$selectedIteration; // fallback
 
-    $remark     = trim($_POST['remark']);
-    $remarkName = trim($_POST['remark_name'] ?? '');
+    $logId     = (int)$_POST['log_id'];
+    $remark    = trim($_POST['remark']);
+    $remarkName= trim($_POST['remark_name'] ?? '');
 
-    if ($userId && $username && $program && $sessionId && $remark !== '') {
+    if ($userId && $program && $sessionId && $remark !== '') {
+
         saveQaRemark(
             $db,
             $userId,
@@ -106,16 +107,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'
             $iteration,
             $remarkName,
             $remark,
-            $resolved = false
+            false,
+            $logId
         );
     }
-
-    header('Location: ' . $_SERVER['PHP_SELF']
-        . '?user=' . urlencode($program)
-        . '&session=' . urlencode($sessionId)
-        . '&iteration=' . $iteration
-    );
-    exit;
 }
 
 /* ==========================
@@ -179,9 +174,15 @@ function group_error_logs(array $errorLogs): array
     return array_values($grouped);
 }
 
-function render_log_entry(array $log): string
+function render_log_entry(array $log, array $remarksByLog = []): string
 {
     $type = $log['type'] ?? '';
+    $logId = $log['id'] ?? null;
+
+    // Get remark for this log
+    $remark = $logId && isset($remarksByLog[$logId])
+        ? $remarksByLog[$logId]
+        : null;
 
     // Normalize endpoints
     $endpoints = !empty($log['_endpoints']) && is_array($log['_endpoints'])
@@ -197,7 +198,7 @@ function render_log_entry(array $log): string
     $html = '<div class="card mb-3 ' . $cardClass . '">';
     $html .= '<div class="card-body p-3">';
 
-    // Card title
+    // Title
     $html .= '<h6 class="card-title mb-2">' . 
              ($type === 'backend-error' 
                  ? '<span class="text-danger">Backend Error</span>' 
@@ -216,50 +217,52 @@ function render_log_entry(array $log): string
         $html .= '</p>';
     }
 
-    // Request body
+    // Request
     if (!empty($log['request_body'])) {
         $json = json_decode($log['request_body'], true);
         $pretty = $json !== null
             ? json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
             : $log['request_body'];
-        $html .= '<p class="mb-2"><strong>Request:</strong><pre class="p-2 bg-white border rounded" style="overflow-x:auto;">' 
-                 . htmlspecialchars($pretty) . '</pre></p>';
+        $html .= '<pre class="p-2 bg-white border rounded">'
+              . htmlspecialchars($pretty) . '</pre>';
     }
 
-    // Response body
+    // Response
     if (!empty($log['response_body'])) {
         $json = json_decode($log['response_body'], true);
         $pretty = $json !== null
             ? json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
             : $log['response_body'];
-        $html .= '<p class="mb-2"><strong>Response:</strong><pre class="p-2 bg-white border rounded" style="overflow-x:auto;">' 
-                 . htmlspecialchars($pretty) . '</pre></p>';
+        $html .= '<pre class="p-2 bg-white border rounded">'
+              . htmlspecialchars($pretty) . '</pre>';
     }
 
-    // Iteration / Method / Status
-    if (!in_array($type, ['frontend-io', 'backend-response'], true)) {
-        if (!empty($log['iteration'])) $html .= '<p class="mb-1"><strong>Iteration:</strong> ' . htmlspecialchars($log['iteration']) . '</p>';
-        if (!empty($log['method'])) $html .= '<p class="mb-1"><strong>Method:</strong> ' . htmlspecialchars($log['method']) . '</p>';
-        if (isset($log['status_code'])) $html .= '<p class="mb-1"><strong>Status:</strong> ' . (int)$log['status_code'] . '</p>';
+    // Remark display
+    if ($remark) {
+        $badge = !empty($remark['resolved']) ? 'bg-success' : 'bg-warning text-dark';
+
+        $html .= '<div class="mt-2 p-2 border rounded bg-light">';
+        $html .= '<span class="badge ' . $badge . ' mb-1">'
+              . (!empty($remark['resolved']) ? 'Resolved' : 'Pending')
+              . '</span><br>';
+
+        $html .= '<strong>' . htmlspecialchars($remark['remark_name']) . '</strong><br>';
+        $html .= '<small>By: ' . htmlspecialchars($remark['username']) . '</small><br>';
+        $html .= nl2br(htmlspecialchars($remark['remark']));
+        $html .= '</div>';
     }
 
-    // Occurrences
-    if ($type === 'backend-error' && !empty($log['_count']) && $log['_count'] > 1) {
-        $extra = (int)$log['_count'] - 1;
-        $html .= '<div class="alert alert-warning p-2 mt-2 mb-2" role="alert">
-                    <strong>Occurrences:</strong> ' . (int)$log['_count'] . '<br>
-                    + ' . $extra . ' more occurrence' . ($extra > 1 ? 's' : '') . '
-                </div>';
-    }
-
-    // Created At
-    if (!empty($log['created_at'])) {
-        $html .= '<p class="text-muted small mb-0">Created at: ' . 
-            (!empty($log['created_at']) 
-                ? date('Y-m-d H:i:s', strtotime($log['created_at'])) 
-                : '-') 
-            . '</p>';
-    }
+    // Button
+    $html .= '<button 
+        class="btn btn-sm btn-dark mt-2 remark-btn"
+        data-bs-toggle="modal"
+        data-bs-target="#remarkModal"
+        data-log-id="' . htmlspecialchars($logId) . '"
+        data-remark-name="' . htmlspecialchars($remark['remark_name'] ?? '') . '"
+        data-remark-text="' . htmlspecialchars($remark['remark'] ?? '') . '"
+    >
+        ' . ($remark ? 'Edit Remark' : 'Add Remark') . '
+    </button>';
 
     $html .= '</div></div>';
 
@@ -272,12 +275,12 @@ function render_log_entry(array $log): string
 $programs = loadPrograms($db);
 
 /* ==========================
-   LOAD REMARKS (FILTERED BY USER)
+   LOAD REMARKS
 ========================== */
-$remarked = [];
+$remarksByLog = [];
 
 if ($selectedProgram) {
-    $remarked = loadRemarksByProgram($db, $selectedProgram);
+    $remarksByLog = loadRemarksByLog($db, $selectedProgram);
 }
 
 /* ==========================
@@ -485,17 +488,6 @@ $iterations = $allIterations;
         $remarkData = $filteredRemarked[$selectedSession][$selectedIteration] ?? null;
         $hasRemark  = !empty($remarkData['remark']);
         ?>
-        <?php if (!empty($selectedIteration)): ?>
-
-            <?php if (!$hasRemark): ?>
-                <!-- Button to Open Modal -->
-                <button class="btn btn-dark w-100 mt-2"
-                        data-bs-toggle="modal"
-                        data-bs-target="#remarkModal">
-                    Add QA Remark
-                </button>
-            <?php endif; ?>
-        <?php endif; ?>
 
             <?php
                 $remarkData = $filteredRemarked[$selectedSession][$selectedIteration] ?? null;
@@ -577,13 +569,13 @@ $iterations = $allIterations;
 
         // 1️⃣ Render normal logs AS-IS
         foreach ($normalLogs as $log) {
-            echo render_log_entry($log);
+            echo render_log_entry($log, $remarksByLog);
         }
 
         // 2️⃣ Render grouped backend errors ONLY
         $groupedErrors = group_error_logs($errorLogs);
         foreach ($groupedErrors as $log) {
-            echo render_log_entry($log);
+            echo render_log_entry($log, $remarksByLog);
         }
 
     endif; ?>
@@ -657,46 +649,59 @@ if (selectedProgram) {
 </script>
 
 <div class="modal fade" id="remarkModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
 
-            <div class="modal-header">
-                <h5 class="modal-title">Add QA Remark</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
+      <div class="modal-header">
+        <h5 class="modal-title">QA Remark</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
 
-            <div class="modal-body">
-                <form method="POST">
+      <div class="modal-body">
+        <form method="POST">
 
-                    <input type="hidden" name="program" value="<?= htmlspecialchars($selectedProgram) ?>">
-                    <input type="hidden" name="session" value="<?= htmlspecialchars($selectedSession) ?>">
-                    <input type="hidden" name="iteration" value="<?= htmlspecialchars($selectedIteration) ?>">
+          <input type="hidden" name="program" value="<?= htmlspecialchars($selectedProgram) ?>">
+          <input type="hidden" name="session" value="<?= htmlspecialchars($selectedSession) ?>">
+          <input type="hidden" name="iteration" value="<?= htmlspecialchars($selectedIteration) ?>">
+          <input type="hidden" name="log_id" id="modalLogId" value="">
 
-                    <input type="text"
-                           name="remark_name"
-                           class="form-control mb-2"
-                           placeholder="Remark name"
-                           maxlength="20"
-                           value="<?= htmlspecialchars($remarkData['name'] ?? '') ?>"
-                           required
-                           pattern=".*\S.*"
-                           title="Remark name cannot be empty or spaces only">
+          <input type="text"
+                 name="remark_name"
+                 id="modalRemarkName"
+                 class="form-control mb-2"
+                 placeholder="Remark name"
+                 maxlength="20"
+                 required
+                 pattern=".*\S.*"
+                 title="Remark name cannot be empty or spaces only">
 
-                    <textarea name="remark"
-                              class="form-control mb-3"
-                              placeholder="Enter QA remarks here..."
-                              required><?= htmlspecialchars($remarkData['remark'] ?? '') ?></textarea>
+          <textarea name="remark"
+                    id="modalRemarkText"
+                    class="form-control mb-3"
+                    placeholder="Enter QA remarks here..."
+                    required></textarea>
 
-                    <button type="submit" class="btn btn-dark w-100">
-                        Save Remark
-                    </button>
+          <button type="submit" class="btn btn-dark w-100">Save Remark</button>
+        </form>
+      </div>
 
-                </form>
-            </div>
-
-        </div>
     </div>
+  </div>
 </div>
+
+<script>
+document.querySelectorAll('.remark-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const logId = this.dataset.logId || '';
+        const name = this.dataset.remarkName || '';
+        const text = this.dataset.remarkText || '';
+
+        document.getElementById('modalLogId').value = logId;
+        document.getElementById('modalRemarkName').value = name;
+        document.getElementById('modalRemarkText').value = text;
+    });
+});
+</script>
 
 
 </body>

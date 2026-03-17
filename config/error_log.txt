@@ -10,3 +10,145 @@
 [2026-02-23 13:36:16] Error: [2] Undefined variable $hasRemark in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 653
 [2026-02-23 13:36:17] Error: [2] Undefined variable $hasRemark in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 653
 [2026-02-23 13:36:18] Error: [2] Undefined variable $hasRemark in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 653
+[2026-03-17 14:00:29] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 268
+[2026-03-17 14:00:29] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 269
+[2026-03-17 14:00:29] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 270
+[2026-03-17 14:00:29] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 272
+[2026-03-17 14:00:29] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 268
+[2026-03-17 14:00:29] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 269
+[2026-03-17 14:00:29] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 270
+[2026-03-17 14:00:29] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 272
+[2026-03-17 14:00:29] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 268
+[2026-03-17 14:00:29] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 269
+[2026-03-17 14:00:29] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 270
+[2026-03-17 14:00:29] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 272
+[2026-03-17 14:02:06] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 271
+[2026-03-17 14:02:06] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 272
+[2026-03-17 14:02:06] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 273
+[2026-03-17 14:02:06] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 275
+[2026-03-17 14:02:06] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 271
+[2026-03-17 14:02:06] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 272
+[2026-03-17 14:02:06] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 273
+[2026-03-17 14:02:06] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 275
+[2026-03-17 14:02:06] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 271
+[2026-03-17 14:02:06] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 272
+[2026-03-17 14:02:06] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 273
+[2026-03-17 14:02:06] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 275
+[2026-03-17 14:02:17] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 271
+[2026-03-17 14:02:17] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 272
+[2026-03-17 14:02:17] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 273
+[2026-03-17 14:02:17] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 275
+[2026-03-17 14:02:17] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 271
+[2026-03-17 14:02:17] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 272
+[2026-03-17 14:02:17] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 273
+[2026-03-17 14:02:17] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 275
+[2026-03-17 14:02:17] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 271
+[2026-03-17 14:02:17] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 272
+[2026-03-17 14:02:17] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 273
+[2026-03-17 14:02:17] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 275
+[2026-03-17 14:02:27] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 271
+[2026-03-17 14:02:27] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 272
+[2026-03-17 14:02:27] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 273
+[2026-03-17 14:02:27] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 275
+[2026-03-17 14:02:27] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 271
+[2026-03-17 14:02:27] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 272
+[2026-03-17 14:02:27] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 273
+[2026-03-17 14:02:27] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 275
+[2026-03-17 14:02:27] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 271
+[2026-03-17 14:02:27] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 272
+[2026-03-17 14:02:27] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 273
+[2026-03-17 14:02:27] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 275
+[2026-03-17 14:12:37] Error: [2] Undefined variable $remark in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 252
+[2026-03-17 14:12:37] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 269
+[2026-03-17 14:12:37] Error: [2] Undefined variable $remark in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 273
+[2026-03-17 14:12:43] Error: [2] Undefined variable $remark in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 252
+[2026-03-17 14:12:43] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 269
+[2026-03-17 14:12:43] Error: [2] Undefined variable $remark in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 273
+[2026-03-17 14:14:04] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 299
+[2026-03-17 14:14:04] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 299
+[2026-03-17 14:14:04] Error: [2] Undefined variable $remark in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 252
+[2026-03-17 14:14:04] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 269
+[2026-03-17 14:14:04] Error: [2] Undefined variable $remark in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 273
+[2026-03-17 14:14:09] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 299
+[2026-03-17 14:14:09] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 299
+[2026-03-17 14:14:09] Error: [2] Undefined variable $remark in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 252
+[2026-03-17 14:14:09] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 269
+[2026-03-17 14:14:09] Error: [2] Undefined variable $remark in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 273
+[2026-03-17 14:15:17] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 299
+[2026-03-17 14:15:17] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 299
+[2026-03-17 14:15:18] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 299
+[2026-03-17 14:15:18] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 299
+[2026-03-17 14:15:18] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 299
+[2026-03-17 14:15:18] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 299
+[2026-03-17 14:15:20] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 299
+[2026-03-17 14:15:20] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 299
+[2026-03-17 14:15:20] Error: [2] Undefined variable $remark in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 252
+[2026-03-17 14:15:20] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 269
+[2026-03-17 14:15:20] Error: [2] Undefined variable $remark in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 273
+[2026-03-17 14:15:23] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 299
+[2026-03-17 14:15:23] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 299
+[2026-03-17 14:15:23] Error: [2] Undefined variable $remark in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 252
+[2026-03-17 14:15:23] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 269
+[2026-03-17 14:15:23] Error: [2] Undefined variable $remark in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 273
+[2026-03-17 14:15:54] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 299
+[2026-03-17 14:15:54] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 299
+[2026-03-17 14:15:54] Error: [2] Undefined variable $remark in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 252
+[2026-03-17 14:15:54] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 269
+[2026-03-17 14:15:54] Error: [2] Undefined variable $remark in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 273
+[2026-03-17 14:15:58] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 299
+[2026-03-17 14:15:58] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 299
+[2026-03-17 14:15:58] Error: [2] Undefined variable $remark in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 252
+[2026-03-17 14:15:58] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 269
+[2026-03-17 14:15:58] Error: [2] Undefined variable $remark in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 273
+[2026-03-17 14:16:01] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 299
+[2026-03-17 14:16:01] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 299
+[2026-03-17 14:16:03] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 299
+[2026-03-17 14:16:03] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 299
+[2026-03-17 14:16:04] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 299
+[2026-03-17 14:16:04] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 299
+[2026-03-17 14:16:05] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 299
+[2026-03-17 14:16:05] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 299
+[2026-03-17 14:16:05] Error: [2] Undefined variable $remark in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 252
+[2026-03-17 14:16:05] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 269
+[2026-03-17 14:16:05] Error: [2] Undefined variable $remark in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 273
+[2026-03-17 14:16:09] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 299
+[2026-03-17 14:16:09] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 299
+[2026-03-17 14:16:09] Error: [2] Undefined variable $remark in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 252
+[2026-03-17 14:16:09] Error: [2] Undefined variable $logId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 269
+[2026-03-17 14:16:09] Error: [2] Undefined variable $remark in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 273
+[2026-03-17 14:16:25] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 282
+[2026-03-17 14:16:25] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 282
+[2026-03-17 14:16:28] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 282
+[2026-03-17 14:16:28] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 282
+[2026-03-17 14:16:29] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 282
+[2026-03-17 14:16:29] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 282
+[2026-03-17 14:16:30] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 282
+[2026-03-17 14:16:30] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 282
+[2026-03-17 14:16:34] Error: [2] Undefined variable $program in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 94
+[2026-03-17 14:16:34] Error: [2] Undefined variable $sessionId in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 94
+[2026-03-17 14:18:15] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 288
+[2026-03-17 14:18:15] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 288
+[2026-03-17 14:18:29] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 288
+[2026-03-17 14:18:29] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 288
+[2026-03-17 14:19:43] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 290
+[2026-03-17 14:19:43] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 290
+[2026-03-17 14:19:47] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 290
+[2026-03-17 14:19:47] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 290
+[2026-03-17 14:20:31] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 290
+[2026-03-17 14:20:31] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 290
+[2026-03-17 14:20:34] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 290
+[2026-03-17 14:20:34] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 290
+[2026-03-17 14:21:33] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 290
+[2026-03-17 14:21:33] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 290
+[2026-03-17 14:22:49] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 290
+[2026-03-17 14:22:49] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 290
+[2026-03-17 14:22:56] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 290
+[2026-03-17 14:22:56] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 290
+[2026-03-17 14:24:52] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 290
+[2026-03-17 14:24:52] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 290
+[2026-03-17 14:24:53] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 290
+[2026-03-17 14:24:53] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 290
+[2026-03-17 14:24:54] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 290
+[2026-03-17 14:24:54] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 290
+[2026-03-17 14:24:56] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 290
+[2026-03-17 14:24:56] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 290

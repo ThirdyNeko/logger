@@ -12,67 +12,68 @@ function saveQaRemark(
     int $iteration,
     string $remarkName,
     string $remark,
-    bool $resolved
-    
+    bool $resolved,
+    ?int $logId = null // ✅ allow null for backward compatibility
 ): void {
-    $sql = "
-        IF EXISTS (
-            SELECT 1
-            FROM qa_remarks
-            WHERE user_id = ?
-              AND program_name = ?
-              AND session_id = ?
-              AND iteration = ?
-        )
-        BEGIN
-            UPDATE qa_remarks
-            SET
-                remark_name = ?,
-                remark = ?,
-                username = ?,
-                resolved = ?
-            WHERE user_id = ?
-              AND program_name = ?
-              AND session_id = ?
-              AND iteration = ?
-        END
-        ELSE
-        BEGIN
-            INSERT INTO qa_remarks
-                (user_id, username, program_name, session_id, iteration, remark_name, remark, resolved)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        END
-    ";
 
-    $stmt = $db->prepare($sql);
-    $stmt->execute([
-        // EXISTS
-        $userId,
-        $program,
-        $sessionId,
-        $iteration,
+    if ($logId) {
+        // 🔥 NEW: log-based remark
+        $sql = "
+            IF EXISTS (SELECT 1 FROM qa_remarks WHERE log_id = ?)
+            BEGIN
+                UPDATE qa_remarks
+                SET remark_name = ?, remark = ?, username = ?, resolved = ?
+                WHERE log_id = ?
+            END
+            ELSE
+            BEGIN
+                INSERT INTO qa_remarks
+                    (user_id, username, program_name, session_id, iteration, log_id, remark_name, remark, resolved)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            END
+        ";
 
-        // UPDATE
-        $remarkName,
-        $remark,
-        $username,
-        $resolved,
-        $userId,
-        $program,
-        $sessionId,
-        $iteration,
-        
+        $stmt = $db->prepare($sql);
+        $stmt->execute([
+            $logId,
+            $remarkName, $remark, $username, $resolved, $logId,
+            $userId, $username, $program, $sessionId, $iteration, $logId, $remarkName, $remark, $resolved
+        ]);
 
-        // INSERT
-        $userId,
-        $username,
-        $program,
-        $sessionId,
-        $iteration,
-        $remarkName,
-        $remark,
-        $resolved
-    ]);
+    } else {
+        // ✅ OLD behavior (iteration-based)
+        $sql = "
+            IF EXISTS (
+                SELECT 1 FROM qa_remarks
+                WHERE user_id = ?
+                  AND program_name = ?
+                  AND session_id = ?
+                  AND iteration = ?
+            )
+            BEGIN
+                UPDATE qa_remarks
+                SET remark_name = ?, remark = ?, username = ?, resolved = ?
+                WHERE user_id = ?
+                  AND program_name = ?
+                  AND session_id = ?
+                  AND iteration = ?
+            END
+            ELSE
+            BEGIN
+                INSERT INTO qa_remarks
+                    (user_id, username, program_name, session_id, iteration, remark_name, remark, resolved)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            END
+        ";
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute([
+            $userId, $program, $sessionId, $iteration,
+            $remarkName, $remark, $username, $resolved,
+            $userId, $program, $sessionId, $iteration,
+            $userId, $username, $program, $sessionId, $iteration, $remarkName, $remark, $resolved
+        ]);
+    }
 }
 
 /**
@@ -113,6 +114,27 @@ function loadRemarksByProgram(PDO $db, string $program): array
     }
 
     return $remarked;
+}
+
+function loadRemarksByLog(PDO $db, string $program): array
+{
+    $sql = "
+        SELECT log_id, remark_name, remark, username, resolved
+        FROM qa_remarks
+        WHERE program_name = :program
+          AND log_id IS NOT NULL
+    ";
+
+    $stmt = $db->prepare($sql);
+    $stmt->execute([':program' => $program]);
+
+    $out = [];
+
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $out[(int)$row['log_id']] = $row;
+    }
+
+    return $out;
 }
 
 

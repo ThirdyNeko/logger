@@ -45,18 +45,19 @@ $userId   = $username ? getUserIdByUsername($db, $username) : null;
    STORE QA REMARK (VIEWER)
 ========================== */
 if ($_SERVER['REQUEST_METHOD'] === 'POST'
-    && isset($_POST['remark'], $_POST['iteration'])
+    && isset($_POST['remark'], $_POST['iteration'], $_POST['log_id'])
 ) {
     define('QA_SKIP_LOGGING', true);
 
     $program   = $_POST['program'] ?? '';
     $sessionId = $_POST['session'] ?? '';
     $iteration = (int) ($_POST['iteration'] ?? 0);
+    $logId     = (int) ($_POST['log_id'] ?? 0);
 
     $remark     = trim($_POST['remark']);
     $remarkName = trim($_POST['remark_name'] ?? '');
 
-    if ($userId && $username && $program && $sessionId && $remark !== '') {
+    if ($userId && $username && $program && $sessionId && $remark !== '' && $logId) {
         saveQaRemark(
             $db,
             $userId,
@@ -66,15 +67,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST'
             $iteration,
             $remarkName,
             $remark,
-            $resolved = false
+            false,
+            $logId // ✅ NEW
         );
     }
 
-    header('Location: ' . $_SERVER['PHP_SELF']
-        . '?user=' . urlencode($program)
-        . '&session=' . urlencode($sessionId)
-        . '&iteration=' . $iteration
-    );
+    header('Location: ' . $_SERVER['REQUEST_URI']);
     exit;
 }
 
@@ -161,8 +159,10 @@ function group_error_logs(array $errorLogs): array
 }
 
 
-function render_log_entry(array $log): string
+function render_log_entry(array $log, array $remarksByLog): string
 {
+    $logId = (int)($log['id'] ?? 0);
+    $remark = $remarksByLog[$logId] ?? null;
     $type = $log['type'] ?? '';
 
     // Normalize endpoints
@@ -242,6 +242,31 @@ function render_log_entry(array $log): string
                 : '-') 
             . '</p>';
     }
+    
+    // Remark display inside log card
+    if ($remark) {
+        $badge = $remark['resolved'] ? 'bg-success' : 'bg-warning text-dark';
+        $html .= '<div class="mt-2 p-2 border rounded bg-light">';
+        $html .= '<span class="badge ' . $badge . ' mb-1">'
+            . ($remark['resolved'] ? 'Resolved' : 'Pending')
+            . '</span><br>';
+        $html .= '<strong>' . htmlspecialchars($remark['remark_name']) . '</strong><br>';
+        $html .= '<small>By: ' . htmlspecialchars($remark['username']) . '</small><br>';
+        $html .= nl2br(htmlspecialchars($remark['remark']));
+        $html .= '</div>';
+    }
+
+    // Add/Edit button
+    $html .= '<button 
+        class="btn btn-sm btn-dark mt-2 remark-btn"
+        data-bs-toggle="modal"
+        data-bs-target="#remarkModal"
+        data-log-id="' . $logId . '"
+        data-remark-name="' . htmlspecialchars($remark['remark_name'] ?? '') . '"
+        data-remark-text="' . htmlspecialchars($remark['remark'] ?? '') . '"
+    >
+        ' . ($remark ? 'Edit Remark' : 'Add Remark') . '
+    </button>';
 
     $html .= '</div></div>';
 
@@ -295,14 +320,10 @@ if ($selectedProgram && $selectedSession) {
 /* ==========================
    LOAD REMARKS
 ========================== */
-$filteredRemarked = [];
+$remarksByLog = [];
 
-if ($selectedProgram && $selectedSession) {
-    $filteredRemarked = loadRemarksByProgram(
-        $db,
-        $selectedProgram,
-        $selectedSession
-    );
+if ($selectedProgram) {
+    $remarksByLog = loadRemarksByLog($db, $selectedProgram);
 }
 
 ?>
@@ -413,62 +434,6 @@ if ($selectedProgram && $selectedSession) {
             </form>
         </div>
 
-        <?php
-        // Get current remark data for this session & iteration
-        $remarkData = $filteredRemarked[$selectedSession][$selectedIteration] ?? null;
-        $hasRemark  = !empty($remarkData['remark']);
-        $isResolved = $remarkData['resolved'] ?? false;
-        ?>
-        <?php if (!empty($selectedIteration)): ?>
-
-            <?php if (!$hasRemark): ?>
-                <!-- Button to Open Modal -->
-                <button class="btn btn-dark mb-2 w-100 mt-2"
-                        data-bs-toggle="modal"
-                        data-bs-target="#remarkModal">
-                    Add QA Remark
-                </button>
-
-            <?php else: ?>
-
-                <!-- Remark Status Card -->
-                <div class="card p-2 mb-2 text-start">
-
-                    <?php if ($isResolved): ?>
-                        <!-- Resolved Badge -->
-                        <span class="badge bg-success w-100 py-2">
-                            ✅ Remark Resolved
-                        </span>
-
-                        <?php if (!empty($remarkData['resolve_comment'])): ?>
-                            <div class="mb-2">
-                                <strong>Comment:</strong>
-                                <div class="text-muted">
-                                    <?= nl2br(htmlspecialchars($remarkData['resolve_comment'])) ?>
-                                </div>
-                            </div>
-                        <?php endif; ?>
-
-                        <small class="d-block text-muted">
-                            By: <?= htmlspecialchars($remarkData['resolved_by'] ?? '---') ?> <br>
-                            At: <?= !empty($remarkData['resolved_at']) 
-                                ? date('Y-m-d H:i:s', strtotime($remarkData['resolved_at'])) 
-                                : '-' ?>
-                        </small>
-
-                    <?php else: ?>
-                        <!-- Pending Badge -->
-                        <span class="badge bg-warning text-dark w-100 py-2">
-                            ⏳ Remark Pending
-                        </span>
-                    <?php endif; ?>
-
-                </div>
-
-            <?php endif; ?>
-        <?php endif; ?>
-
-
         <!-- Logs -->
         <div id="print-area">
 
@@ -486,29 +451,11 @@ if ($selectedProgram && $selectedSession) {
 
         <?php if (!empty($logsToShow)): ?>
             <?php
-            // Single iteration remark info
-            $remarkEntry = $filteredRemarked[$selectedSession][$selectedIteration] ?? null;
-            $remarkName = $remarkEntry['name'] ?? '';
-            $remarkText = $remarkEntry['remark'] ?? '';
-            $remarkUser = $remarkEntry['username'] ?? 'Unknown';
-            ?>
-
-            <?php if ($remarkName || $remarkText) : ?>
-                <div class="card log-card bg-primary-subtle border-primary p-3 mb-2">
-                    <strong>Remark Name:</strong> <?= htmlspecialchars($remarkName) ?><br>
-                    <small>By: <?= htmlspecialchars($remarkUser) ?></small>
-                    <div class="card log-card bg-light p-3 mt-2 mb-2">
-                        <strong>Remark:</strong><br>
-                        <?= nl2br(htmlspecialchars($remarkText)) ?>
-                    </div>
-                </div>
-            <?php endif; ?>
-            <?php
             
                 // Single iteration view
                 $logsToRender = group_error_logs($logsToShow);
                 foreach ($logsToRender as $log) {
-                    echo render_log_entry($log);
+                    echo render_log_entry($log, $remarksByLog);
                 }
             ?>
             
@@ -516,50 +463,6 @@ if ($selectedProgram && $selectedSession) {
         </div>
     </main>
 </div>
-
-<?php if (!$hasRemark): ?>
-<div class="modal fade" id="remarkModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-
-            <div class="modal-header">
-                <h5 class="modal-title">Add QA Remark</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-
-            <div class="modal-body">
-                <form method="POST">
-
-                    <input type="hidden" name="program" value="<?= htmlspecialchars($selectedProgram) ?>">
-                    <input type="hidden" name="session" value="<?= htmlspecialchars($selectedSession) ?>">
-                    <input type="hidden" name="iteration" value="<?= htmlspecialchars($selectedIteration) ?>">
-
-                    <input type="text"
-                           name="remark_name"
-                           class="form-control mb-2"
-                           placeholder="Remark name"
-                           maxlength="20"
-                           value="<?= htmlspecialchars($remarkData['name'] ?? '') ?>"
-                           required
-                           pattern=".*\S.*"
-                           title="Remark name cannot be empty or spaces only">
-
-                    <textarea name="remark"
-                              class="form-control mb-3"
-                              placeholder="Enter QA remarks here..."
-                              required><?= htmlspecialchars($remarkData['remark'] ?? '') ?></textarea>
-
-                    <button type="submit" class="btn btn-dark w-100">
-                        Save Remark
-                    </button>
-
-                </form>
-            </div>
-
-        </div>
-    </div>
-</div>
-<?php endif; ?>
 
 <!-- Bootstrap JS -->
 <script src="../scripts/bootstrap.bundle.min.js"></script>
@@ -574,6 +477,66 @@ function printLogs() {
     document.body.innerHTML = originalContents;
     location.reload();
 }
+</script>
+
+<!-- Remark Modal (per-log) -->
+<div class="modal fade" id="remarkModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">QA Remark</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <form method="POST">
+
+          <input type="hidden" name="program" value="<?= htmlspecialchars($selectedProgram) ?>">
+          <input type="hidden" name="session" value="<?= htmlspecialchars($selectedSession) ?>">
+          <input type="hidden" name="iteration" value="<?= htmlspecialchars($selectedIteration) ?>">
+          <input type="hidden" name="log_id" id="modalLogId" value="">
+
+          <input type="text"
+                 name="remark_name"
+                 id="modalRemarkName"
+                 class="form-control mb-2"
+                 placeholder="Remark name"
+                 maxlength="20"
+                 required
+                 pattern=".*\S.*"
+                 title="Remark name cannot be empty or spaces only">
+
+          <textarea name="remark"
+                    id="modalRemarkText"
+                    class="form-control mb-3"
+                    placeholder="Enter QA remarks here..."
+                    required></textarea>
+
+          <button type="submit" class="btn btn-dark w-100">
+            Save Remark
+          </button>
+
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- JS to populate modal from button -->
+<script>
+document.querySelectorAll('.remark-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const logId = this.dataset.logId || '';
+        const name = this.dataset.remarkName || '';
+        const text = this.dataset.remarkText || '';
+
+        document.getElementById('modalLogId').value = logId;
+        document.getElementById('modalRemarkName').value = name;
+        document.getElementById('modalRemarkText').value = text;
+    });
+});
 </script>
 
 </body>

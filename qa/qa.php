@@ -206,8 +206,9 @@ $programs = loadPrograms($db);
                             <th>Program</th>
                             <th>Session</th>
                             <th>User ID</th>
-                            <th>Last Updated</th> <!-- New column -->
-                            <th></th> <!-- For print icon -->
+                            <th>Errors</th> <!-- NEW -->
+                            <th>Last Updated</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>

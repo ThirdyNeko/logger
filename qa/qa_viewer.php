@@ -453,8 +453,25 @@ if ($selectedProgram) {
             <?php
             
                 // Single iteration view
-                $logsToRender = group_error_logs($logsToShow);
-                foreach ($logsToRender as $log) {
+                $errorLogs  = [];
+                $normalLogs = [];
+
+                foreach ($logsToShow as $log) {
+                    if (is_error_log($log)) {
+                        $errorLogs[] = $log;
+                    } else {
+                        $normalLogs[] = $log;
+                    }
+                }
+
+                // 1️⃣ Show normal logs (NO grouping)
+                foreach ($normalLogs as $log) {
+                    echo render_log_entry($log, $remarksByLog);
+                }
+
+                // 2️⃣ Show grouped backend errors
+                $groupedErrors = group_error_logs($errorLogs);
+                foreach ($groupedErrors as $log) {
                     echo render_log_entry($log, $remarksByLog);
                 }
             ?>

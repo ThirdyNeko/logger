@@ -22,13 +22,18 @@ $result = loadSessionNamesForViewer(
     $_POST['user_id'] ?? null
 );
 
-$data = [];
 foreach ($result['sessions'] as $row) {
+
+    $errors = (int)($row['error_count'] ?? 0);
+
     $data[] = [
         $row['program_name'],
         $row['session_id'],
         $row['user_id'],
-        date('Y-m-d H:i:s', strtotime($row['last_updated'])), // 👈 format to seconds
+        $errors > 0 
+            ? "<span class='text-danger fw-bold'>{$errors}</span>"
+            : "0",
+        date('Y-m-d H:i:s', strtotime($row['last_updated'])),
         '<a href="#" class="print-session text-decoration-none"><i class="bi bi-printer"></i></a>'
     ];
 }

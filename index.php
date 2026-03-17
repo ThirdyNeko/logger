@@ -201,13 +201,14 @@ $programs = loadPrograms($db);
                     </script>
                 <table id="logs" class="table table-hover mb-0">
                     <thead class="table-light">
-                        <tr>
-                            <th>Program</th>
-                            <th>Session</th>
-                            <th>User ID</th>
-                            <th>Last Updated</th> <!-- New column -->
-                            <th></th> <!-- For print icon -->
-                        </tr>
+                    <tr>
+                        <th>Program</th>
+                        <th>Session</th>
+                        <th>User ID</th>
+                        <th>Errors</th> <!-- NEW -->
+                        <th>Last Updated</th>
+                        <th></th>
+                    </tr>
                     </thead>
                     <tbody>
                     </tbody>

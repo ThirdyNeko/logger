@@ -54,9 +54,10 @@ function loadSessionNamesForViewer(
             SELECT
                 program_name,
                 session_id,
-                MAX(user_id)   AS user_id,
+                MAX(user_id) AS user_id,
                 MIN(created_at) AS started_at,
                 MAX(created_at) AS last_updated,
+                SUM(CASE WHEN type = 'backend-error' THEN 1 ELSE 0 END) AS error_count,
                 ROW_NUMBER() OVER (ORDER BY MAX(created_at) DESC) AS rn
             FROM qa_logs
             $where

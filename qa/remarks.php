@@ -10,7 +10,7 @@ require_once __DIR__ . '/../viewer_repo/users.php';
 require_once __DIR__ . '/../viewer_repo/programs.php';
 
 if (!isset($_SESSION['user'])) {
-    header('Location: ' . BASE_URL . 'auth/login.php');
+    header('Location: ' . BASE_URL . '../auth/login.php');
     exit;
 }
 
@@ -19,24 +19,63 @@ $db = qa_db();
 /* ==========================
    INPUT STATE
 ========================== */
-
 $selectedProgram = $_GET['program'] ?? '';
+$username        = $_GET['username'] ?? '';
 $status          = $_GET['status'] ?? ''; // resolved | pending
 $fromDate        = $_GET['from_date'] ?? '';
 $toDate          = $_GET['to_date'] ?? '';
-
-// Force remarks to only show the logged-in user
-$username = $_SESSION['user']['username']; 
-
 
 /* ==========================
    PAGINATION
 ========================== */
 
-$remarks = loadRemarks(
+function loadErrorRemarksFiltered(PDO $db, ?string $program, ?string $status, ?string $fromDate, ?string $toDate): array {
+    $where = [];
+    $params = [];
+
+    if ($program) {
+        $where[] = "eg.program_name LIKE :program";
+        $params[':program'] = "%$program%";
+    }
+
+    if ($status !== null && $status !== '') {
+        $where[] = "eg.status = :status";
+        $params[':status'] = $status;
+    }
+
+    if ($fromDate) {
+        $where[] = "eg.created_at >= :from_date";
+        $params[':from_date'] = $fromDate . " 00:00:00";
+    }
+
+    if ($toDate) {
+        $where[] = "eg.created_at <= :to_date";
+        $params[':to_date'] = $toDate . " 23:59:59";
+    }
+
+    $whereSql = $where ? "WHERE " . implode(" AND ", $where) : "";
+
+    $sql = "
+        SELECT 
+            eg.*,
+            eo.session_id,
+            eo.iteration
+        FROM qa_error_groups eg
+        LEFT JOIN qa_error_occurrences eo
+            ON eg.group_key = eo.group_key
+        $whereSql
+        ORDER BY eg.error_count DESC, eg.updated_at DESC
+    ";
+
+    $stmt = $db->prepare($sql);
+    $stmt->execute($params);
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+$remarks = loadErrorRemarksFiltered(
     $db,
     $selectedProgram ?: null,
-    $username ?: null,
     $status !== '' ? $status : null,
     $fromDate ?: null,
     $toDate ?: null
@@ -147,29 +186,72 @@ $programs = loadPrograms($db);
                         <thead class="table-light">
                             <tr>
                                 <th>Program</th>
-                                <th>Session</th>
-                                <th>Iteration</th>
-                                <th>Remark Name</th>
+                                <th>Error Type</th>
+                                <th>Message</th>
+                                <th>Severity</th>
+                                <th>Error Count</th>
                                 <th>Status</th>
-                                <th>Created At</th>
+                                <th>Last Updated</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($remarks as $row): ?>
-                                <tr class="clickable-row"
-                                    onclick="window.location='qa_viewer.php?user=<?= urlencode($row['program_name']) ?>&session=<?= urlencode($row['session_id']) ?>&iteration=<?= (int)$row['iteration'] ?>'">
+                                <?php
+                                $program   = $row['program_name'] ?? '';
+                                $session   = $row['session_id'] ?? '';
+                                $iteration = $row['iteration'] ?? '';
+
+                                if ($session && $iteration !== '') {
+                                    $iterationParam = (int)$iteration;
+                                    $onclick = "window.location='qa_viewer.php?user="
+                                            . urlencode($program)
+                                            . "&session=" . urlencode($session)
+                                            . "&iteration=" . $iterationParam
+                                            . "'";
+                                } else {
+                                    $onclick = '';
+                                }
+                                ?>
+                                <tr class="clickable-row" <?= $onclick ? "onclick=\"$onclick\"" : "" ?>>
+
                                     <td><?= htmlspecialchars($row['program_name']) ?></td>
-                                    <td><?= htmlspecialchars($row['session_id']) ?></td>
-                                    <td><?= (int)$row['iteration'] ?></td>
-                                    <td><?= htmlspecialchars($row['remark_name']) ?></td>
+
                                     <td>
-                                        <?php if ($row['resolved']): ?>
-                                            <span class="badge bg-success">Resolved</span>
-                                        <?php else: ?>
-                                            <span class="badge bg-warning text-dark">Pending</span>
-                                        <?php endif; ?>
+                                        <span class="badge bg-danger">
+                                            <?= htmlspecialchars($row['error_type']) ?>
+                                        </span>
                                     </td>
-                                    <td><?= date('Y-m-d', strtotime($row['created_at'])) ?></td>
+
+                                    <td style="max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                        <?= htmlspecialchars($row['message']) ?>
+                                    </td>
+
+                                    <td><?= htmlspecialchars($row['severity']) ?></td>
+
+                                    <td>
+                                        <span class="badge bg-dark">
+                                            <?= (int)$row['error_count'] ?>
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <?php
+                                            $status = $row['status'];
+                                            $color = match($status) {
+                                                'pending'  => 'secondary',
+                                                'standby'  => 'warning',
+                                                'working'  => 'primary',
+                                                'resolved' => 'success',
+                                                default    => 'dark'
+                                            };
+                                        ?>
+                                        <span class="badge bg-<?= $color ?>">
+                                            <?= ucfirst($status) ?>
+                                        </span>
+                                    </td>
+
+                                    <td><?= date('Y-m-d H:i', strtotime($row['updated_at'])) ?></td>
+
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -222,17 +304,24 @@ $programs = loadPrograms($db);
                            value="<?= htmlspecialchars($toDate) ?>">
                 </div>
 
+                <!-- Created By -->
+                <div class="col-md-3">
+                    <label class="form-label">Created By</label>
+                    <input type="text"
+                           name="username"
+                           class="form-control"
+                           value="<?= htmlspecialchars($username) ?>">
+                </div>
+
                 <!-- Status -->
                 <div class="col-md-3">
                     <label class="form-label">Status</label>
                     <select name="status" class="form-select">
                         <option value="">All</option>
-                        <option value="resolved" <?= $status === 'resolved' ? 'selected' : '' ?>>
-                            Resolved
-                        </option>
-                        <option value="pending" <?= $status === 'pending' ? 'selected' : '' ?>>
-                            Pending
-                        </option>
+                        <option value="pending" <?= $status === 'pending' ? 'selected' : '' ?>>Pending</option>
+                        <option value="standby" <?= $status === 'standby' ? 'selected' : '' ?>>Standby</option>
+                        <option value="working" <?= $status === 'working' ? 'selected' : '' ?>>Working On</option>
+                        <option value="resolved" <?= $status === 'resolved' ? 'selected' : '' ?>>Resolved</option>
                     </select>
                 </div>
 

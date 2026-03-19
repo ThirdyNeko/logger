@@ -200,3 +200,7 @@
 [2026-03-19 10:49:31] Error: [2] Undefined array key "session_id" in C:\xampp\htdocs\logger\remarks.php on line 202
 [2026-03-19 10:49:31] Error: [8192] urlencode(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\remarks.php on line 202
 [2026-03-19 10:49:31] Error: [2] Undefined array key "iteration" in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 11:08:58] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 290
+[2026-03-19 11:08:58] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 290
+[2026-03-19 11:09:43] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 290
+[2026-03-19 11:09:43] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 290

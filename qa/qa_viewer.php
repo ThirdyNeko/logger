@@ -3,16 +3,15 @@ session_name('QA_LOGGER_SESSION');
 
 require_once __DIR__ . '/../auth/require_login.php';
 date_default_timezone_set('Asia/Manila');
-require_once __DIR__ . '/../viewer_repo/remarks.php';
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../repo/user_repo.php';
-require_once __DIR__ . '/../viewer_repo/users.php';
+require_once __DIR__ . '/../viewer_repo/remarks.php';
 require_once __DIR__ . '/../viewer_repo/viewer.php';
 require_once __DIR__ . '/../viewer_repo/iterations.php';
 require_once __DIR__ . '/../viewer_repo/programs.php';
 
 if (!isset($_SESSION['user'])) {
-    header('Location: ' . BASE_URL . 'auth/login.php');
+    header('Location: ' . BASE_URL . '../auth/login.php');
     exit;
 }
 
@@ -21,7 +20,7 @@ $userRow = $userRepo->findByUsername($_SESSION['user']['username']);
 
 if (!$userRow) {
     session_destroy();
-    header('Location: ' . BASE_URL . 'auth/login.php');
+    header('Location: ' . BASE_URL . '../auth/login.php');
     exit;
 }
 
@@ -36,45 +35,43 @@ $selectedSession   = $_GET['session'] ?? '';
 $selectedIteration = $_GET['iteration'] ?? '';
 
 /* ==========================
-   CURRENT USER
+   HANDLE REMARK RESOLUTION
 ========================== */
-$username = $_SESSION['user']['username'] ?? '';
-$userId   = $username ? getUserIdByUsername($db, $username) : null;
 
-/* ==========================
-   STORE QA REMARK (VIEWER)
-========================== */
-if ($_SERVER['REQUEST_METHOD'] === 'POST'
-    && isset($_POST['remark'], $_POST['iteration'], $_POST['log_id'])
-) {
-    define('QA_SKIP_LOGGING', true);
+if (isset($_POST['mark_resolved'])) {
+    $program        = $_POST['program'];
+    $session        = $_POST['session'];
+    $iteration      = (int)$_POST['iteration'];
+    $resolveComment = $_POST['resolve_comment'] ?? '';
+    $resolvedBy     = $_SESSION['user']['username'] ?? 'Unknown';
+    $resolvedAt     = date('Y-m-d H:i:s');
 
-    $program   = $_POST['program'] ?? '';
-    $sessionId = $_POST['session'] ?? '';
-    $iteration = (int) ($_POST['iteration'] ?? 0);
-    $logId     = (int) ($_POST['log_id'] ?? 0);
+    // Update the resolved fields
+    $stmt = $db->prepare("
+        UPDATE qa_remarks
+        SET 
+            resolved = 1,
+            resolved_by = :resolved_by,
+            resolved_at = :resolved_at,
+            resolve_comment = :resolve_comment
+        WHERE program_name = :program
+          AND session_id = :session
+          AND iteration = :iteration
+    ");
+    $stmt->execute([
+        ':resolved_by'    => $resolvedBy,
+        ':resolved_at'    => $resolvedAt,
+        ':resolve_comment'=> $resolveComment,
+        ':program'        => $program,
+        ':session'        => $session,
+        ':iteration'      => $iteration
+    ]);
 
-    $remark     = trim($_POST['remark']);
-    $remarkName = trim($_POST['remark_name'] ?? '');
-
-    if ($userId && $username && $program && $sessionId && $remark !== '' && $logId) {
-        saveQaRemark(
-            $db,
-            $userId,
-            $username,
-            $program,
-            $sessionId,
-            $iteration,
-            $remarkName,
-            $remark,
-            false,
-            $logId // ✅ NEW
-        );
-    }
-
-    header('Location: ' . $_SERVER['REQUEST_URI']);
+    // Reload page to reflect change
+    header("Location: " . $_SERVER['REQUEST_URI']);
     exit;
 }
+
 
 /* ==========================
    LOAD ITERATIONS
@@ -159,10 +156,8 @@ function group_error_logs(array $errorLogs): array
 }
 
 
-function render_log_entry(array $log, array $remarksByLog): string
+function render_log_entry(array $log): string
 {
-    $logId = (int)($log['id'] ?? 0);
-    $remark = $remarksByLog[$logId] ?? null;
     $type = $log['type'] ?? '';
 
     // Normalize endpoints
@@ -242,36 +237,61 @@ function render_log_entry(array $log, array $remarksByLog): string
                 : '-') 
             . '</p>';
     }
-    
-    // Remark display inside log card
-    if ($remark) {
-        $badge = $remark['resolved'] ? 'bg-success' : 'bg-warning text-dark';
-        $html .= '<div class="mt-2 p-2 border rounded bg-light">';
-        $html .= '<span class="badge ' . $badge . ' mb-1">'
-            . ($remark['resolved'] ? 'Resolved' : 'Pending')
-            . '</span><br>';
-        $html .= '<strong>' . htmlspecialchars($remark['remark_name']) . '</strong><br>';
-        $html .= '<small>By: ' . htmlspecialchars($remark['username']) . '</small><br>';
-        $html .= nl2br(htmlspecialchars($remark['remark']));
-        $html .= '</div>';
-    }
-
-    // Add/Edit button
-    $html .= '<button 
-        class="btn btn-sm btn-dark mt-2 remark-btn"
-        data-bs-toggle="modal"
-        data-bs-target="#remarkModal"
-        data-log-id="' . $logId . '"
-        data-remark-name="' . htmlspecialchars($remark['remark_name'] ?? '') . '"
-        data-remark-text="' . htmlspecialchars($remark['remark'] ?? '') . '"
-    >
-        ' . ($remark ? 'Edit Remark' : 'Add Remark') . '
-    </button>';
 
     $html .= '</div></div>';
 
     return $html;
 }
+
+/* ==========================
+   LOAD REMARKS
+========================== */
+
+function loadErrorRemarksForSession(PDO $db, string $program, string $session): array
+{
+    $sql = "
+        SELECT 
+            g.group_key,
+            g.error_type,
+            g.message,
+            g.severity,
+            g.status,
+            g.remark,
+            o.iteration
+        FROM qa_error_groups g
+        JOIN qa_error_occurrences o ON o.group_key = g.group_key
+        WHERE g.program_name = :program
+          AND o.session_id = :session
+    ";
+
+    $stmt = $db->prepare($sql);
+    $stmt->execute([
+        ':program' => $program,
+        ':session' => $session
+    ]);
+
+    $out = [];
+
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $iter = (int)$row['iteration'];
+        if (!isset($out[$iter])) $out[$iter] = [];
+
+        $out[$iter][] = $row;
+    }
+
+    return $out;
+}
+
+$filteredRemarked = [];
+
+if ($selectedProgram && $selectedSession) {
+    $filteredRemarked = loadErrorRemarksForSession(
+        $db,
+        $selectedProgram,
+        $selectedSession
+    );
+}
+
 /* ==========================
    ITERATION LIST FOR SELECTED SESSION
 ========================== */
@@ -317,14 +337,6 @@ if ($selectedProgram && $selectedSession) {
     sort($iterations);
 }
 
-/* ==========================
-   LOAD REMARKS
-========================== */
-$remarksByLog = [];
-
-if ($selectedProgram) {
-    $remarksByLog = loadRemarksByLog($db, $selectedProgram);
-}
 
 ?>
 <!doctype html>
@@ -381,7 +393,6 @@ if ($selectedProgram) {
         <!-- Top buttons -->
         <div class="d-grid gap-2">
             <a href="qa.php" class="btn btn-primary btn-sm">Back to Sessions</a>
-            <a href="../profile.php" class="btn btn-outline-dark btn-sm">Profile</a>
             <button onclick="printLogs()" class="btn btn-outline-dark btn-sm">
                 Print Activity Log
             </button>
@@ -400,7 +411,6 @@ if ($selectedProgram) {
             <h4 class="mb-0">Activity Logs for Session: <?= htmlspecialchars($selectedSession) ?></h4>
         </div>
 
-
         <!-- Iteration Dropdown -->
         <div class="mb-3 d-flex align-items-center gap-2">
             <form method="GET" class="d-flex align-items-center gap-2 m-0">
@@ -413,14 +423,23 @@ if ($selectedProgram) {
                             <?= $selectedIteration ? htmlspecialchars($selectedIteration) : '-- Select Activity Log --' ?>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-scroll w-100 text-wrap" aria-labelledby="iterationDropdown">
+                            <!-- Session Summary Option -->
+                            <li>
+                                <a class="dropdown-item"
+                                    href="?user=<?= urlencode($selectedProgram) ?>&session=<?= urlencode($selectedSession) ?>&iteration=summary&from_date=<?= urlencode($fromDate ?? '') ?>">
+
+                                    Session Summary
+                                </a>
+                            </li>
                             
                             <?php foreach ($iterations as $iter):
-                                $remarkName = $filteredRemarked[$selectedSession][$iter]['name'] ?? '';
+                                $hasRemark = !empty($filteredRemarked[$iter]);
                                 $hasError   = isset($errorIterations[$iter]);
 
                                 $label = $iter;
-                                if ($remarkName) $label .= ' - ' . $remarkName;
-                                if ($hasError)   $label .= ' ⚠';
+                                if ($hasRemark) {
+                                    $label .= ' ⚠ Issue';
+                                }
                             ?>
                             <li>
                                 <a class="dropdown-item text-wrap <?= $hasError ? 'text-danger fw-semibold' : '' ?>"
@@ -434,49 +453,166 @@ if ($selectedProgram) {
             </form>
         </div>
 
+        <?php
+        $remarkData = $filteredRemarked[$selectedSession][$selectedIteration] ?? null;
+        $hasRemark  = !empty($remarkData['remark']);
+        $isResolved = $remarkData['resolved'] ?? false;
+        ?>
+
+        <?php if ($hasRemark && !$isResolved): ?>
+            <!-- Form to mark remark as resolved -->
+            <button type="button" 
+                    class="btn btn-success w-100 py-2"
+                    data-bs-toggle="modal" 
+                    data-bs-target="#resolveModal">
+                ✅ Mark Remark as Resolved
+            </button>
+
+        <?php elseif ($hasRemark && $isResolved): ?>
+            <!-- Display resolved info -->
+            <div class="card p-3 mb-2 text-start">
+                <span class="badge bg-success w-100 py-2 mb-2 text-center">
+                    ✅ Remark Resolved
+                </span>
+
+                <?php if (!empty($remarkData['resolve_comment'])): ?>
+                    <div class="mb-2">
+                        <strong>Comment:</strong>
+                        <div class="text-muted">
+                            <?= nl2br(htmlspecialchars($remarkData['resolve_comment'])) ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
+                <small class="d-block text-muted">
+                    By: <?= htmlspecialchars($remarkData['resolved_by'] ?? '-') ?> <br>
+                    At: <?= !empty($remarkData['resolved_at']) 
+                        ? date('Y-m-d H:i:s', strtotime($remarkData['resolved_at'])) 
+                        : '-' ?>
+                </small>
+            </div>
+        <?php endif; ?>
+
         <!-- Logs -->
         <div id="print-area">
 
-        <div class="print-header d-none">
-            <h4 class="mb-1">QA Logger Report</h4>
-            <div class="small">
-                Program: <?= htmlspecialchars($selectedProgram ?? '-') ?><br>
-                Session: <?= htmlspecialchars($selectedSession ?? '-') ?><br>
-                Activity Log: <?= htmlspecialchars($selectedIteration ?? '-') ?><br>
-                Printed by: <?= htmlspecialchars($_SESSION['user']['username']) ?><br>
-                Printed at: <?= date('Y-m-d H:i:s') ?>
+            <div class="print-header d-none">
+                <h4 class="mb-1">QA Logger Report</h4>
+                <div class="small">
+                    Program: <?= htmlspecialchars($selectedProgram ?? '-') ?><br>
+                    Session: <?= htmlspecialchars($selectedSession ?? '-') ?><br>
+                    Activity Log: <?= htmlspecialchars($selectedIteration ?? '-') ?><br>
+                    Printed by: <?= htmlspecialchars($_SESSION['user']['username']) ?><br>
+                    Printed at: <?= date('Y-m-d H:i:s') ?>
+                </div>
+                <hr>
             </div>
-            <hr>
-        </div>
 
-        <?php if (!empty($logsToShow)): ?>
-            <?php
-            
-                // Single iteration view
-                $errorLogs  = [];
-                $normalLogs = [];
+            <?php if (!empty($logsToShow) || !empty($filteredRemarked)) : ?>
 
-                foreach ($logsToShow as $log) {
-                    if (is_error_log($log)) {
-                        $errorLogs[] = $log;
-                    } else {
-                        $normalLogs[] = $log;
+                <?php
+                $remarkEntry = $filteredRemarked[$selectedIteration] ?? [];
+                ?>
+
+                <?php if (!empty($remarkEntry)): ?>
+
+                    <div class="card bg-warning-subtle border-warning p-3 mb-3">
+                        <strong>Issues found in this iteration:</strong>
+                        <br>
+                    <?php foreach ($remarkEntry as $issue): ?>
+
+                        <div class="card mb-2 border-danger">
+                            <div class="card-body">
+
+                                <strong><?= htmlspecialchars($issue['error_type']) ?></strong><br>
+                                <?= htmlspecialchars($issue['message']) ?><br>
+
+                                <small>Severity: <?= htmlspecialchars($issue['severity']) ?></small><br>
+
+                                <?php
+                                    $status = $issue['status'];
+                                    $color = match($status) {
+                                        'pending'  => 'secondary',
+                                        'standby'  => 'warning',
+                                        'working'  => 'primary',
+                                        'resolved' => 'success',
+                                        default    => 'dark'
+                                    };
+                                ?>
+
+                                <span class="badge bg-<?= $color ?>">
+                                    <?= ucfirst($status) ?>
+                                </span>
+
+                                <?php if (!empty($issue['remark'])): ?>
+                                    <div class="mt-2 p-2 bg-light border rounded">
+                                        <?= nl2br(htmlspecialchars($issue['remark'])) ?>
+                                    </div>
+                                <?php endif; ?>
+
+                            </div>
+                        </div>                                     
+                    <?php endforeach; ?>
+                    </div>  
+                <?php endif; ?>
+
+                <?php
+                if ($selectedIteration === 'summary') :
+
+                    $logsByIteration = [];
+
+                    foreach ($logsToShow as $log) {
+                        $iter = $log['iteration'] ?? 0;
+                        if (!is_error_log($log)) continue;
+
+                        if (!isset($logsByIteration[$iter])) $logsByIteration[$iter] = [];
+                        $logsByIteration[$iter][] = $log;
                     }
-                }
 
-                // 1️⃣ Show normal logs (NO grouping)
-                foreach ($normalLogs as $log) {
-                    echo render_log_entry($log, $remarksByLog);
-                }
+                    // Include remark-only iterations
+                    foreach ($filteredRemarked[$selectedSession] ?? [] as $iter => $remark) {
+                        if (!isset($logsByIteration[$iter])) {
+                            $logsByIteration[$iter] = [];
+                        }
+                    }
 
-                // 2️⃣ Show grouped backend errors
-                $groupedErrors = group_error_logs($errorLogs);
-                foreach ($groupedErrors as $log) {
-                    echo render_log_entry($log, $remarksByLog);
-                }
-            ?>
-            
-        <?php endif; ?>
+                    foreach ($logsByIteration as $iter => $logs) :
+
+                        echo '<h5 class="mt-3">Activity Log ' . htmlspecialchars($iter) . '</h5>';
+
+                        $remarkEntry = $filteredRemarked[$selectedSession][$iter] ?? null;
+
+                        if ($remarkEntry) :
+                            echo '<div class="card bg-primary-subtle border-primary p-3 mb-2">';
+                            echo '<strong>Remark Name:</strong> ' . htmlspecialchars($remarkEntry['name']) . '<br>';
+                            echo '<small>By: ' . htmlspecialchars($remarkEntry['username'] ?? 'Unknown') . '</small>';
+                            echo '</div>';
+
+                            if (!empty($remarkEntry['remark'])) :
+                                echo '<div class="card bg-light p-3 mb-2">';
+                                echo '<strong>Remark:</strong><br>' . nl2br(htmlspecialchars($remarkEntry['remark']));
+                                echo '</div>';
+                            endif;
+                        endif;
+
+                        $logsToRender = group_error_logs($logs);
+                        foreach ($logsToRender as $log) {
+                            echo render_log_entry($log);
+                        }
+
+                    endforeach;
+
+                else :  // SINGLE ITERATION
+
+                    $logsToRender = group_error_logs($logsToShow);
+                    foreach ($logsToRender as $log) {
+                        echo render_log_entry($log);
+                    }
+
+                endif; ?>
+                
+            <?php endif; ?>
+
         </div>
     </main>
 </div>
@@ -496,65 +632,49 @@ function printLogs() {
 }
 </script>
 
-<!-- Remark Modal (per-log) -->
-<div class="modal fade" id="remarkModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
+<!-- Resolve Remark Modal -->
+<div class="modal fade" id="resolveModal" tabindex="-1" aria-labelledby="resolveModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
 
-      <div class="modal-header">
-        <h5 class="modal-title">QA Remark</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="resolveModalLabel">
+                    Confirm Resolve Remark
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
 
-      <div class="modal-body">
-        <form method="POST">
+            <form method="POST">
+                <div class="modal-body">
 
-          <input type="hidden" name="program" value="<?= htmlspecialchars($selectedProgram) ?>">
-          <input type="hidden" name="session" value="<?= htmlspecialchars($selectedSession) ?>">
-          <input type="hidden" name="iteration" value="<?= htmlspecialchars($selectedIteration) ?>">
-          <input type="hidden" name="log_id" id="modalLogId" value="">
+                    <input type="hidden" name="program" value="<?= htmlspecialchars($selectedProgram) ?>">
+                    <input type="hidden" name="session" value="<?= htmlspecialchars($selectedSession) ?>">
+                    <input type="hidden" name="iteration" value="<?= htmlspecialchars($selectedIteration) ?>">
+                    <input type="hidden" name="mark_resolved" value="1">
 
-          <input type="text"
-                 name="remark_name"
-                 id="modalRemarkName"
-                 class="form-control mb-2"
-                 placeholder="Remark name"
-                 maxlength="20"
-                 required
-                 pattern=".*\S.*"
-                 title="Remark name cannot be empty or spaces only">
+                    <label class="form-label fw-bold">Resolution Comment</label>
+                    <textarea 
+                        name="resolve_comment" 
+                        class="form-control" 
+                        placeholder="Add a detailed comment for resolving..."
+                        rows="4"
+                        required></textarea>
 
-          <textarea name="remark"
-                    id="modalRemarkText"
-                    class="form-control mb-3"
-                    placeholder="Enter QA remarks here..."
-                    required></textarea>
+                </div>
 
-          <button type="submit" class="btn btn-dark w-100">
-            Save Remark
-          </button>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        ✅ Confirm Resolve
+                    </button>
+                </div>
+            </form>
 
-        </form>
-      </div>
-
+        </div>
     </div>
-  </div>
 </div>
-
-<!-- JS to populate modal from button -->
-<script>
-document.querySelectorAll('.remark-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        const logId = this.dataset.logId || '';
-        const name = this.dataset.remarkName || '';
-        const text = this.dataset.remarkText || '';
-
-        document.getElementById('modalLogId').value = logId;
-        document.getElementById('modalRemarkName').value = name;
-        document.getElementById('modalRemarkText').value = text;
-    });
-});
-</script>
 
 </body>
 </html>

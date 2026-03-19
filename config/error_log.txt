@@ -152,3 +152,8 @@
 [2026-03-17 14:24:54] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 290
 [2026-03-17 14:24:56] Error: [2] Undefined variable $remarked in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 290
 [2026-03-17 14:24:56] Error: [2] foreach() argument must be of type array|object, null given in C:\xampp\htdocs\logger\qa\qa_live_viewer.php on line 290
+[2026-03-19 10:05:17] Error: [2] require_once(C:\xampp\htdocs\logger/viewer_repo/sessions.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\logger\developer_live_viewer.php on line 7
+[2026-03-19 10:05:22] Error: [2] require_once(C:\xampp\htdocs\logger/viewer_repo/sessions.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\logger\developer_live_viewer.php on line 7
+[2026-03-19 10:05:23] Error: [2] require_once(C:\xampp\htdocs\logger/viewer_repo/sessions.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\logger\developer_live_viewer.php on line 7
+[2026-03-19 10:05:23] Error: [2] require_once(C:\xampp\htdocs\logger/viewer_repo/sessions.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\logger\developer_live_viewer.php on line 7
+[2026-03-19 10:05:23] Error: [2] require_once(C:\xampp\htdocs\logger/viewer_repo/sessions.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\logger\developer_live_viewer.php on line 7

@@ -246,18 +246,51 @@ function render_log_entry(array $log): string
 /* ==========================
    LOAD REMARKS
 ========================== */
+
+function loadErrorRemarksForSession(PDO $db, string $program, string $session): array
+{
+    $sql = "
+        SELECT 
+            g.group_key,
+            g.error_type,
+            g.message,
+            g.severity,
+            g.status,
+            g.remark,
+            o.iteration
+        FROM qa_error_groups g
+        JOIN qa_error_occurrences o ON o.group_key = g.group_key
+        WHERE g.program_name = :program
+          AND o.session_id = :session
+    ";
+
+    $stmt = $db->prepare($sql);
+    $stmt->execute([
+        ':program' => $program,
+        ':session' => $session
+    ]);
+
+    $out = [];
+
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $iter = (int)$row['iteration'];
+        if (!isset($out[$iter])) $out[$iter] = [];
+
+        $out[$iter][] = $row;
+    }
+
+    return $out;
+}
+
 $filteredRemarked = [];
 
 if ($selectedProgram && $selectedSession) {
-    $filteredRemarked = loadRemarksByProgram(
+    $filteredRemarked = loadErrorRemarksForSession(
         $db,
         $selectedProgram,
         $selectedSession
     );
 }
-
-
-
 
 /* ==========================
    ITERATION LIST FOR SELECTED SESSION
@@ -400,12 +433,13 @@ if ($selectedProgram && $selectedSession) {
                             </li>
                             
                             <?php foreach ($iterations as $iter):
-                                $remarkName = $filteredRemarked[$selectedSession][$iter]['name'] ?? '';
+                                $hasRemark = !empty($filteredRemarked[$iter]);
                                 $hasError   = isset($errorIterations[$iter]);
 
                                 $label = $iter;
-                                if ($remarkName) $label .= ' - ' . $remarkName;
-                                if ($hasError)   $label .= ' ⚠';
+                                if ($hasRemark) {
+                                    $label .= ' ⚠ Issue';
+                                }
                             ?>
                             <li>
                                 <a class="dropdown-item text-wrap <?= $hasError ? 'text-danger fw-semibold' : '' ?>"
@@ -477,22 +511,49 @@ if ($selectedProgram && $selectedSession) {
             <?php if (!empty($logsToShow) || !empty($filteredRemarked)) : ?>
 
                 <?php
-                // Single iteration remark info
-                $remarkEntry = $filteredRemarked[$selectedSession][$selectedIteration] ?? null;
-                $remarkName = $remarkEntry['name'] ?? '';
-                $remarkText = $remarkEntry['remark'] ?? '';
-                $remarkUser = $remarkEntry['username'] ?? 'Unknown';
+                $remarkEntry = $filteredRemarked[$selectedIteration] ?? [];
                 ?>
 
-                <?php if ($remarkName || $remarkText) : ?>
-                    <div class="card log-card bg-primary-subtle border-primary p-3 mb-2">
-                        <strong>Remark Name:</strong> <?= htmlspecialchars($remarkName) ?><br>
-                        <small>By: <?= htmlspecialchars($remarkUser) ?></small>
-                        <div class="card log-card bg-light p-3 mt-2 mb-2">
-                            <strong>Remark:</strong><br>
-                            <?= nl2br(htmlspecialchars($remarkText)) ?>
-                        </div>
-                    </div>
+                <?php if (!empty($remarkEntry)): ?>
+
+                    <div class="card bg-warning-subtle border-warning p-3 mb-3">
+                        <strong>Issues found in this iteration:</strong>
+                        <br>
+                    <?php foreach ($remarkEntry as $issue): ?>
+
+                        <div class="card mb-2 border-danger">
+                            <div class="card-body">
+
+                                <strong><?= htmlspecialchars($issue['error_type']) ?></strong><br>
+                                <?= htmlspecialchars($issue['message']) ?><br>
+
+                                <small>Severity: <?= htmlspecialchars($issue['severity']) ?></small><br>
+
+                                <?php
+                                    $status = $issue['status'];
+                                    $color = match($status) {
+                                        'pending'  => 'secondary',
+                                        'standby'  => 'warning',
+                                        'working'  => 'primary',
+                                        'resolved' => 'success',
+                                        default    => 'dark'
+                                    };
+                                ?>
+
+                                <span class="badge bg-<?= $color ?>">
+                                    <?= ucfirst($status) ?>
+                                </span>
+
+                                <?php if (!empty($issue['remark'])): ?>
+                                    <div class="mt-2 p-2 bg-light border rounded">
+                                        <?= nl2br(htmlspecialchars($issue['remark'])) ?>
+                                    </div>
+                                <?php endif; ?>
+
+                            </div>
+                        </div>                                     
+                    <?php endforeach; ?>
+                    </div>  
                 <?php endif; ?>
 
                 <?php

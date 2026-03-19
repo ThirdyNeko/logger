@@ -63,11 +63,25 @@ function syncErrorGroups(PDO $db, string $program, array $errorLogs): void
 
 function loadErrorRemarks(PDO $db, ?string $program = null): array
 {
+    $whereSql = $program ? "WHERE g.program_name = :program" : "";
+
     $sql = "
-        SELECT *
-        FROM qa_error_groups
-        " . ($program ? "WHERE program_name = :program" : "") . "
-        ORDER BY error_count DESC, updated_at DESC
+        SELECT 
+            g.group_key,
+            g.program_name,
+            g.error_type,
+            g.message,
+            g.severity,
+            g.error_count,
+            g.status,
+            g.remark,
+            o.session_id,
+            o.iteration
+        FROM qa_error_groups g
+        INNER JOIN qa_error_occurrences o
+            ON o.group_key = g.group_key
+        $whereSql
+        ORDER BY g.error_count DESC, g.updated_at DESC, o.session_id, o.iteration
     ";
 
     $stmt = $db->prepare($sql);

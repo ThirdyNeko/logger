@@ -29,44 +29,42 @@ $toDate          = $_GET['to_date'] ?? '';
    PAGINATION
 ========================== */
 
-function loadErrorRemarksFiltered(
-    PDO $db,
-    ?string $program,
-    ?string $status,
-    ?string $fromDate,
-    ?string $toDate
-): array {
-
+function loadErrorRemarksFiltered(PDO $db, ?string $program, ?string $status, ?string $fromDate, ?string $toDate): array {
     $where = [];
     $params = [];
 
     if ($program) {
-        $where[] = "program_name LIKE :program";
+        $where[] = "eg.program_name LIKE :program";
         $params[':program'] = "%$program%";
     }
 
     if ($status !== null && $status !== '') {
-        $where[] = "status = :status";
+        $where[] = "eg.status = :status";
         $params[':status'] = $status;
     }
 
     if ($fromDate) {
-        $where[] = "created_at >= :from_date";
+        $where[] = "eg.created_at >= :from_date";
         $params[':from_date'] = $fromDate . " 00:00:00";
     }
 
     if ($toDate) {
-        $where[] = "created_at <= :to_date";
+        $where[] = "eg.created_at <= :to_date";
         $params[':to_date'] = $toDate . " 23:59:59";
     }
 
     $whereSql = $where ? "WHERE " . implode(" AND ", $where) : "";
 
     $sql = "
-        SELECT *
-        FROM qa_error_groups
+        SELECT 
+            eg.*,
+            eo.session_id,
+            eo.iteration
+        FROM qa_error_groups eg
+        LEFT JOIN qa_error_occurrences eo
+            ON eg.group_key = eo.group_key
         $whereSql
-        ORDER BY error_count DESC, updated_at DESC
+        ORDER BY eg.error_count DESC, eg.updated_at DESC
     ";
 
     $stmt = $db->prepare($sql);
@@ -198,8 +196,23 @@ $programs = loadPrograms($db);
                         </thead>
                         <tbody>
                             <?php foreach ($remarks as $row): ?>
-                                <tr class="clickable-row"
-                                    onclick="window.location='error_details.php?group_key=<?= urlencode($row['group_key']) ?>'">
+                                <?php
+                                $program   = $row['program_name'] ?? '';
+                                $session   = $row['session_id'] ?? '';
+                                $iteration = $row['iteration'] ?? '';
+
+                                if ($session && $iteration !== '') {
+                                    $iterationParam = (int)$iteration;
+                                    $onclick = "window.location='iteration_viewer.php?user="
+                                            . urlencode($program)
+                                            . "&session=" . urlencode($session)
+                                            . "&iteration=" . $iterationParam
+                                            . "'";
+                                } else {
+                                    $onclick = '';
+                                }
+                                ?>
+                                <tr class="clickable-row" <?= $onclick ? "onclick=\"$onclick\"" : "" ?>>
 
                                     <td><?= htmlspecialchars($row['program_name']) ?></td>
 

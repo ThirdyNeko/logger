@@ -158,3 +158,45 @@
 [2026-03-19 10:05:23] Error: [2] require_once(C:\xampp\htdocs\logger/viewer_repo/sessions.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\logger\developer_live_viewer.php on line 7
 [2026-03-19 10:05:23] Error: [2] require_once(C:\xampp\htdocs\logger/viewer_repo/sessions.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\logger\developer_live_viewer.php on line 7
 [2026-03-19 10:26:24] Error: [2] Undefined variable $data in C:\xampp\htdocs\logger\viewer_repo\session_server.php on line 45
+[2026-03-19 10:46:22] Error: [2] Undefined array key "session_id" in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:46:22] Error: [8192] urlencode(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:46:22] Error: [2] Undefined array key "iteration" in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:46:22] Error: [2] Undefined array key "session_id" in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:46:22] Error: [8192] urlencode(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:46:22] Error: [2] Undefined array key "iteration" in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:46:27] Error: [2] Undefined array key "session_id" in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:46:27] Error: [8192] urlencode(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:46:27] Error: [2] Undefined array key "iteration" in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:46:27] Error: [2] Undefined array key "session_id" in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:46:27] Error: [8192] urlencode(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:46:27] Error: [2] Undefined array key "iteration" in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:47:02] Error: [2] Undefined array key "session_id" in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:47:02] Error: [8192] urlencode(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:47:02] Error: [2] Undefined array key "iteration" in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:47:02] Error: [2] Undefined array key "session_id" in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:47:02] Error: [8192] urlencode(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:47:02] Error: [2] Undefined array key "iteration" in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:49:22] Error: [2] Undefined array key "session_id" in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:49:22] Error: [8192] urlencode(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:49:22] Error: [2] Undefined array key "iteration" in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:49:22] Error: [2] Undefined array key "session_id" in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:49:22] Error: [8192] urlencode(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:49:22] Error: [2] Undefined array key "iteration" in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:49:23] Error: [2] Undefined array key "session_id" in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:49:23] Error: [8192] urlencode(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:49:23] Error: [2] Undefined array key "iteration" in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:49:23] Error: [2] Undefined array key "session_id" in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:49:23] Error: [8192] urlencode(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:49:23] Error: [2] Undefined array key "iteration" in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:49:23] Error: [2] Undefined array key "session_id" in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:49:23] Error: [8192] urlencode(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:49:23] Error: [2] Undefined array key "iteration" in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:49:23] Error: [2] Undefined array key "session_id" in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:49:23] Error: [8192] urlencode(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:49:23] Error: [2] Undefined array key "iteration" in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:49:31] Error: [2] Undefined array key "session_id" in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:49:31] Error: [8192] urlencode(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:49:31] Error: [2] Undefined array key "iteration" in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:49:31] Error: [2] Undefined array key "session_id" in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:49:31] Error: [8192] urlencode(): Passing null to parameter #1 ($string) of type string is deprecated in C:\xampp\htdocs\logger\remarks.php on line 202
+[2026-03-19 10:49:31] Error: [2] Undefined array key "iteration" in C:\xampp\htdocs\logger\remarks.php on line 202

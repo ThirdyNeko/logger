@@ -29,10 +29,55 @@ $toDate          = $_GET['to_date'] ?? '';
    PAGINATION
 ========================== */
 
-$remarks = loadRemarks(
+function loadErrorRemarksFiltered(
+    PDO $db,
+    ?string $program,
+    ?string $status,
+    ?string $fromDate,
+    ?string $toDate
+): array {
+
+    $where = [];
+    $params = [];
+
+    if ($program) {
+        $where[] = "program_name LIKE :program";
+        $params[':program'] = "%$program%";
+    }
+
+    if ($status !== null && $status !== '') {
+        $where[] = "status = :status";
+        $params[':status'] = $status;
+    }
+
+    if ($fromDate) {
+        $where[] = "created_at >= :from_date";
+        $params[':from_date'] = $fromDate . " 00:00:00";
+    }
+
+    if ($toDate) {
+        $where[] = "created_at <= :to_date";
+        $params[':to_date'] = $toDate . " 23:59:59";
+    }
+
+    $whereSql = $where ? "WHERE " . implode(" AND ", $where) : "";
+
+    $sql = "
+        SELECT *
+        FROM qa_error_groups
+        $whereSql
+        ORDER BY error_count DESC, updated_at DESC
+    ";
+
+    $stmt = $db->prepare($sql);
+    $stmt->execute($params);
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+$remarks = loadErrorRemarksFiltered(
     $db,
     $selectedProgram ?: null,
-    $username ?: null,
     $status !== '' ? $status : null,
     $fromDate ?: null,
     $toDate ?: null
@@ -143,31 +188,57 @@ $programs = loadPrograms($db);
                         <thead class="table-light">
                             <tr>
                                 <th>Program</th>
-                                <th>Session</th>
-                                <th>Iteration</th>
-                                <th>Remark Name</th>
+                                <th>Error Type</th>
+                                <th>Message</th>
+                                <th>Severity</th>
+                                <th>Error Count</th>
                                 <th>Status</th>
-                                <th>Created By</th>
-                                <th>Created At</th>
+                                <th>Last Updated</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($remarks as $row): ?>
                                 <tr class="clickable-row"
-                                    onclick="window.location='iteration_viewer.php?user=<?= urlencode($row['program_name']) ?>&session=<?= urlencode($row['session_id']) ?>&iteration=<?= (int)$row['iteration'] ?>'">
+                                    onclick="window.location='error_details.php?group_key=<?= urlencode($row['group_key']) ?>'">
+
                                     <td><?= htmlspecialchars($row['program_name']) ?></td>
-                                    <td><?= htmlspecialchars($row['session_id']) ?></td>
-                                    <td><?= (int)$row['iteration'] ?></td>
-                                    <td><?= htmlspecialchars($row['remark_name']) ?></td>
+
                                     <td>
-                                        <?php if ($row['resolved']): ?>
-                                            <span class="badge bg-success">Resolved</span>
-                                        <?php else: ?>
-                                            <span class="badge bg-warning text-dark">Pending</span>
-                                        <?php endif; ?>
+                                        <span class="badge bg-danger">
+                                            <?= htmlspecialchars($row['error_type']) ?>
+                                        </span>
                                     </td>
-                                    <td><?= htmlspecialchars($row['username']) ?></td>
-                                    <td><?= date('Y-m-d', strtotime($row['created_at'])) ?></td>
+
+                                    <td style="max-width:300px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                        <?= htmlspecialchars($row['message']) ?>
+                                    </td>
+
+                                    <td><?= htmlspecialchars($row['severity']) ?></td>
+
+                                    <td>
+                                        <span class="badge bg-dark">
+                                            <?= (int)$row['error_count'] ?>
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <?php
+                                            $status = $row['status'];
+                                            $color = match($status) {
+                                                'pending'  => 'secondary',
+                                                'standby'  => 'warning',
+                                                'working'  => 'primary',
+                                                'resolved' => 'success',
+                                                default    => 'dark'
+                                            };
+                                        ?>
+                                        <span class="badge bg-<?= $color ?>">
+                                            <?= ucfirst($status) ?>
+                                        </span>
+                                    </td>
+
+                                    <td><?= date('Y-m-d H:i', strtotime($row['updated_at'])) ?></td>
+
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -234,12 +305,10 @@ $programs = loadPrograms($db);
                     <label class="form-label">Status</label>
                     <select name="status" class="form-select">
                         <option value="">All</option>
-                        <option value="resolved" <?= $status === 'resolved' ? 'selected' : '' ?>>
-                            Resolved
-                        </option>
-                        <option value="pending" <?= $status === 'pending' ? 'selected' : '' ?>>
-                            Pending
-                        </option>
+                        <option value="pending" <?= $status === 'pending' ? 'selected' : '' ?>>Pending</option>
+                        <option value="standby" <?= $status === 'standby' ? 'selected' : '' ?>>Standby</option>
+                        <option value="working" <?= $status === 'working' ? 'selected' : '' ?>>Working On</option>
+                        <option value="resolved" <?= $status === 'resolved' ? 'selected' : '' ?>>Resolved</option>
                     </select>
                 </div>
 

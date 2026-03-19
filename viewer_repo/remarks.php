@@ -1,233 +1,105 @@
 <?php
 
-/**
- * Insert or update a QA remark for a user + session + iteration.
- */
-function saveQaRemark(
-    PDO $db,
-    int $userId,
-    string $username,
-    string $program,
-    string $sessionId,
-    int $iteration,
-    string $remarkName,
-    string $remark,
-    bool $resolved,
-    ?int $logId = null // ✅ allow null for backward compatibility
-): void {
+function syncErrorGroups(PDO $db, string $program, array $errorLogs): void
+{
+    $grouped = group_error_logs($errorLogs);
 
-    if ($logId) {
-        // 🔥 NEW: log-based remark
-        $sql = "
-            IF EXISTS (SELECT 1 FROM qa_remarks WHERE log_id = ?)
+    foreach ($grouped as $group) {
+
+        $decoded = json_decode($group['response_body'] ?? '', true);
+
+        $message  = $decoded['message'] ?? '';
+        $severity = $decoded['severity'] ?? '';
+        $type     = $group['type'] ?? '';
+
+        $groupKey = md5($type . '|' . $message . '|' . $severity);
+        $count    = $group['_count'];
+
+        // 🔹 Upsert main issue
+        $stmt = $db->prepare("
+            IF EXISTS (SELECT 1 FROM qa_error_groups WHERE group_key = ?)
             BEGIN
-                UPDATE qa_remarks
-                SET remark_name = ?, remark = ?, username = ?, resolved = ?
-                WHERE log_id = ?
+                UPDATE qa_error_groups
+                SET error_count = ?, updated_at = GETDATE()
+                WHERE group_key = ?
             END
             ELSE
             BEGIN
-                INSERT INTO qa_remarks
-                    (user_id, username, program_name, session_id, iteration, log_id, remark_name, remark, resolved)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO qa_error_groups
+                    (group_key, program_name, error_type, message, severity, error_count)
+                VALUES (?, ?, ?, ?, ?, ?)
             END
-        ";
+        ");
 
-        $stmt = $db->prepare($sql);
         $stmt->execute([
-            $logId,
-            $remarkName, $remark, $username, $resolved, $logId,
-            $userId, $username, $program, $sessionId, $iteration, $logId, $remarkName, $remark, $resolved
+            $groupKey,
+            $count,
+            $groupKey,
+
+            $groupKey,
+            $program,
+            $type,
+            $message,
+            $severity,
+            $count
         ]);
 
-    } else {
-        // ✅ OLD behavior (iteration-based)
-        $sql = "
-            IF EXISTS (
-                SELECT 1 FROM qa_remarks
-                WHERE user_id = ?
-                  AND program_name = ?
-                  AND session_id = ?
-                  AND iteration = ?
-            )
-            BEGIN
-                UPDATE qa_remarks
-                SET remark_name = ?, remark = ?, username = ?, resolved = ?
-                WHERE user_id = ?
-                  AND program_name = ?
-                  AND session_id = ?
-                  AND iteration = ?
-            END
-            ELSE
-            BEGIN
-                INSERT INTO qa_remarks
-                    (user_id, username, program_name, session_id, iteration, remark_name, remark, resolved)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            END
-        ";
+        // 🔹 Insert occurrences (important!)
+        foreach ($group['_endpoints'] as $endpoint) {
+            // If you still have original logs, use them instead
+            $stmt = $db->prepare("
+                INSERT INTO qa_error_occurrences (group_key, session_id, iteration)
+                VALUES (?, ?, ?)
+            ");
 
-        $stmt = $db->prepare($sql);
-        $stmt->execute([
-            $userId, $program, $sessionId, $iteration,
-            $remarkName, $remark, $username, $resolved,
-            $userId, $program, $sessionId, $iteration,
-            $userId, $username, $program, $sessionId, $iteration, $remarkName, $remark, $resolved
-        ]);
+            $stmt->execute([
+                $groupKey,
+                $group['session_id'] ?? null,
+                $group['iteration'] ?? null
+            ]);
+        }
     }
 }
 
-/**
- * Load all remarks for a given program, organized by session and iteration.
- *
- * @return array<string, array<int, array{name:string,remark:string,ctime:int}>>
- *         Format: $remarked[session_id][iteration] = ['name'=>..., 'remark'=>..., 'ctime'=>...]
- */
-function loadRemarksByProgram(PDO $db, string $program): array
+function loadErrorRemarks(PDO $db, ?string $program = null): array
 {
-    $sql = "
-        SELECT session_id, iteration, remark_name, remark, username, created_at,
-               resolved, resolved_by, resolved_at, resolve_comment
-        FROM qa_remarks
-        WHERE program_name = :program_name
-        ORDER BY created_at DESC
-    ";
-
-    $stmt = $db->prepare($sql);
-    $stmt->execute([':program_name' => $program]);
-
-    $remarked = [];
-
-    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        $sid  = $row['session_id'];
-        $iter = (int) $row['iteration'];
-
-        $remarked[$sid][$iter] = [
-            'name'            => $row['remark_name'],
-            'remark'          => $row['remark'],
-            'username'        => $row['username'] ?? 'Unknown',
-            'ctime'           => strtotime($row['created_at']),
-            'resolved'        => (bool) $row['resolved'],
-            'resolved_by'     => $row['resolved_by'] ?? null,
-            'resolved_at'     => $row['resolved_at'] ?? null,
-            'resolve_comment' => $row['resolve_comment'] ?? null
-        ];
-    }
-
-    return $remarked;
-}
-
-function loadRemarksByLog(PDO $db, string $program): array
-{
-    $sql = "
-        SELECT log_id, remark_name, remark, username, resolved
-        FROM qa_remarks
-        WHERE program_name = :program
-          AND log_id IS NOT NULL
-    ";
-
-    $stmt = $db->prepare($sql);
-    $stmt->execute([':program' => $program]);
-
-    $out = [];
-
-    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        $out[(int)$row['log_id']] = $row;
-    }
-
-    return $out;
-}
-
-
-/**
- * Load paginated QA remarks with filters.
- *
- * @return array{
- *     data: array<int, array>,
- *     total: int
- * }
- */
-function loadRemarks(
-    PDO $db,
-    ?string $program,
-    ?string $username,
-    ?string $status,      // 'resolved' | 'pending' | null
-    ?string $fromDate,
-    ?string $toDate
-): array {
-
-    $where = [];
-    $params = [];
-
-    if ($program) {
-        $where[] = "program_name LIKE :program";
-        $params[':program'] = "%$program%";
-    }
-
-    if ($username) {
-        $where[] = "username LIKE :username";
-        $params[':username'] = "%$username%";
-    }
-
-    if ($status !== null && $status !== '') {
-        $where[] = "resolved = :resolved";
-        $params[':resolved'] = $status === 'resolved' ? 1 : 0;
-    }
-
-    if ($fromDate) {
-        $where[] = "created_at >= :from_date";
-        $params[':from_date'] = $fromDate . " 00:00:00";
-    }
-
-    if ($toDate) {
-        $where[] = "created_at <= :to_date";
-        $params[':to_date'] = $toDate . " 23:59:59";
-    }
-
-    $whereSql = $where ? "WHERE " . implode(" AND ", $where) : "";
-
     $sql = "
         SELECT *
-        FROM qa_remarks
-        $whereSql
-        ORDER BY created_at DESC
+        FROM qa_error_groups
+        " . ($program ? "WHERE program_name = :program" : "") . "
+        ORDER BY error_count DESC, updated_at DESC
     ";
 
     $stmt = $db->prepare($sql);
-    $stmt->execute($params);
+
+    if ($program) {
+        $stmt->execute([':program' => $program]);
+    } else {
+        $stmt->execute();
+    }
 
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-
-/**
- * Mark a QA remark as resolved, adding resolved info.
- */
-function markRemarkResolved(
+function updateErrorRemark(
     PDO $db,
-    string $program,
-    string $sessionId,
-    int $iteration,
-    string $resolvedBy,
-    string $resolveComment
+    string $groupKey,
+    string $status,
+    ?string $remark = null
 ): void {
-    $resolvedAt = date('Y-m-d H:i:s');
+
+    $allowed = ['pending', 'standby', 'working', 'resolved'];
+
+    if (!in_array($status, $allowed)) {
+        throw new InvalidArgumentException("Invalid status");
+    }
 
     $sql = "
-        UPDATE qa_remarks
-        SET resolved = 1,
-            resolved_by = ?,
-            resolved_at = ?,
-            resolve_comment = ?
-        WHERE program_name = ? AND session_id = ? AND iteration = ?
+        UPDATE qa_error_groups
+        SET status = ?, remark = ?, updated_at = GETDATE()
+        WHERE group_key = ?
     ";
 
     $stmt = $db->prepare($sql);
-    $stmt->execute([
-        $resolvedBy,
-        $resolvedAt,
-        $resolveComment,
-        $program,
-        $sessionId,
-        $iteration
-    ]);
+    $stmt->execute([$status, $remark, $groupKey]);
 }

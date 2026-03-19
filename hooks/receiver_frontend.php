@@ -96,4 +96,70 @@ $logData = [
 $logRepo = new QaLogRepository(qa_db());
 $logRepo->insertLog($logData);
 
+/* ==========================
+   REAL-TIME ERROR GROUP SYNC
+========================== */
+if ($logData['type'] === 'backend-error') {
+
+    $decoded = json_decode($logData['response_body'] ?? '', true);
+
+    $message  = $decoded['message'] ?? '';
+    $severity = $decoded['severity'] ?? '';
+    $type     = $logData['type'];
+
+    $groupKey = md5($type . '|' . $message . '|' . $severity);
+
+    $db = qa_db();
+
+    // 🔹 Upsert main group
+    $stmt = $db->prepare("
+        IF EXISTS (SELECT 1 FROM qa_error_groups WHERE group_key = ?)
+        BEGIN
+            UPDATE qa_error_groups
+            SET error_count = error_count + 1,
+                updated_at = GETDATE()
+            WHERE group_key = ?
+        END
+        ELSE
+        BEGIN
+            INSERT INTO qa_error_groups
+                (group_key, program_name, error_type, message, severity, error_count)
+            VALUES (?, ?, ?, ?, ?, 1)
+        END
+    ");
+
+    $stmt->execute([
+        $groupKey,
+        $groupKey,
+
+        $groupKey,
+        $logData['program_name'],
+        $type,
+        $message,
+        $severity
+    ]);
+
+    // 🔹 Insert occurrence (no duplicates)
+    $stmt = $db->prepare("
+        IF NOT EXISTS (
+            SELECT 1 FROM qa_error_occurrences
+            WHERE group_key = ?
+              AND session_id = ?
+              AND iteration = ?
+        )
+        INSERT INTO qa_error_occurrences (group_key, session_id, iteration)
+        VALUES (?, ?, ?)
+    ");
+
+    $stmt->execute([
+        $groupKey,
+        $session_id,
+        $iteration,
+
+        $groupKey,
+        $session_id,
+        $iteration
+    ]);
+}
+
 http_response_code(204);
